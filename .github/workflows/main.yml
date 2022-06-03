@@ -1,0 +1,29 @@
+name: deploy on ec2
+
+on:
+  push:
+    branches:
+      - main
+
+    paths:
+      -'DABackend/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: executing remote ssh commands using ssh key
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.KEY }}
+        port: ${{ secrets.PORT }}
+        script: |
+          cd /var/www/html/DABackend
+          pwd
+          ls -la
+          sudo git pull origin main
+          sudo yarn
+          pm2 ls
+          pm2 restart all
