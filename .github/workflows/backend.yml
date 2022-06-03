@@ -2,9 +2,10 @@ name: deploy on ec2
 
 on:
   push:
-    branches: 
+    branches:
       - main
-
+    paths:
+      -'DABackend/**'
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,5 +23,5 @@ jobs:
           ls -la
           sudo git pull origin main
           sudo yarn
-          pm2 ls 
+          pm2 ls
           pm2 restart all
