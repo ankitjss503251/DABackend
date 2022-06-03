@@ -20,6 +20,7 @@ jobs:
           cd /var/www/html/DABackend
           pwd
           ls -la
-          sudo git pull 
-          sudo npm install
-          sudo pm2 start index.js
+          sudo git pull origin main
+          sudo yarn
+          pm2 ls 
+          pm2 restart all
