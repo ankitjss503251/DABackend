@@ -4,6 +4,7 @@ const collectionSchema = mongoose.Schema({
   name: {
     type: String,
     require: true,
+    unique: true,
   },
   type: {
     type: Number,
@@ -82,6 +83,11 @@ const collectionSchema = mongoose.Schema({
     enum: [0, 1],
   },
   isExclusive: {
+    type: Number,
+    default: 0,
+    enum: [0, 1],
+  },
+  isOnMarketplace: {
     type: Number,
     default: 0,
     enum: [0, 1],
