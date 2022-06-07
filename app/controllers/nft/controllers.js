@@ -118,6 +118,7 @@ class NFTController {
             preSaleStartTime: req.body.preSaleStartTime,
             preSaleEndTime: req.body.preSaleEndTime,
             totalSupply: req.body.totalSupply,
+            isOnMarketplace: req.body.isOnMarketplace,
             nextId: 0,
             price: req.body.price,
             createdBy: req.userId,
@@ -186,6 +187,10 @@ class NFTController {
       if (req.body.isExclusive && req.body.isExclusive !== undefined) {
         isExclusive = req.body.isExclusive;
       }
+      let isOnMarketplace = "";
+      if (req.body.isOnMarketplace && req.body.isOnMarketplace !== undefined) {
+        isOnMarketplace = req.body.isOnMarketplace;
+      }
 
       let searchArray = [];
       if (collectionID !== "") {
@@ -214,6 +219,9 @@ class NFTController {
       }
       if (filterString !== "") {
         searchArray["salesCount"] = { $gte: 0 };
+      }
+      if (isOnMarketplace !== "") {
+        searchArray["isOnMarketplace"] = isOnMarketplace;
       }
       if (searchText !== "") {
         let searchKey = new RegExp(searchText, 'i');
