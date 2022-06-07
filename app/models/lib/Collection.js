@@ -87,6 +87,11 @@ const collectionSchema = mongoose.Schema({
     default: 0,
     enum: [0, 1],
   },
+  isOnMarketplace: {
+    type: Number,
+    default: 0,
+    enum: [0, 1],
+  },
   createdBy: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
