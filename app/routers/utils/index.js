@@ -1,15 +1,10 @@
 const router = require("express").Router();
-const utilsController = require("./lib/controllers");
-const utilsMiddleware = require("./lib/middleware");
+const UtilsController = require("./controllers");
+const utilsController = new UtilsController();
+const utilsMiddleware = require("../helpers/middleware");
 
-router.post(
-  "/addCategory",
-  utilsMiddleware.verifyToken,
-  utilsController.addCategory
-);
-
-router.post("/addBrand", utilsMiddleware.verifyToken, utilsController.addBrand);
-
+router.post("/addCategory", utilsMiddleware.verifyUserToken, utilsController.addCategory);
+router.post("/addBrand", utilsMiddleware.verifyUserToken, utilsController.addBrand);
 router.get("/getAllCategory", utilsController.getAllCategory);
 router.get("/getAllBrand", utilsController.getAllBrand);
 

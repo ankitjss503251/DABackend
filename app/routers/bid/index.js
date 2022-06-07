@@ -1,10 +1,11 @@
 const router = require('express').Router();
-const bidController = require('./lib/controllers');
-const bidMiddleware = require('./lib/middleware');
+const BidController = require('./controllers');
+const bidController = new BidController();
+const bidMiddleware = require('./../helpers/middleware');
 
-router.post("/createBidNft",bidMiddleware.verifyToken,bidController.createBidNft);
-router.post("/updateBidNft",bidMiddleware.verifyToken,bidController.updateBidNft);
-router.post("/fetchBidNft",bidMiddleware.verifyToken,bidController.fetchBidNft);
-router.post("/acceptBidNft",bidMiddleware.verifyToken,bidController.acceptBidNft);
+router.post("/createBidNft",bidMiddleware.verifyUserToken,bidController.createBidNft);
+router.post("/updateBidNft",bidMiddleware.verifyUserToken,bidController.updateBidNft);
+router.post("/fetchBidNft",bidMiddleware.verifyUserToken,bidController.fetchBidNft);
+router.post("/acceptBidNft",bidMiddleware.verifyUserToken,bidController.acceptBidNft);
 
 module.exports = router;

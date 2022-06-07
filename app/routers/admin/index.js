@@ -1,35 +1,34 @@
 const router = require('express').Router();
-const adminController = require('./lib/controllers');
-const adminMiddleware = require('./lib/middleware');
-
+const AdminController   = require('./controllers');
+const adminController = new AdminController();
+const adminMiddleware = require('../helpers/middleware');
 // Dashboard API
-router.get('/getDashboardData', adminMiddleware.verifyToken, adminController.getDashboardData);
-
+router.get('/getDashboardData', adminMiddleware.verifyUserToken, adminController.getDashboardData);
 // Profile API
-router.put('/updateProfile', adminMiddleware.verifyToken, adminController.updateProfile);
+router.put('/updateProfile', adminMiddleware.verifyUserToken, adminController.updateProfile);
 
 // NFT APIs
-router.post('/nfts', adminMiddleware.verifyToken, adminController.nfts);
+router.post('/nfts', adminMiddleware.verifyUserToken, adminController.nfts);
 
 // User APIs
-router.post('/users', adminMiddleware.verifyToken, adminController.users);
-router.post('/toggleUserStatus', adminMiddleware.verifyToken, adminController.toggleUserStatus);
+router.post('/users', adminMiddleware.verifyUserToken, adminController.users);
+router.post('/toggleUserStatus', adminMiddleware.verifyUserToken, adminController.toggleUserStatus);
 
 // Newsletter APIs
-router.post('/sendNewsLetterEmail', adminMiddleware.verifyToken, adminController.sendNewsLetterEmail);
-router.post('/getNewsLetterEmailsLists', adminMiddleware.verifyToken, adminController.getNewsLetterEmailsLists);
-router.delete('/deleteNewsLetterEmail', adminMiddleware.verifyToken, adminController.deleteNewsLetterEmail);
+router.post('/sendNewsLetterEmail', adminMiddleware.verifyUserToken, adminController.sendNewsLetterEmail);
+router.post('/getNewsLetterEmailsLists', adminMiddleware.verifyUserToken, adminController.getNewsLetterEmailsLists);
+router.delete('/deleteNewsLetterEmail', adminMiddleware.verifyUserToken, adminController.deleteNewsLetterEmail);
 
 // Category APIs
-router.post("/addCategory", adminMiddleware.verifyToken, adminController.addCategory);
-router.post("/getCategories", adminMiddleware.verifyToken, adminController.getCategories);
-router.put("/toggleCategory/:sName", adminMiddleware.verifyToken, adminController.toggleCategory);
-router.delete("/deleteCategory/:sName", adminMiddleware.verifyToken, adminController.deleteCategory);
-router.put("/editCategory", adminMiddleware.verifyToken, adminController.editCategory);
+router.post("/addCategory", adminMiddleware.verifyUserToken, adminController.addCategory);
+router.post("/getCategories", adminMiddleware.verifyUserToken, adminController.getCategories);
+router.put("/toggleCategory/:sName", adminMiddleware.verifyUserToken, adminController.toggleCategory);
+router.delete("/deleteCategory/:sName", adminMiddleware.verifyUserToken, adminController.deleteCategory);
+router.put("/editCategory", adminMiddleware.verifyUserToken, adminController.editCategory);
 
 //CMS APIs
-router.post("/updateAboutus", adminMiddleware.verifyToken, adminController.updateAboutus);
-router.post("/updateTerms", adminMiddleware.verifyToken, adminController.updateTerms);
-router.post("/updateFAQs", adminMiddleware.verifyToken, adminController.updateFAQs);
+router.post("/updateAboutus", adminMiddleware.verifyUserToken, adminController.updateAboutus);
+router.post("/updateTerms", adminMiddleware.verifyUserToken, adminController.updateTerms);
+router.post("/updateFAQs", adminMiddleware.verifyUserToken, adminController.updateFAQs);
 
 module.exports = router;
