@@ -10,13 +10,11 @@ const {
     Aboutus,
     Terms,
     FAQs
-} = require('../../../models');
+} = require('../../models');
 const {
     nodemailer
-} = require('../../../utils/index');
-const validators = require("./validators");
-
-const controllers = {};
+} = require('../../utils/index');
+const validators = require("../helpers/validators");
 
 const storage = multer.diskStorage({
     destination: (req, file, callback) => {
@@ -41,7 +39,13 @@ cloudinary.config({
 
 const upload = multer(oMulterObj).single('userProfile');
 
-controllers.updateProfile = async (req, res, next) => {
+class AdminController{
+  
+    constructor(){
+      
+    }
+
+    async updateProfile(req, res, next){
 
     try {
         if (!req.userId) return res.reply(messages.unauthorized());
@@ -91,7 +95,7 @@ controllers.updateProfile = async (req, res, next) => {
     }
 }
 
-controllers.getDashboardData = async (req, res) => {
+async getDashboardData(req, res){
     try {
         if (!req.userId) return res.reply(messages.unauthorized());
 
@@ -188,7 +192,7 @@ controllers.getDashboardData = async (req, res) => {
     }
 };
 
-controllers.users = async (req, res, next) => {
+async users(req, res, next){
     try {
         // Per page limit
         var nLimit = parseInt(req.body.length);
@@ -272,7 +276,7 @@ controllers.users = async (req, res, next) => {
     }
 }
 
-controllers.nfts = async (req, res, next) => {
+async nfts(req, res, next){
     try {
         // Per page limit
         var nLimit = parseInt(req.body.length);
@@ -363,7 +367,7 @@ controllers.nfts = async (req, res, next) => {
     }
 }
 
-controllers.toggleUserStatus = async (req, res, next) => {
+async toggleUserStatus(req, res, next){
     try {
         if (!req.body.sObjectId) return res.reply(messages.not_found("User ID"));
         if (!req.body.sStatus) return res.reply(messages.not_found("Status"));
@@ -388,7 +392,7 @@ controllers.toggleUserStatus = async (req, res, next) => {
 }
 
 // ------- News Letter controllers --------
-controllers.sendNewsLetterEmail = async (req, res, next) => {
+async sendNewsLetterEmail(req, res, next){
     try {
         log.green(req.body);
         if (!req.userId) return res.reply(messages.unauthorized());
@@ -423,7 +427,7 @@ controllers.sendNewsLetterEmail = async (req, res, next) => {
     }
 };
 
-controllers.getNewsLetterEmailsLists = async (req, res, next) => {
+async getNewsLetterEmailsLists(req, res, next){
     try {
 
         await NewsLetterEmail.countDocuments({}, async (err, nCount) => {
@@ -448,7 +452,7 @@ controllers.getNewsLetterEmailsLists = async (req, res, next) => {
     }
 };
 
-controllers.deleteNewsLetterEmail = async (req, res) => {
+async deleteNewsLetterEmail(req, res){
     try {
         NewsLetterEmail.findOneAndDelete({
             _id: req.headers._id
@@ -464,7 +468,7 @@ controllers.deleteNewsLetterEmail = async (req, res) => {
 };
 
 // Category Controllers
-controllers.addCategory = async (req, res) => {
+async addCategory(req, res){
     try {
         log.green(req.body);
         if (!req.userId) return res.reply(messages.unauthorized());
@@ -488,7 +492,7 @@ controllers.addCategory = async (req, res) => {
     }
 }
 
-controllers.getCategories = async (req, res) => {
+async getCategories(req, res){
     try {
         if (!req.userId) return res.reply(messages.unauthorized());
         // Per page limit
@@ -549,7 +553,7 @@ controllers.getCategories = async (req, res) => {
     }
 }
 
-controllers.toggleCategory = async (req, res) => {
+async toggleCategory(req, res){
     try {
         log.green(req.body);
         log.green(req.params);
@@ -571,7 +575,7 @@ controllers.toggleCategory = async (req, res) => {
     }
 }
 
-controllers.deleteCategory = (req, res) => {
+deleteCategory(req, res){
     try {
         log.green(req.params);
         if (!req.userId) return res.reply(messages.unauthorized());
@@ -588,7 +592,7 @@ controllers.deleteCategory = (req, res) => {
     }
 }
 
-controllers.editCategory = async (req, res) => {
+async editCategory(req, res){
     try {
         log.green(req.body);
         if (!req.userId) return res.reply(messages.unauthorized());
@@ -612,7 +616,7 @@ controllers.editCategory = async (req, res) => {
 }
 
 // CMS Controllers
-controllers.updateAboutus = async (req, res) => {
+async updateAboutus(req, res){
     try {
         log.green(req.body);
         if (!req.userId) return res.reply(messages.unauthorized());
@@ -633,7 +637,7 @@ controllers.updateAboutus = async (req, res) => {
     }
 }
 
-controllers.updateFAQs = async (req, res) => {
+async updateFAQs(req, res){
     try {
         log.green(req.body);
         if (!req.userId) return res.reply(messages.unauthorized());
@@ -657,7 +661,7 @@ controllers.updateFAQs = async (req, res) => {
     }
 }
 
-controllers.updateTerms = async (req, res) => {
+async updateTerms(req, res){
     try {
         log.green(req.body);
         if (!req.userId) return res.reply(messages.unauthorized());
@@ -677,4 +681,5 @@ controllers.updateTerms = async (req, res) => {
         return res.reply(messages.server_error());
     }
 }
-module.exports = controllers;
+}
+module.exports = AdminController;

@@ -1,12 +1,13 @@
 
   
 const router = require('express').Router();
-const orderController = require('./lib/controllers');
-const orderMiddleware = require('./lib/middleware');
+const OrderController = require('./controllers');
+const orderController = new OrderController();
+const orderMiddleware = require('./../helpers/middleware');
 
-router.post('/createOrder', orderMiddleware.verifyToken, orderController.createOrder);
-router.put('/updateOrder', orderMiddleware.verifyToken, orderController.updateOrder);
-router.delete('/deleteOrder', orderMiddleware.verifyToken, orderController.deleteOrder);
+router.post('/createOrder', orderMiddleware.verifyUserToken, orderController.createOrder);
+router.put('/updateOrder', orderMiddleware.verifyUserToken, orderController.updateOrder);
+router.delete('/deleteOrder', orderMiddleware.verifyUserToken, orderController.deleteOrder);
 router.post('/getOrder', orderController.getOrder);
 router.post('/getOrdersByNftId', orderController.getOrdersByNftId);
 

@@ -7,7 +7,6 @@ const cors = require("cors");
 const compression = require("compression");
 const morgan = require("morgan");
 const routes = require("./routes");
-const htmlRender = require("./render");
 
 
 function Router() {
@@ -21,7 +20,6 @@ function Router() {
 
   this.app.use(
     cors({
-      // Set the browser cache time for preflight responses
       maxAge: 86400,
       preflightContinue: true, // Allow us to manually add to preflights
     })
@@ -70,11 +68,9 @@ Router.prototype.setupMiddleware = function () {
   );
   this.app.set("views", "./seeds");
   this.app.set("view engine", "ejs");
-  // if (process.env.NODE_ENV !== 'prod') this.app.use(morgan('dev', { skip: (req) => req.path === '/ping' || req.path === '/favicon.ico' }));
   this.app.use(express.static("./seeds"));
   this.app.use(this.routeConfig);
   this.app.use("/api/v1", routes);
-  this.app.use("/", htmlRender);
   this.app.use("*", this.routeHandler);
   this.app.use(this.logErrors);
   this.app.use(this.errorHandler);
