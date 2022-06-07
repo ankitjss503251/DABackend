@@ -118,7 +118,6 @@ class NFTController {
             preSaleStartTime: req.body.preSaleStartTime,
             preSaleEndTime: req.body.preSaleEndTime,
             totalSupply: req.body.totalSupply,
-            isOnMarketplace: req.body.isOnMarketplace,
             nextId: 0,
             price: req.body.price,
             createdBy: req.userId,
@@ -709,6 +708,24 @@ class NFTController {
       const startIndex = (page - 1) * limit;
       const endIndex = page * limit;
 
+      let collData = [];
+      await Collection.find({ isOnMarketplace: 1})
+      .select({
+        contractAddress:1,
+        isOnMarketplace:1,
+      })
+      .sort({ createdOn: -1 })
+      .exec()
+      .then((resData) => {
+        resData.forEach(element => {
+          collData.push(mongoose.Types.ObjectId(element._id));
+        });
+      })
+      .catch((e) => {
+        console.log("Error", e);
+      });
+      console.log("collData ",collData);
+
       let nftID = "";
       if (req.body.nftID && req.body.nftID !== undefined) {
         nftID = req.body.nftID;
@@ -745,8 +762,13 @@ class NFTController {
       if (req.body.isLazyMinted !== undefined) {
         isLazyMinted = req.body.isLazyMinted;
       }
+      let isOnMarketplace = "";
+      if (req.body.isOnMarketplace !== undefined) {
+        isOnMarketplace = req.body.isOnMarketplace;
+      }
 
       let searchArray = [];
+      searchArray["collectionID"] = { "$in": collData };
 
       if (nftID !== "") {
         searchArray["_id"] = mongoose.Types.ObjectId(nftID);
@@ -797,6 +819,7 @@ class NFTController {
       }
 
       console.log("search obkj", searchObj);
+      
       await NFT.find(searchObj)
         .populate("collectionID")
         .populate("categoryID")
@@ -817,6 +840,7 @@ class NFTController {
       results.results = data;
       res.header("Access-Control-Max-Age", 600);
       return res.reply(messages.success("NFT List"), results);
+
     } catch (error) {
       console.log("Error " + error);
       return res.reply(messages.server_error());
@@ -3513,6 +3537,30 @@ class NFTController {
     } catch (error) {
       console.log("Error:", error);
       return res.reply(messages.error());
+    }
+  };
+
+  async updateCollectionMarketplace(req, res){
+    try {
+      if (!req.userId) return res.reply(messages.unauthorized());
+      if (!req.body.collectionID) {
+        return res.reply(messages.not_found("Collection ID"));
+      }
+      let collectionID = req.body.collectionID;
+      let isOnMarketplace = req.body.isOnMarketplace;
+
+      let updateData = [];
+      updateData["isOnMarketplace"] = isOnMarketplace ;
+      let updateObj = Object.assign({}, updateData);
+
+      Collection.findByIdAndUpdate(
+        { _id: mongoose.Types.ObjectId(collectionID) },
+        { $set: updateObj }
+      ).then((collection) => {
+        return res.reply( messages.updated("Collection Updated successfully."), collection );
+      });
+    } catch (error) {
+      return res.reply(messages.server_error());
     }
   };
 
