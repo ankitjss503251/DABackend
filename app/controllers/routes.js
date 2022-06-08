@@ -7,7 +7,8 @@ const nftRoute = require('./nft');
 const bidRoute = require('./bid');
 const orderRoute = require('./order');
 const historyRoute = require('./history');
-const utilsRoute=require('./utils')
+const utilsRoute=require('./utils');
+const importRoute = require('./imports');
 
 router.use('/auth', authRoute);
 router.use('/user', userRoute);
@@ -16,6 +17,7 @@ router.use('/nft', nftRoute);
 router.use('/bid', bidRoute);
 router.use('/order', orderRoute);
 router.use('/history', historyRoute);
-router.use('/utils',utilsRoute)
+router.use('/utils',utilsRoute);
+router.use('/import',importRoute);
 
 module.exports = router;
