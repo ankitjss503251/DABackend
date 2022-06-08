@@ -80,7 +80,7 @@ class ImportedController {
       let searchArray = [];
       
       if (searchText !== "") {
-        searchArray["address"] = { $regex: new RegExp(searchText), $options: "i" };
+        searchArray["contractAddress"] = { $regex: new RegExp(searchText), $options: "i" };
       }
       let searchObj = Object.assign({}, searchArray);
       console.log("searchArray", searchArray);
