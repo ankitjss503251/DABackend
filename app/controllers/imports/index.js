@@ -5,5 +5,6 @@ const nftMiddleware = require('./../helpers/middleware');
 
 
 router.post("/createCollection", importedController.createCollection );
+router.post("/createNFT", importedController.createNFT );
 
 module.exports = router;

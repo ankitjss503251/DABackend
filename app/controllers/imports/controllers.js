@@ -64,5 +64,38 @@ class ImportedController {
       return res.reply(messages.server_error());
     }
   };
+
+  async createNFT(req, res) {
+    try {
+      if (!req.body.nftData) {
+        return res.reply(messages.not_found("NFT Data"));
+      }
+      let NFTData = req.body.nftData;
+      if(NFTData.length > 0){
+        NFTData.forEach(nftElement => {
+          let nft = new importedNFT({
+            name: nftElement.name,
+            description: nftElement.description,
+            image: nftElement.image,
+            tokenID: nftElement.tokenID,
+            collectionAddress: nftElement.collectionAddress,
+          });
+          let NFTAttr = nftElement.attributes;
+          if (NFTAttr.length > 0) {
+            NFTAttr.forEach((obj) => {
+              nft.attributes.push(obj);
+            });
+          }
+          nft.save().then(async (result) => { });
+        });
+        return res.reply(messages.created("NFT"));
+      }else{
+        return res.reply("Empty Request");
+      }
+    } catch (error) {
+      console.log(error);
+      return res.reply(messages.server_error());
+    }
+  };
 }
 module.exports = ImportedController;
