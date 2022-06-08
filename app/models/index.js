@@ -6,6 +6,8 @@ const History = require('./lib/History');
 const NFT = require('./lib/NFT');
 const Order = require('./lib/Order');
 const User = require('./lib/User');
+const importedCollection = require('./lib/importedCollection');
+const importedNFT = require('./lib/importedNFT');
 module.exports = {
     Bid,
     Brand,
@@ -14,5 +16,7 @@ module.exports = {
     History,
     NFT,
     Order,
-    User
+    User,
+    importedNFT,
+    importedCollection
 };

@@ -8,6 +8,7 @@ const {
   NFTowners,
   Order,
   Brand,
+  Category
 } = require("../../models");
 const pinataSDK = require("@pinata/sdk");
 const aws = require("aws-sdk");
@@ -768,7 +769,7 @@ class NFTController {
       }
 
       let searchArray = [];
-      searchArray["collectionID"] = { "$in": collData };
+      // searchArray["collectionID"] = { "$in": collData };
 
       if (nftID !== "") {
         searchArray["_id"] = mongoose.Types.ObjectId(nftID);
@@ -804,42 +805,94 @@ class NFTController {
 
       console.log("searchArray", searchArray);
 
-      const results = {};
-      if (endIndex < (await NFT.countDocuments(searchObj).exec())) {
-        results.next = {
-          page: page + 1,
-          limit: limit,
-        };
-      }
-      if (startIndex > 0) {
-        results.previous = {
-          page: page - 1,
-          limit: limit,
-        };
-      }
+      let nfts = await NFT.aggregate([
+        { $match: searchObj },
+        {  $lookup : {
+            from : 'Collection',
+            let: { collectionID: 'collectionID' },
+            pipeline : [{
+              $match : {
+                $expr :{
+                  $and :[
+                    { $eq : ["$isOnMarketplace",1] },
+                  ]
+                }
+              }
+            }],
+            as : "CollectionData"
+          } 
+        },
+        {  $lookup : {
+            from : 'Category',
+            let: { categoryID: 'categoryID' },
+            pipeline : [{
+              $match : {
+                $expr :[ 
+                  { _id : categoryID }
+                ]
+              }
+            }],
+            as : "CategoryData"
+          } 
+        },
+        {  $lookup : {
+            from : 'Brand',
+            localField : 'brandID',
+            foreignField : "_id.str",
+            as : "BrandData"
+          } 
+        },
+        {  $lookup: {
+            from : 'User',
+            localField : 'createdBy',
+            foreignField : "_id.str",
+            as : "UserData"
+          } 
+        },
+        {  $skip : startIndex },
+        { $limit : limit },
+        { $sort : { createdOn: -1 } }
+      ]).exec(function ( e, nftData ) {
+        console.log("Error " , e )
+        return res.reply(messages.success("NFT List"), nftData);           
+      })
+      // return res.reply(messages.success("NFT List"), nfts);
+      // const results = {};
+      // if (endIndex < (await NFT.countDocuments(searchObj).exec())) {
+      //   results.next = {
+      //     page: page + 1,
+      //     limit: limit,
+      //   };
+      // }
+      // if (startIndex > 0) {
+      //   results.previous = {
+      //     page: page - 1,
+      //     limit: limit,
+      //   };
+      // }
 
-      console.log("search obkj", searchObj);
+      // console.log("search obkj", searchObj);
       
-      await NFT.find(searchObj)
-        .populate("collectionID")
-        .populate("categoryID")
-        .populate("brandID")
-        .populate("createdBy")
-        .sort({ createdOn: -1 })
-        .limit(limit)
-        .skip(startIndex)
-        .lean()
-        .exec()
-        .then((res) => {
-          data.push(res);
-        })
-        .catch((e) => {
-          console.log("Error", e);
-        });
-      results.count = await NFT.countDocuments(searchObj).exec();
-      results.results = data;
-      res.header("Access-Control-Max-Age", 600);
-      return res.reply(messages.success("NFT List"), results);
+      // await NFT.find(searchObj)
+      //   .populate("collectionID")
+      //   .populate("categoryID")
+      //   .populate("brandID")
+      //   .populate("createdBy")
+      //   .sort({ createdOn: -1 })
+      //   .limit(limit)
+      //   .skip(startIndex)
+      //   .lean()
+      //   .exec()
+      //   .then((res) => {
+      //     data.push(res);
+      //   })
+      //   .catch((e) => {
+      //     console.log("Error", e);
+      //   });
+      // results.count = await NFT.countDocuments(searchObj).exec();
+      // results.results = data;
+      // res.header("Access-Control-Max-Age", 600);
+      // return res.reply(messages.success("NFT List"), results);
 
     } catch (error) {
       console.log("Error " + error);
