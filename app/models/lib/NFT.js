@@ -43,6 +43,23 @@ const nftSchema = mongoose.Schema({
       },
     },
   ],
+  attributesImported: [
+    {
+      trait_type: {
+        type: String,
+      },
+      value: {
+        type: String,
+      },
+      max_value: {
+        type: String,
+        default: "",
+      },
+      isImage: {
+        type: String,
+      },
+    },
+  ],
   levels: [
     {
       name: {
@@ -97,6 +114,11 @@ const nftSchema = mongoose.Schema({
       type: mongoose.Schema.ObjectId,
     },
   ],
+  isImported: {
+    type: Number,
+    default: 0,
+    enum: [0, 1], // 0-No 1-Yes
+  },
   createdBy: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
