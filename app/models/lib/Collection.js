@@ -92,6 +92,11 @@ const collectionSchema = mongoose.Schema({
     default: 0,
     enum: [0, 1],
   },
+  isImported: {
+    type: Number,
+    default: 0,
+    enum: [0, 1], // 0-No 1-Yes
+  },
   createdBy: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
