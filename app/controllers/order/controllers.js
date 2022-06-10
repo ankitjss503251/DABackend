@@ -27,7 +27,7 @@ class OrderController {
       console.log("nft req", req.body);
       const order = new Order({
         nftID: req.body.nftId,
-        tokenID: req.body.tokenId,
+        tokenID: req.body.tokenID,
         tokenAddress: req.body.collection,
         total_quantity: req.body.quantity,
         deadline: req.body.deadline,
@@ -238,10 +238,10 @@ class OrderController {
       const endIndex = page * limit;
       const results = {};
       let searchArray = [];
-      if (req.body.nftID != undefined || req.body.nftID != "") {
+      if (req.body.nftID != undefined && req.body.nftID != "") {
         searchArray["nftID"] = req.body.nftID;
       }
-      if (req.body.tokenID != undefined || req.body.tokenID != "") {
+      if (req.body.tokenID != undefined && req.body.tokenID != "") {
         searchArray["tokenID"] = req.body.tokenID;
         searchArray["collectionAddress"] = req.body.collectionAddress;
       }
@@ -282,7 +282,7 @@ class OrderController {
       let nftID = "";
       console.log("collectionID " + collectionID);
       console.log("nftID " + nftID);
-      let importedNFTID = req.body.nftId;
+      let importedNFTID = req.body.nftID;
       let importedCollection = req.body.collection.toLowerCase();
       // let creatorAddress = req.body.creatorAddress;
       console.log("importedCollection " + importedCollection);
@@ -306,7 +306,7 @@ class OrderController {
                 .then((saveCol) => {
                   console.log("Saved Collection", saveCol);
                   collectionID = saveCol._id;
-                  resolve(saveCol._id);
+                  resolve(collectionID);
                 })
                 .catch((error) => {
                   console.log("Created Collection error", error);
@@ -315,11 +315,12 @@ class OrderController {
             } else {
               console.log("Updated Collection", colData);
               collectionID = colData._id;
-              resolve(colData._id);
+              resolve(collectionID);
             }
           }
         );
       });
+
       let createNFT = await new Promise((resolve) => {
         importedNFT
           .findById(importedNFTID, (err, nftData) => {
@@ -352,6 +353,8 @@ class OrderController {
                   const collection = await Collection.findOne({
                     _id: mongoose.Types.ObjectId(collectionID),
                   });
+
+                  console.log("_id", collectionID, collection);
                   let nextID = collection.getNextID();
                   collection.nextID = nextID;
                   collection.save();
@@ -360,6 +363,9 @@ class OrderController {
                     { $inc: { nftCount: 1 } },
                     function () {}
                   );
+                  await importedNFT.deleteOne({
+                    _id: mongoose.Types.ObjectId(importedNFTID),
+                  });
                   resolve(result._id);
                 })
                 .catch((error) => {
@@ -380,8 +386,8 @@ class OrderController {
 
       const order = new Order({
         nftID: nftID,
-        tokenID: req.body.tokenId,
-        tokenAddress: collectionID,
+        tokenID: req.body.tokenID,
+        collectionAddress: req.body.collectionAddress,
         total_quantity: req.body.quantity,
         deadline: req.body.deadline,
         deadlineDate: req.body.deadlineDate,
