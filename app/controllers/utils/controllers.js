@@ -66,47 +66,50 @@ const uploadCategory = multer(oMulterObj);
 const uploadBrand = multer(oMulterObj);
 
 class UtilsController {
-
-  constructor() {
-
-  }
+  constructor() {}
 
   async addCategory(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
       allowedMimes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
       errAllowed = "JPG, JPEG, PNG,GIF";
-      uploadCategory.fields([{ name: 'image', maxCount: 1 }])(req, res, function (error) {
-        if (error) {
-          log.red(error);
-          console.log("Error ");
-          return res.reply(messages.bad_request(error.message));
-        } else {
-          console.log("Here");
+      uploadCategory.fields([{ name: "image", maxCount: 1 }])(
+        req,
+        res,
+        function (error) {
+          if (error) {
+            log.red(error);
+            console.log("Error ");
+            return res.reply(messages.bad_request(error.message));
+          } else {
+            console.log("Here");
 
-          if (!req.body.name) {
-            return res.reply(messages.not_found("Category Name"));
+            if (!req.body.name) {
+              return res.reply(messages.not_found("Category Name"));
+            }
+            if (!validators.isValidString(req.body.name)) {
+              return res.reply(messages.invalid("Category Name"));
+            }
+            const category = new Category({
+              name: req.body.name,
+              image: req.files.image[0].location,
+              createdBy: req.userId,
+            });
+            category
+              .save()
+              .then((result) => {
+                return res.reply(messages.created("Category"), result);
+              })
+              .catch((error) => {
+                return res.reply(messages.already_exists("Category"), error);
+              });
           }
-          if (!validators.isValidString(req.body.name)) {
-            return res.reply(messages.invalid("Category Name"));
-          }
-          const category = new Category({
-            name: req.body.name,
-            image: req.files.image[0].location,
-            createdBy: req.userId,
-          });
-          category.save().then((result) => {
-            return res.reply(messages.created("Category"), result);
-          }).catch((error) => {
-            return res.reply(messages.already_exists("Category"), error);
-          });
         }
-      });
-
+      );
     } catch (error) {
       return res.reply(messages.server_error());
     }
-  };
+  }
 
   async addBrand(req, res) {
     try {
@@ -114,15 +117,17 @@ class UtilsController {
       allowedMimes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
       errAllowed = "JPG, JPEG, PNG,GIF";
 
-      uploadBrand.fields([{ name: 'logoImage', maxCount: 1 }, { name: 'coverImage', maxCount: 1 }])(req, res, function (error) {
-        console.log("in add brand api")
+      uploadBrand.fields([
+        { name: "logoImage", maxCount: 1 },
+        { name: "coverImage", maxCount: 1 },
+      ])(req, res, function (error) {
+        console.log("in add brand api");
         if (error) {
           log.red(error);
           console.log("Error ", error);
           return res.reply(messages.bad_request(error.message));
         } else {
           console.log("Here");
-
 
           if (!req.body.name) {
             return res.reply(messages.not_found("Brand Name"));
@@ -140,24 +145,24 @@ class UtilsController {
             coverImage: req.files.coverImage[0].location,
             createdBy: req.userId,
           });
-          brand.save().then((result) => {
-            return res.reply(messages.created("Brand"), result);
-          }).catch((error) => {
-            return res.reply(messages.already_exists("Brand"), error);
-          });
+          brand
+            .save()
+            .then((result) => {
+              return res.reply(messages.created("Brand"), result);
+            })
+            .catch((error) => {
+              return res.reply(messages.already_exists("Brand"), error);
+            });
         }
       });
-
     } catch (error) {
       return res.reply(messages.server_error());
     }
-  };
+  }
 
   async getAllCategory(req, res) {
     try {
-      let category = await Category.find({})
-
-
+      let category = await Category.find({});
 
       console.log("category", category);
 
@@ -168,13 +173,11 @@ class UtilsController {
     } catch (e) {
       return res.reply(messages.error(e));
     }
-  };
+  }
 
   async getAllBrand(req, res) {
     try {
-      let brand = await Brand.find({})
-
-
+      let brand = await Brand.find({});
 
       console.log("brand", brand);
 
@@ -185,8 +188,20 @@ class UtilsController {
     } catch (e) {
       return res.reply(messages.error(e));
     }
-  };
+  }
 
+  async getBrandByID(req, res) {
+    try {
+      if (!req.params.brandID) return res.reply(messages.not_found("Brand ID"));
+      Brand.findById(req.params.brandID, (err, brand) => {
+        if (err) return res.reply(messages.server_error());
+        if (!brand) return res.reply(messages.not_found("Brand"));
+        return res.reply(messages.successfully("Brand Details Found"), brand);
+      });
+    } catch (e) {
+      return res.reply(message.error(e));
+    }
+  }
 }
 
 module.exports = UtilsController;

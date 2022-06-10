@@ -9,6 +9,7 @@ const {
   Order,
   Brand,
   Category,
+  importedNFT,
 } = require("../../models");
 const pinataSDK = require("@pinata/sdk");
 const aws = require("aws-sdk");
@@ -3499,6 +3500,7 @@ class NFTController {
           .catch((e) => {
             console.log("Error", e);
           });
+
         results.count = await NFT.countDocuments({
           nCollection: collection,
           "nOwnedBy.address": userWalletAddress,
@@ -3665,5 +3667,46 @@ class NFTController {
   //     return res.reply(messages.server_error());
   //   }
   // };
+
+  async getCombinedNfts(req, res) {
+    try {
+      let collectionAddress = "";
+      if (
+        req.body.collectionAddress &&
+        req.body.collectionAddress !== undefined
+      ) {
+        collectionAddress = req.body.collectionAddress;
+      }
+      let tokenID = "";
+      if (req.body.tokenID && req.body.tokenID !== undefined) {
+        tokenID = req.body.tokenID;
+      }
+
+      let searchArray = [];
+      if (collectionAddress !== "") {
+        searchArray["collectionAddress"] = collectionAddress;
+      }
+      if (tokenID !== "") {
+        searchArray["tokenID"] = tokenID;
+      }
+      let searchObj = Object.assign({}, searchArray);
+
+      let result = [];
+      const nfts = await NFT.find(searchObj);
+      if (nfts.length) result.push(nfts);
+      const impnfts = await importedNFT.find(searchObj);
+      if (impnfts.length) result.push(impnfts);
+      if (result.length)
+        return res.reply(messages.success("NFTs/Imported NFTs List"), result);
+      else
+        return res.reply(
+          messages.not_found(
+            "NFTs with " + collectionAddress + " collection address"
+          )
+        );
+    } catch (e) {
+      return res.reply(messages.error());
+    }
+  }
 }
 module.exports = NFTController;

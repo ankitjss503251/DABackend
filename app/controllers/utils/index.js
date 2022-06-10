@@ -7,5 +7,6 @@ router.post("/addCategory", utilsMiddleware.verifyUserToken, utilsController.add
 router.post("/addBrand", utilsMiddleware.verifyUserToken, utilsController.addBrand);
 router.get("/getAllCategory", utilsController.getAllCategory);
 router.get("/getAllBrand", utilsController.getAllBrand);
+router.post("/getBrandByID/:brandID",utilsController.getBrandByID);
 
 module.exports = router;
