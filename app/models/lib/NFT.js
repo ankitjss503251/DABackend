@@ -84,8 +84,8 @@ const nftSchema = mongoose.Schema({
   ],
   hash: {
     type: String,
-    require: true,
-    unique: true,
+    // require: true,
+    // unique: true,
   },
   isMinted: {
     type: Number,
