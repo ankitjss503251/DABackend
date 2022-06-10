@@ -3690,7 +3690,6 @@ class NFTController {
         searchArray["tokenID"] = tokenID;
       }
       let searchObj = Object.assign({}, searchArray);
-      console.log("searchArray", searchArray);
 
       let result = [];
       const nfts = await NFT.find(searchObj);
