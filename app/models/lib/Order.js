@@ -29,9 +29,7 @@ const orderSchema = mongoose.Schema({
   tokenID: {
     type: String,
   },
-  tokenAddress: {
-    type: String,
-  },
+ 
   deadlineDate: {
     type: Date,
   },

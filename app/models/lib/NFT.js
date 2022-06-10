@@ -19,6 +19,9 @@ const nftSchema = mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: "Collection",
   },
+  collectionAddress: {
+    type: String,
+  },
   tokenID: String,
   assetsInfo: [
     {
