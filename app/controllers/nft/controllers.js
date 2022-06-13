@@ -107,6 +107,7 @@ class NFTController {
             symbol: req.body.symbol,
             description: req.body.description,
             type: req.body.type,
+            royaltyPercentage: req.body.royalty,
             contractAddress: req.body.contractAddress,
             logoImage: req.files.logoImage[0].location,
             coverImage: req.files.coverImage[0].location,
@@ -115,6 +116,7 @@ class NFTController {
             chainID: req.body.chainID,
             preSaleStartTime: req.body.preSaleStartTime,
             preSaleEndTime: req.body.preSaleEndTime,
+            preSaleTokenAddress: req.body.preSaleTokenAddress,
             totalSupply: req.body.totalSupply,
             nextId: 0,
             price: req.body.price,
@@ -431,6 +433,18 @@ class NFTController {
           }
           if (req.body.preSaleStartTime) {
             updateData["preSaleStartTime"] = req.body.preSaleStartTime;
+          }
+          if (req.body.preSaleEndTime) {
+            updateData["preSaleEndTime"] = req.body.preSaleEndTime;
+          }
+          if (req.body.isDeployed !== "" && req.body.isDeployed !== undefined) {
+            updateData["isDeployed"] = req.body.isDeployed;
+          }
+          if (
+            req.body.isOnMarketplace !== "" &&
+            req.body.isOnMarketplace !== undefined
+          ) {
+            updateData["isOnMarketplace"] = req.body.isOnMarketplace;
           }
           updateData["lastUpdatedBy"] = req.userId;
           updateData["lastUpdatedOn"] = Date.now();
