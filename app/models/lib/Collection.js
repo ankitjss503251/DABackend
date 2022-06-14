@@ -105,6 +105,9 @@ const collectionSchema = mongoose.Schema({
     default: 0,
     enum: [0, 1], // 0-No 1-Yes
   },
+  link: {
+    type: String,
+  },
   createdBy: {
     type: mongoose.Schema.ObjectId,
     ref: "User",

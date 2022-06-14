@@ -26,9 +26,9 @@ class OrderController {
       let validity = Math.floor(orderDate / 1000);
       console.log("nft req", req.body);
       const order = new Order({
-        nftID: req.body.nftId,
+        nftID: req.body.nftID,
         tokenID: req.body.tokenID,
-        tokenAddress: req.body.collection,
+        collectionAddress: req.body.collectionAddress,
         total_quantity: req.body.quantity,
         deadline: req.body.deadline,
         deadlineDate: req.body.deadlineDate,
@@ -283,7 +283,7 @@ class OrderController {
       console.log("collectionID " + collectionID);
       console.log("nftID " + nftID);
       let importedNFTID = req.body.nftID;
-      let importedCollection = req.body.collection.toLowerCase();
+      let importedCollection = req.body.collectionAddress.toLowerCase();
       // let creatorAddress = req.body.creatorAddress;
       console.log("importedCollection " + importedCollection);
 
@@ -300,6 +300,7 @@ class OrderController {
                 contractAddress: importedCollection,
                 createdBy: req.userId,
                 isImported: 1,
+                link: colData.link,
               });
               collection
                 .save()
@@ -334,6 +335,7 @@ class OrderController {
               const nft = new NFT({
                 name: nftData.name,
                 collectionID: collectionID,
+                collectionAddress: importedCollection,
                 description: nftData.description,
                 createdBy: req.userId,
                 tokenID: nftData.tokenID,
@@ -341,14 +343,14 @@ class OrderController {
                 isMinted: 1,
                 lazyMintingStatus: 0,
                 isImported: 1,
+                ownedBy: [],
+                image: nftData.image,
               });
-              // nft.ownedBy.push({
-              //   address: creatorAddress.toLowerCase(),
-              //   quantity: req.body.quantity,
-              // });
+              nft.ownedBy.push(nftData.ownedBy);
               nft
                 .save()
                 .then(async (result) => {
+                  console.log("nft res", result);
                   nftID = result._id;
                   const collection = await Collection.findOne({
                     _id: mongoose.Types.ObjectId(collectionID),
