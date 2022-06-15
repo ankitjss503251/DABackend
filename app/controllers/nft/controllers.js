@@ -797,7 +797,7 @@ class NFTController {
       }
 
       let searchArray = [];
-      // searchArray["collectionID"] = { "$in": collData };
+      searchArray["collectionID"] = { "$in": collData };
 
       if (nftID !== "") {
         searchArray["_id"] = mongoose.Types.ObjectId(nftID);
