@@ -738,7 +738,13 @@ class NFTController {
       const endIndex = page * limit;
 
       let collData = [];
-      await Collection.find({ isOnMarketplace: 1 })
+      let searchArrayCat = [];
+      if (req.body.isOnMarketplace !== undefined) {
+        searchArrayCat["isOnMarketplace"] = req.body.isOnMarketplace;
+      }
+      let searchObjCat = Object.assign({}, searchArrayCat);
+      
+      await Collection.find(searchObjCat)
         .select({
           contractAddress: 1,
           isOnMarketplace: 1,
