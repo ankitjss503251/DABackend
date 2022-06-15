@@ -494,7 +494,7 @@ async addCategory(req, res){
 
 async getCategories(req, res){
     try {
-        if (!req.userId) return res.reply(messages.unauthorized());
+        // if (!req.userId) return res.reply(messages.unauthorized());
         // Per page limit
         var nLimit = parseInt(req.body.length);
         // From where to start

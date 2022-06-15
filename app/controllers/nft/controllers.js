@@ -10,6 +10,7 @@ const {
   Brand,
   Category,
   importedNFT,
+  importedCollection,
 } = require("../../models");
 const pinataSDK = require("@pinata/sdk");
 const aws = require("aws-sdk");
@@ -3663,6 +3664,20 @@ class NFTController {
     }
   }
 
+  async getImportedCollections(req, res){
+    try{
+      let result = await importedCollection.find();
+      console.log("collectionssss",result)
+      if (!result) {
+        return res.reply(messages.not_found("Imported Collection"));
+      }
+      return res.reply(messages.no_prefix("Imported Collection "), result);
+    }
+    catch(e){
+      res.reply(messages.error());
+    }
+  }
+
   // async updateCollectionToken(req, res){
   //   try {
   //     if (!req.params.collectionAddress)
@@ -3696,6 +3711,11 @@ class NFTController {
         tokenID = req.body.tokenID;
       }
 
+      let ownedBy = "";
+      if (req.body.ownedBy && req.body.ownedBy !== undefined) {
+        ownedBy = req.body.ownedBy;
+      }
+
       let searchArray = [];
       if (collectionAddress !== "") {
         searchArray["collectionAddress"] = collectionAddress;
@@ -3703,8 +3723,16 @@ class NFTController {
       if (tokenID !== "") {
         searchArray["tokenID"] = tokenID;
       }
-      let searchObj = Object.assign({}, searchArray);
 
+      // if (ownedBy !== "") {
+      //   searchArray["ownedBy"]= {
+      //     $elemMatch: {
+      //       address: ownedBy,
+      //       quantity: { $gt: 0 },
+      //     }
+      //   }
+      // }
+      let searchObj = Object.assign({}, searchArray);
       let result = [];
       const nfts = await NFT.find(searchObj);
       if (nfts.length) result.push(nfts);
@@ -3722,5 +3750,7 @@ class NFTController {
       return res.reply(messages.error());
     }
   }
+
+ 
 }
 module.exports = NFTController;
