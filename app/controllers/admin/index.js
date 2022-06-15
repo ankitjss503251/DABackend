@@ -21,7 +21,7 @@ router.delete('/deleteNewsLetterEmail', adminMiddleware.verifyUserToken, adminCo
 
 // Category APIs
 router.post("/addCategory", adminMiddleware.verifyUserToken, adminController.addCategory);
-router.post("/getCategories", adminMiddleware.verifyUserToken, adminController.getCategories);
+router.post("/getCategories",  adminController.getCategories);
 router.put("/toggleCategory/:sName", adminMiddleware.verifyUserToken, adminController.toggleCategory);
 router.delete("/deleteCategory/:sName", adminMiddleware.verifyUserToken, adminController.deleteCategory);
 router.put("/editCategory", adminMiddleware.verifyUserToken, adminController.editCategory);
