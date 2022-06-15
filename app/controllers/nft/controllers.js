@@ -441,6 +441,9 @@ class NFTController {
           if (req.body.isDeployed !== "" && req.body.isDeployed !== undefined) {
             updateData["isDeployed"] = req.body.isDeployed;
           }
+          if (req.body.link !== "" && req.body.link !== undefined) {
+            updateData["link"] = req.body.link;
+          }
           if (
             req.body.isOnMarketplace !== "" &&
             req.body.isOnMarketplace !== undefined
@@ -3740,12 +3743,7 @@ class NFTController {
       if (impnfts.length) result.push(impnfts);
       if (result.length)
         return res.reply(messages.success("NFTs/Imported NFTs List"), result);
-      else
-        return res.reply(
-          messages.not_found(
-            "NFTs with " + collectionAddress + " collection address"
-          )
-        );
+      else return res.reply(messages.success("NFTs/Imported NFTs List"), []);
     } catch (e) {
       return res.reply(messages.error());
     }
