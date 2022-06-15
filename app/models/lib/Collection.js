@@ -36,7 +36,7 @@ const collectionSchema = mongoose.Schema({
   },
   contractAddress: {
     type: String,
-    unique: true,
+    // unique: true,
     require: true,
     lowercase: true,
   },
@@ -62,6 +62,9 @@ const collectionSchema = mongoose.Schema({
   },
   preSaleEndTime: {
     type: Date,
+  },
+  preSaleTokenAddress: {
+    type: String,
   },
   totalSupply: {
     type: Number,
@@ -96,6 +99,14 @@ const collectionSchema = mongoose.Schema({
     type: Number,
     default: 0,
     enum: [0, 1], // 0-No 1-Yes
+  },
+  isDeployed: {
+    type: Number,
+    default: 0,
+    enum: [0, 1], // 0-No 1-Yes
+  },
+  link: {
+    type: String,
   },
   createdBy: {
     type: mongoose.Schema.ObjectId,
