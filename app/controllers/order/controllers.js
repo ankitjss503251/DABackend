@@ -365,9 +365,10 @@ class OrderController {
                     { $inc: { nftCount: 1 } },
                     function () {}
                   );
-                  await importedNFT.deleteOne({
+                  importedNFT.deleteOne({
                     _id: mongoose.Types.ObjectId(importedNFTID),
                   });
+                  console.log("Delete Imported NFT"),importedNFTID;
                   resolve(result._id);
                 })
                 .catch((error) => {

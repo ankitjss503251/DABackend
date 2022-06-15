@@ -15,7 +15,7 @@ var jwt = require("jsonwebtoken");
 const e = require("express");
 
 class ImportedController {
-  constructor() {}
+  constructor() { }
 
   async createCollection(req, res) {
     try {
@@ -163,7 +163,7 @@ class ImportedController {
             address: nftElement.owner,
             quantity: 1,
           });
-          nft.save().then(async (result) => {});
+          nft.save().then(async (result) => { });
         });
         return res.reply(messages.created("NFT"));
       } else {
@@ -175,9 +175,10 @@ class ImportedController {
     }
   }
 
+
   async updateNFT(req, res) {
-    if (!req.userId) return res.reply(messages.unauthorized());
     try {
+      if (!req.userId) return res.reply(messages.unauthorized());
       if (!req.body.name) {
         return res.reply(messages.not_found("NFT Name"));
       }
@@ -193,7 +194,6 @@ class ImportedController {
       if (!req.body.image) {
         return res.reply(messages.not_found("Image"));
       }
-
       let attributes = [];
       let NFTAttr = req.body.attributes;
       if (NFTAttr.length > 0) {
@@ -202,44 +202,75 @@ class ImportedController {
         });
       }
 
-      let dataToadd = {
-        address: req.body.owner,
-        quantity: 1,
-      };
-      importedNFT
-        .findOneAndUpdate(
+      await importedNFT.updateOne(
+        {
+          collectionAddress: req.body.collectionAddress,
+          tokenID: req.body.tokenID,
+        },
+        {
+          $set: {
+            name: req.body.name,
+            description: req.body.description,
+            image: req.body.image,
+            attributes: attributes,
+          },
+        },
+        {
+          upsert: true,
+        },
+        (err) => {
+          if (err) throw error;
+        }
+      );
+
+      let hasOwner = await importedNFT.exists({
+        collectionAddress: req.body.collectionAddress,
+        tokenID: req.body.tokenID,
+        "ownedBy.address": req.body.owner.toLowerCase(),
+      });
+      if (hasOwner) {
+        let NFTData = await importedNFT.findOne({
+          collectionAddress: req.body.collectionAddress,
+          tokenID: req.body.tokenID,
+          "ownedBy.address": req.body.owner.toLowerCase(),
+        }).select("ownedBy -_id");
+        console.log("NFTData-------->", NFTData);
+        let currentQty = NFTData.ownedBy.find(
+          (o) => o.address === req.body.owner.toLowerCase()
+        ).quantity;
+
+        await NFT.importedNFT(
+          {
+            collectionAddress: req.body.collectionAddress,
+            tokenID: req.body.tokenID,
+            "ownedBy.address": req.body.owner,
+          },
+          {
+            $set: {
+              "ownedBy.$.quantity": req.body.quantity,
+            },
+          }
+        ).catch((e) => {
+          console.log("Error2", e.message);
+        });
+      } else {
+        let dataToadd = {
+          address: req.body.owner,
+          quantity: parseInt(req.body.quantity),
+        };
+        await NFT.findOneAndUpdate(
           {
             collectionAddress: req.body.collectionAddress,
             tokenID: req.body.tokenID,
           },
-          { 
-            $set : {
-              name: req.body.name,
-              description: req.body.description,
-              image: req.body.image,
-              attributes: attributes,
-            },
-            $push : { ownedBy: dataToadd } 
-          },
-          // {
-          //   name: req.body.name,
-          //   description: req.body.description,
-          //   image: req.body.image,
-          //   attributes: attributes,
-          //   ownedBy: [],
-          // },
-          // { $addToSet: { ownedBy: dataToadd } },
-          { new: true }
-        ).then((result) => {
-          return res.reply(messages.updated("NFT"), result);
-        })
-        .catch((error) => {
-          console.log(error);
-          return res.reply(error);
-        });
+          { $addToSet: { ownedBy: dataToadd } },
+
+          { upsert: true }
+        );
+      }
+      return res.reply(messages.updated("Imported NFT"));
     } catch (error) {
-      console.log(error);
-      return res.reply(messages.server_error());
+      return res.reply(messages.error(), error.message);
     }
   }
 
