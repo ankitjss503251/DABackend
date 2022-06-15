@@ -431,6 +431,9 @@ class NFTController {
           if (req.body.isMinted) {
             updateData["isMinted"] = req.body.isMinted;
           }
+          if (req.body.isImported) {
+            updateData["isImported"] = req.body.isImported;
+          }
           if (req.body.preSaleStartTime) {
             updateData["preSaleStartTime"] = req.body.preSaleStartTime;
           }
@@ -442,6 +445,12 @@ class NFTController {
           }
           if (req.body.link !== "" && req.body.link !== undefined) {
             updateData["link"] = req.body.link;
+          }
+          if (
+            req.body.contractAddress !== "" &&
+            req.body.contractAddress !== undefined
+          ) {
+            updateData["contractAddress"] = req.body.contractAddress;
           }
           if (
             req.body.isOnMarketplace !== "" &&
