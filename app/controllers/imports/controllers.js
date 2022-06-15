@@ -1,6 +1,6 @@
 const fs = require("fs");
 const http = require("https");
-const { importedNFT, importedCollection } = require("../../models");
+const { importedNFT, importedCollection, NFT } = require("../../models");
 const pinataSDK = require("@pinata/sdk");
 const aws = require("aws-sdk");
 const multer = require("multer");
@@ -19,6 +19,7 @@ class ImportedController {
 
   async createCollection(req, res) {
     try {
+      if (!req.userId) return res.reply(messages.unauthorized());
       if (!req.body.address) {
         return res.reply(messages.not_found("Collection Address"));
       }
@@ -137,6 +138,7 @@ class ImportedController {
 
   async createNFT(req, res) {
     try {
+      if (!req.userId) return res.reply(messages.unauthorized());
       if (!req.body.nftData) {
         return res.reply(messages.not_found("NFT Data"));
       }
@@ -174,6 +176,7 @@ class ImportedController {
   }
 
   async updateNFT(req, res) {
+    if (!req.userId) return res.reply(messages.unauthorized());
     try {
       if (!req.body.name) {
         return res.reply(messages.not_found("NFT Name"));
@@ -209,18 +212,25 @@ class ImportedController {
             collectionAddress: req.body.collectionAddress,
             tokenID: req.body.tokenID,
           },
-          {
-            name: req.body.name,
-            description: req.body.description,
-            image: req.body.image,
-            attributes: attributes,
-            ownedBy: [],
+          { 
+            $set : {
+              name: req.body.name,
+              description: req.body.description,
+              image: req.body.image,
+              attributes: attributes,
+            },
+            $push : { ownedBy: dataToadd } 
           },
+          // {
+          //   name: req.body.name,
+          //   description: req.body.description,
+          //   image: req.body.image,
+          //   attributes: attributes,
+          //   ownedBy: [],
+          // },
           // { $addToSet: { ownedBy: dataToadd } },
           { new: true }
-        )
-
-        .then((result) => {
+        ).then((result) => {
           return res.reply(messages.updated("NFT"), result);
         })
         .catch((error) => {
