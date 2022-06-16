@@ -71,7 +71,7 @@ class ImportedController {
     }
   }
 
-  async getCollection(req, res) {
+  async getImportedCollection(req, res) {
     try {
       let data = [];
       const page = parseInt(req.body.page);
@@ -143,6 +143,7 @@ class ImportedController {
       let NFTData = req.body.nftData;
       if (NFTData.length > 0) {
         NFTData.forEach((nftElement) => {
+          console.log("nftElement.owner", nftElement.owner);
           let nft = new importedNFT({
             name: nftElement.name,
             description: nftElement.description,

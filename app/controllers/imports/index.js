@@ -8,6 +8,6 @@ router.post("/createCollection", nftMiddleware.verifyUserToken, importedControll
 router.post("/createNFT", nftMiddleware.verifyUserToken, importedController.createNFT );
 router.post("/updateNFT", nftMiddleware.verifyUserToken, importedController.updateNFT );
 router.post("/getNFT", importedController.getNFT );
-router.post("/getCollection", importedController.getCollection );
+router.post("/getImportedCollection", importedController.getImportedCollection );
 
 module.exports = router;
