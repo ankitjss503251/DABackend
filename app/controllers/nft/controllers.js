@@ -3674,16 +3674,44 @@ class NFTController {
   }
 
   async getImportedCollections(req, res){
+
     try{
-      let result = await importedCollection.find();
-      console.log("collectionssss",result)
-      if (!result) {
-        return res.reply(messages.not_found("Imported Collection"));
+      let data = [];
+      const page = parseInt(req.body.page);
+      const limit = parseInt(req.body.limit);
+      const startIndex = (page - 1) * limit;
+      const endIndex = page * limit;
+
+      const results = {};
+      if (endIndex < (await importedCollection.countDocuments().exec())) {
+        results.next = {
+          page: page + 1,
+          limit: limit,
+        };
       }
-      return res.reply(messages.no_prefix("Imported Collection "), result);
+      if (startIndex > 0) {
+        results.previous = {
+          page: page - 1,
+          limit: limit,
+        };
+      }
+       await importedCollection.find().limit(limit)
+       .skip(startIndex)
+       .lean()
+       .exec()
+       .then((res) => {
+         data.push(res);
+       })
+       .catch((e) => {
+         console.log("Error", e);
+       });
+     results.count = await importedCollection.countDocuments().exec();
+     results.results = data;
+     res.header("Access-Control-Max-Age", 600);
+     return res.reply(messages.success("Imported Collection List"),results);
     }
     catch(e){
-      res.reply(messages.error());
+     return res.reply(messages.error());
     }
   }
 
