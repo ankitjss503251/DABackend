@@ -91,8 +91,15 @@ class NFTController {
         } else {
           console.log("Here");
           log.green(req.body);
-          log.green(req.files.logoImage[0].location);
-          log.green(req.files.coverImage[0].location);
+          if (
+            req.files.logoImage != "" &&
+            req.files.logoImage != undefined &&
+            req.files.coverImage != "" &&
+            req.files.coverImage != undefined
+          ) {
+            log.green(req.files.logoImage[0].location);
+            log.green(req.files.coverImage[0].location);
+          }
 
           if (!req.body.name) {
             return res.reply(messages.not_found("Collection Name"));
@@ -100,9 +107,10 @@ class NFTController {
           if (!validators.isValidString(req.body.name)) {
             return res.reply(messages.invalid("Collection Name"));
           }
-          if (req.body.description.trim().length > 1000) {
-            return res.reply(messages.invalid("Description"));
-          }
+          if (req.body.description != "" && req.body.description != undefined)
+            if (req.body.description.trim().length > 1000) {
+              return res.reply(messages.invalid("Description"));
+            }
           const collection = new Collection({
             name: req.body.name,
             symbol: req.body.symbol,
@@ -110,8 +118,12 @@ class NFTController {
             type: req.body.type,
             royaltyPercentage: req.body.royalty,
             contractAddress: req.body.contractAddress,
-            logoImage: req.files.logoImage[0].location,
-            coverImage: req.files.coverImage[0].location,
+            logoImage: req.files.logoImage
+              ? req.files.logoImage[0].location
+              : "",
+            coverImage: req.files.coverImage
+              ? req.files.coverImage[0].location
+              : "",
             categoryID: req.body.categoryID,
             brandID: req.body.brandID,
             chainID: req.body.chainID,
@@ -432,6 +444,9 @@ class NFTController {
           if (req.body.isMinted) {
             updateData["isMinted"] = req.body.isMinted;
           }
+          if (req.body.isImported) {
+            updateData["isImported"] = req.body.isImported;
+          }
           if (req.body.preSaleStartTime) {
             updateData["preSaleStartTime"] = req.body.preSaleStartTime;
           }
@@ -443,6 +458,12 @@ class NFTController {
           }
           if (req.body.link !== "" && req.body.link !== undefined) {
             updateData["link"] = req.body.link;
+          }
+          if (
+            req.body.contractAddress !== "" &&
+            req.body.contractAddress !== undefined
+          ) {
+            updateData["contractAddress"] = req.body.contractAddress;
           }
           if (
             req.body.isOnMarketplace !== "" &&
@@ -743,7 +764,7 @@ class NFTController {
         searchArrayCat["isOnMarketplace"] = req.body.isOnMarketplace;
       }
       let searchObjCat = Object.assign({}, searchArrayCat);
-      
+
       await Collection.find(searchObjCat)
         .select({
           contractAddress: 1,
@@ -803,7 +824,7 @@ class NFTController {
       }
 
       let searchArray = [];
-      searchArray["collectionID"] = { "$in": collData };
+      searchArray["collectionID"] = { $in: collData };
 
       if (nftID !== "") {
         searchArray["_id"] = mongoose.Types.ObjectId(nftID);
@@ -3673,48 +3694,6 @@ class NFTController {
     }
   }
 
-  async getImportedCollections(req, res){
-
-    try{
-      let data = [];
-      const page = parseInt(req.body.page);
-      const limit = parseInt(req.body.limit);
-      const startIndex = (page - 1) * limit;
-      const endIndex = page * limit;
-
-      const results = {};
-      if (endIndex < (await importedCollection.countDocuments().exec())) {
-        results.next = {
-          page: page + 1,
-          limit: limit,
-        };
-      }
-      if (startIndex > 0) {
-        results.previous = {
-          page: page - 1,
-          limit: limit,
-        };
-      }
-       await importedCollection.find().limit(limit)
-       .skip(startIndex)
-       .lean()
-       .exec()
-       .then((res) => {
-         data.push(res);
-       })
-       .catch((e) => {
-         console.log("Error", e);
-       });
-     results.count = await importedCollection.countDocuments().exec();
-     results.results = data;
-     res.header("Access-Control-Max-Age", 600);
-     return res.reply(messages.success("Imported Collection List"),results);
-    }
-    catch(e){
-     return res.reply(messages.error());
-    }
-  }
-
   // async updateCollectionToken(req, res){
   //   try {
   //     if (!req.params.collectionAddress)
@@ -3782,7 +3761,5 @@ class NFTController {
       return res.reply(messages.error());
     }
   }
-
- 
 }
 module.exports = NFTController;
