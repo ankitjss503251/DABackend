@@ -784,21 +784,16 @@ class NFTController {
         {
           $lookup: {
             from: "Collection",
-            let: { collectionID: "collectionID" },
+            localField: "collectionID",
+            foreignField: "_id.str",
             as: "CollectionData",
           },
         },
         {
           $lookup: {
             from: "Category",
-            let: { categoryID: "categoryID" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: [{ _id: categoryID }],
-                },
-              },
-            ],
+            localField: "categoryID",
+            foreignField: "_id.str",
             as: "CategoryData",
           },
         },
