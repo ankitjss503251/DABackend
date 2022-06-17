@@ -42,6 +42,7 @@ router.post(
   nftController.createNFT
 );
 router.post("/viewNFTs", nftController.viewNFTs);
+router.post("/viewNFTByOrder", nftController.viewNFTByOrder);
 // router.post(
 //   "/getHotCollections",
 //   nftMiddleware.verifyWithoutToken,
