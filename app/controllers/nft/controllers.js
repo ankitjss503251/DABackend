@@ -91,8 +91,15 @@ class NFTController {
         } else {
           console.log("Here");
           log.green(req.body);
-          log.green(req.files.logoImage[0].location);
-          log.green(req.files.coverImage[0].location);
+          if (
+            req.files.logoImage != "" &&
+            req.files.logoImage != undefined &&
+            req.files.coverImage != "" &&
+            req.files.coverImage != undefined
+          ) {
+            log.green(req.files.logoImage[0].location);
+            log.green(req.files.coverImage[0].location);
+          }
 
           if (!req.body.name) {
             return res.reply(messages.not_found("Collection Name"));
@@ -100,9 +107,10 @@ class NFTController {
           if (!validators.isValidString(req.body.name)) {
             return res.reply(messages.invalid("Collection Name"));
           }
-          if (req.body.description.trim().length > 1000) {
-            return res.reply(messages.invalid("Description"));
-          }
+          if (req.body.description != "" && req.body.description != undefined)
+            if (req.body.description.trim().length > 1000) {
+              return res.reply(messages.invalid("Description"));
+            }
           const collection = new Collection({
             name: req.body.name,
             symbol: req.body.symbol,
@@ -110,8 +118,12 @@ class NFTController {
             type: req.body.type,
             royaltyPercentage: req.body.royalty,
             contractAddress: req.body.contractAddress,
-            logoImage: req.files.logoImage[0].location,
-            coverImage: req.files.coverImage[0].location,
+            logoImage: req.files.logoImage
+              ? req.files.logoImage[0].location
+              : "",
+            coverImage: req.files.coverImage
+              ? req.files.coverImage[0].location
+              : "",
             categoryID: req.body.categoryID,
             brandID: req.body.brandID,
             chainID: req.body.chainID,
@@ -335,397 +347,44 @@ class NFTController {
     }
   }
 
-  async viewCollection(req, res) {
-    try {
-      if (!req.params.collectionID)
-        return res.reply(messages.not_found("Collection ID"));
-      if (!validators.isValidObjectID(req.params.collectionID))
-        res.reply(messages.invalid("Collection ID"));
-
-      let collectionData = await Collection.findById(
-        req.params.collectionID
-      ).populate({
-        path: "createdBy",
-        options: {
-          limit: 1,
-        },
-      });
-
-      if (!collectionData) return res.reply(messages.not_found("Collection"));
-      collectionData = collectionData.toObject();
-
-      var token = req.headers.authorization;
-
-      req.userId =
-        req.userId && req.userId != undefined && req.userId != null
-          ? req.userId
-          : "";
-
-      let likeARY =
-        aNFT.user_likes && aNFT.user_likes.length
-          ? aNFT.user_likes.filter((v) => v.toString() == req.userId.toString())
-          : [];
-      if (token) {
-        token = token.replace("Bearer ", "");
-        jwt.verify(token, process.env.JWT_SECRET, function (err, decoded) {
-          if (decoded) req.userId = decoded.id;
-        });
-
-        if (aNFT.oCurrentOwner._id != req.userId)
-          await NFT.findByIdAndUpdate(req.params.nNFTId, {
-            $inc: {
-              nView: 1,
-            },
-          });
-      }
-      aNFT.loggedinUserId = req.userId;
-      console.log("---------------------------8");
-
-      if (!aNFT) {
-        console.log("---------------------------9");
-
-        return res.reply(messages.not_found("NFT"));
-      }
-      console.log("---------------------------10");
-
-      return res.reply(messages.success(), aNFT);
-    } catch (error) {
-      return res.reply(messages.server_error());
-    }
-  }
-
-  async updateCollection(req, res) {
-    try {
-      if (!req.userId) return res.reply(messages.unauthorized());
-      allowedMimes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
-      errAllowed = "JPG, JPEG, PNG,GIF";
-
-      uploadBanner.fields([
-        { name: "logoImage", maxCount: 1 },
-        { name: "coverImage", maxCount: 1 },
-      ])(req, res, function (error) {
-        let updateData = [];
-        let collectionID = req.body.id;
-        if (
-          req.files &&
-          req.files.logoImage &&
-          req.files.logoImage[0] &&
-          req.files.logoImage[0].location
-        ) {
-          updateData["logoImage"] = req.files.logoImage[0].location;
-        }
-        if (
-          req.files &&
-          req.files.coverImage &&
-          req.files.coverImage[0] &&
-          req.files.coverImage[0].location
-        ) {
-          updateData["coverImage"] = req.files.coverImage[0].location;
-        }
-        if (req.body) {
-          if (req.body.price) {
-            updateData["price"] = req.body.price;
-          }
-          if (req.body.isHotCollection) {
-            updateData["isHotCollection"] = req.body.isHotCollection;
-          }
-          if (req.body.isMinted) {
-            updateData["isMinted"] = req.body.isMinted;
-          }
-          if (req.body.preSaleStartTime) {
-            updateData["preSaleStartTime"] = req.body.preSaleStartTime;
-          }
-          if (req.body.preSaleEndTime) {
-            updateData["preSaleEndTime"] = req.body.preSaleEndTime;
-          }
-          if (req.body.isDeployed !== "" && req.body.isDeployed !== undefined) {
-            updateData["isDeployed"] = req.body.isDeployed;
-          }
-          if (req.body.link !== "" && req.body.link !== undefined) {
-            updateData["link"] = req.body.link;
-          }
-          if (
-            req.body.isOnMarketplace !== "" &&
-            req.body.isOnMarketplace !== undefined
-          ) {
-            updateData["isOnMarketplace"] = req.body.isOnMarketplace;
-          }
-          updateData["lastUpdatedBy"] = req.userId;
-          updateData["lastUpdatedOn"] = Date.now();
-        }
-        let updateObj = Object.assign({}, updateData);
-        Collection.findByIdAndUpdate(
-          { _id: mongoose.Types.ObjectId(collectionID) },
-          { $set: updateObj }
-        ).then((collection) => {
-          return res.reply(
-            messages.updated("Collection Updated successfully."),
-            collection
-          );
-        });
-      });
-    } catch (error) {
-      return res.reply(messages.server_error());
-    }
-  }
-
-  async getUpcomingCollections(req, res) {
-    try {
-      let data = [];
-      const page = parseInt(req.body.page);
-      const limit = parseInt(req.body.limit);
-      const startIndex = (page - 1) * limit;
-      const endIndex = page * limit;
-
-      let searchText = "";
-      if (req.body.searchText && req.body.searchText !== undefined) {
-        searchText = req.body.searchText;
-      }
-      let searchArray = [];
-      searchArray["preSaleStartTime"] = { $lt: new Date() };
-      if (searchText !== "") {
-        searchArray["$or"] = [
-          { name: { $regex: new RegExp(searchText), $options: "i" } },
-          {
-            contractAddress: { $regex: new RegExp(searchText), $options: "i" },
-          },
-        ];
-      }
-      let searchObj = Object.assign({}, searchArray);
-
-      const results = {};
-      if (endIndex < (await Collection.countDocuments(searchObj).exec())) {
-        results.next = {
-          page: page + 1,
-          limit: limit,
-        };
-      }
-      if (startIndex > 0) {
-        results.previous = {
-          page: page - 1,
-          limit: limit,
-        };
-      }
-
-      await Collection.find(searchObj)
-        .populate("categoryID")
-        .populate("brandID")
-        .sort({ createdOn: -1 })
-        .limit(limit)
-        .skip(startIndex)
-        .lean()
-        .exec()
-        .then((res) => {
-          data.push(res);
-        })
-        .catch((e) => {
-          console.log("Error", e);
-        });
-      results.count = await Collection.countDocuments(searchObj).exec();
-      results.results = data;
-      res.header("Access-Control-Max-Age", 600);
-      return res.reply(messages.success("Collection List"), results);
-    } catch (error) {
-      console.log("Error " + error);
-      return res.reply(messages.server_error());
-    }
-  }
-
   async createNFT(req, res) {
     try {
-      if (!req.userId) return res.reply(messages.unauthorized());
-      allowedMimes = [
-        "image/jpeg",
-        "video/mp4",
-        "image/jpg",
-        "image/webp",
-        "image/png",
-        "image/gif",
-        "audio/mp3",
-        "audio/mpeg",
-      ];
-      errAllowed = "JPG, JPEG, PNG, GIF, MP3, WEBP & MPEG";
-      let attributes = req.body.attributes;
-      upload(req, res, function (error) {
-        if (error) {
-          log.red(error);
-          return res.reply(messages.bad_request(error.message));
-        } else {
-          if (!req.body.creatorAddress) {
-            return res.reply(messages.not_found("Creator Wallet Address"));
+      if (!req.body.nftData) {
+        return res.reply(messages.not_found("NFT Data"));
+      }
+      let NFTData = req.body.nftData;
+      if (NFTData.length > 0) {
+        NFTData.forEach((nftElement) => {
+          console.log("nftElement.owner", nftElement.owner);
+          let nft = new NFT({
+            name: nftElement.name,
+            description: nftElement.description,
+            image: nftElement.image,
+            tokenID: nftElement.tokenID,
+            collectionAddress: nftElement.collectionAddress,
+            isOnMarketplace: nftElement.isOnMarketplace,
+            isImported: nftElement.isImported,
+            ownedBy: [],
+          });
+          let NFTAttr = nftElement.attributes;
+          if (NFTAttr.length > 0) {
+            NFTAttr.forEach((obj) => {
+              nft.attributes.push(obj);
+            });
           }
-          if (!req.body.name) {
-            return res.reply(messages.not_found("Name"));
-          }
-          if (!req.body.quantity) {
-            return res.reply(messages.not_found("Quantity"));
-          }
-          if (!validators.isValidString(req.body.name)) {
-            return res.reply(messages.invalid("Title"));
-          }
-          if (req.body.description.trim().length > 1000) {
-            return res.reply(messages.invalid("Description"));
-          }
-          if (isNaN(req.body.quantity) || !req.body.quantity > 0) {
-            return res.reply(messages.invalid("Quantity"));
-          }
-          if (!req.file) {
-            return res.reply(messages.not_found("File"));
-          }
-          const iOptions = {
-            pinataMetadata: {
-              name: req.file.originalname,
-            },
-            pinataOptions: {
-              cidVersion: 0,
-            },
-          };
-          try {
-            let creatorAddress = req.body.creatorAddress;
-            const pathString = "/tmp/";
-            const file = fs.createWriteStream(
-              pathString + req.file.originalname
-            );
-            const request = http.get(
-              `${req.file.location}`,
-              function (response) {
-                var stream = response.pipe(file);
-                const readableStreamForFile = fs.createReadStream(
-                  pathString + req.file.originalname
-                );
-                stream.on("finish", async function () {
-                  pinata
-                    .pinFileToIPFS(readableStreamForFile, iOptions)
-                    .then((res) => {
-                      attributes = JSON.parse(req.body.attributes);
-                      let uploadingData = {};
-                      uploadingData = {
-                        description: req.body.description,
-                        external_url: "",
-                        image: "https://ipfs.io/ipfs/" + res.IpfsHash,
-                        name: req.body.name,
-                        attributes: req.body.attributes,
-                      };
-                      console.log("uploadingData", uploadingData);
-                      const mOptions = {
-                        pinataMetadata: {
-                          name: "hello",
-                        },
-                        pinataOptions: {
-                          cidVersion: 0,
-                        },
-                      };
-                      console.log("res---", res.IpfsHash);
-                      return pinata.pinJSONToIPFS(uploadingData, mOptions);
-                    })
-                    .then(async (file2) => {
-                      console.log("111", req.body);
-                      const collectionID = req.body.collectionID;
-                      const collectionData = await Collection.findOne({
-                        _id: mongoose.Types.ObjectId(collectionID),
-                      });
-                      const brandID = collectionData.brandID;
-                      const categoryID = collectionData.categoryID;
-                      console.log("222", req.body);
-                      const nft = new NFT({
-                        name: req.body.name,
-                        collectionID:
-                          collectionID && collectionID != undefined
-                            ? collectionID
-                            : "",
-                        collectionAddress: req.body.collectionAddress,
-                        hash: file2.IpfsHash,
-                        ownedBy: [],
-                        totalQuantity: req.body.quantity,
-                        description: req.body.description,
-                        createdBy: req.userId,
-                        tokenID: req.body.tokenID,
-                        type: req.body.type,
-                        image: req.file.location,
-                        price: req.body.price,
-                        isMinted: req.body.isMinted,
-                        categoryID: categoryID,
-                        brandID: brandID,
-                        lazyMintingStatus: 1,
-                      });
-                      console.log("body", req.body);
-                      console.log("NFTAttr", req.body.attributes);
-                      let NFTAttr = JSON.parse(req.body.attributes);
-                      console.log("NFTAttr", NFTAttr);
-                      if (NFTAttr.length > 0) {
-                        NFTAttr.forEach((obj) => {
-                          for (let [key, value] of Object.entries(obj)) {
-                            nft.attributes.push({
-                              name: key,
-                              value: value,
-                            });
-                            console.log(key + " : " + value);
-                          }
-                        });
-                      }
-
-                      let NFTLevels = JSON.parse(req.body.levels);
-                      if (NFTLevels.length > 0) {
-                        NFTLevels.forEach((obj) => {
-                          for (let [key, value] of Object.entries(obj)) {
-                            nft.levels.push({
-                              name: key,
-                              value: value,
-                            });
-                            console.log(key + " : " + value);
-                          }
-                        });
-                      }
-
-                      nft.assetsInfo.push({
-                        size: req.body.imageSize,
-                        type: req.body.imageType,
-                        dimension: req.body.imageDimension,
-                      });
-                      nft.ownedBy.push({
-                        address: creatorAddress.toLowerCase(),
-                        quantity: req.body.quantity,
-                      });
-                      nft
-                        .save()
-                        .then(async (result) => {
-                          const collection = await Collection.findOne({
-                            _id: mongoose.Types.ObjectId(collectionID),
-                          });
-                          let nextID = collection.getNextID();
-                          collection.nextID = nextID;
-                          collection.save();
-                          await Collection.findOneAndUpdate(
-                            { _id: mongoose.Types.ObjectId(collectionID) },
-                            { $inc: { nftCount: 1 } },
-                            function () {}
-                          );
-                          await Brand.findOneAndUpdate(
-                            { _id: mongoose.Types.ObjectId(brandID) },
-                            { $inc: { nftCount: 1 } },
-                            function () {}
-                          );
-                          return res.reply(messages.created("NFT"), result);
-                        })
-                        .catch((error) => {
-                          console.log("Created NFT error", error);
-                          return res.reply(messages.error());
-                        });
-                    })
-                    .catch((e) => {
-                      console.log("Error " + e);
-                      return res.reply(messages.error());
-                    });
-                });
-              }
-            );
-          } catch (e) {
-            console.log("error in file upload..", e);
-          }
-        }
-      });
+          nft.ownedBy.push({
+            address: nftElement.owner,
+            quantity: 1,
+          });
+          nft.save().then(async (result) => {});
+        });
+        return res.reply(messages.created("NFT"));
+      } else {
+        return res.reply("Empty Request");
+      }
     } catch (error) {
-      return res.reply(messages.error());
+      console.log(error);
+      return res.reply(messages.server_error());
     }
   }
 
@@ -743,7 +402,7 @@ class NFTController {
         searchArrayCat["isOnMarketplace"] = req.body.isOnMarketplace;
       }
       let searchObjCat = Object.assign({}, searchArrayCat);
-      
+
       await Collection.find(searchObjCat)
         .select({
           contractAddress: 1,
@@ -803,7 +462,7 @@ class NFTController {
       }
 
       let searchArray = [];
-      searchArray["collectionID"] = { "$in": collData };
+      searchArray["collectionID"] = { $in: collData };
 
       if (nftID !== "") {
         searchArray["_id"] = mongoose.Types.ObjectId(nftID);
@@ -829,7 +488,7 @@ class NFTController {
       if (searchText !== "") {
         searchArray["name"] = { $regex: new RegExp(searchText), $options: "i" };
       }
-      console.log("isLazyMinted == 1", isLazyMinted == 1);
+
       if (isLazyMinted !== "") {
         if (isLazyMinted == true) searchArray["lazyMintingStatus"] = 1;
         else searchArray["lazyMintingStatus"] = 0;
@@ -952,1563 +611,6 @@ class NFTController {
     }
   }
 
-  async likeNFT(req, res) {
-    try {
-      if (!req.userId) return res.reply(messages.unauthorized());
-      let { id } = req.body;
-      return NFT.findOne({ _id: mongoose.Types.ObjectId(id) }).then(
-        async (NFTData) => {
-          if (NFTData && NFTData != null) {
-            let likeMAINarray = [];
-            likeMAINarray = NFTData.nUser_likes;
-            let flag = "";
-            let likeARY =
-              likeMAINarray && likeMAINarray.length
-                ? likeMAINarray.filter(
-                    (v) => v.toString() == req.userId.toString()
-                  )
-                : [];
-            if (likeARY && likeARY.length) {
-              flag = "dislike";
-              var index = likeMAINarray.indexOf(likeARY[0]);
-              if (index != -1) {
-                likeMAINarray.splice(index, 1);
-              }
-            } else {
-              flag = "like";
-              likeMAINarray.push(mongoose.Types.ObjectId(req.userId));
-            }
-            await NFT.findByIdAndUpdate(
-              { _id: mongoose.Types.ObjectId(id) },
-              { $set: { nUser_likes: likeMAINarray } }
-            ).then((user) => {
-              if (flag == "like") {
-                return res.reply(messages.updated("NFT liked successfully."));
-              } else {
-                return res.reply(messages.updated("NFT unliked successfully."));
-              }
-            });
-          } else {
-            return res.reply(messages.bad_request("NFT not found."));
-          }
-        }
-      );
-    } catch (error) {
-      log.red(error);
-      return res.reply(messages.server_error());
-    }
-  }
-
-  async getNftOwner(req, res) {
-    try {
-      // if (!req.userId) return res.reply(messages.unauthorized());
-      // if (!req.params.nNFTId) return res.reply(messages.not_found("NFT ID"));
-      console.log("user id && NFTId -->", req.userId, req.params.nNFTId);
-
-      let nftOwner = {};
-
-      nftOwner = await NFTowners.findOne({
-        nftId: req.params.nNFTId,
-        oCurrentOwner: req.userId,
-      });
-      if (!nftOwner) {
-        nftOwner = await NFTowners.findOne(
-          { nftId: req.params.nNFTId },
-          {},
-          { sort: { sCreated: -1 } }
-        );
-        console.log("nft owner is-->", nftOwner);
-        return res.reply(messages.success(), nftOwner);
-      } else {
-        if (nftOwner.oCurrentOwner) {
-          users = await User.findOne(nftOwner.oCurrentOwner);
-          nftOwner.oCurrentOwner = users;
-        }
-        console.log("nft owner is-->", nftOwner);
-        return res.reply(messages.success(), nftOwner);
-      }
-    } catch (e) {
-      console.log("error in getNftOwner is-->", e);
-      return e;
-    }
-  }
-
-  async getAllnftOwner(req, res) {
-    try {
-      console.log("All Nft Called -->", req.params.nNFTId);
-
-      let nftOwner = {};
-
-      nftOwner = await NFTowners.find({ nftId: req.params.nNFTId });
-      return res.reply(messages.success(), nftOwner);
-    } catch (e) {
-      console.log("error in getNftOwner is-->", e);
-      return e;
-    }
-  }
-
-  async mynftlist(req, res) {
-    try {
-      if (!req.userId) return res.reply(messages.unauthorized());
-
-      var nLimit = parseInt(req.body.length);
-      var nOffset = parseInt(req.body.start);
-      let oTypeQuery = {},
-        oSellingTypeQuery = {},
-        oSortingOrder = {};
-      log.red(req.body);
-      if (req.body.eType[0] != "All" && req.body.eType[0] != "") {
-        oTypeQuery = {
-          $or: [],
-        };
-        req.body.eType.forEach((element) => {
-          oTypeQuery["$or"].push({
-            eType: element,
-          });
-        });
-      }
-
-      let oCollectionQuery = {};
-      if (req.body.sCollection != "All" && req.body.sCollection != "") {
-        oCollectionQuery = {
-          sCollection: req.body.sCollection,
-        };
-      }
-
-      if (req.body.sSellingType != "") {
-        oSellingTypeQuery = {
-          eAuctionType: req.body.sSellingType,
-        };
-      }
-
-      if (req.body.sSortingType == "Recently Added") {
-        oSortingOrder["sCreated"] = -1;
-      } else if (req.body.sSortingType == "Most Viewed") {
-        oSortingOrder["nView"] = -1;
-      } else if (req.body.sSortingType == "Price Low to High") {
-        oSortingOrder["nBasePrice"] = 1;
-      } else if (req.body.sSortingType == "Price High to Low") {
-        oSortingOrder["nBasePrice"] = -1;
-      } else {
-        oSortingOrder["_id"] = -1;
-      }
-
-      let data = await NFT.aggregate([
-        {
-          $match: {
-            $and: [
-              oTypeQuery,
-              oCollectionQuery,
-              oSellingTypeQuery,
-              {
-                $or: [
-                  {
-                    oCurrentOwner: mongoose.Types.ObjectId(req.userId),
-                  },
-                ],
-              },
-            ],
-          },
-        },
-        {
-          $sort: oSortingOrder,
-        },
-        {
-          $project: {
-            _id: 1,
-            sName: 1,
-            eType: 1,
-            nBasePrice: 1,
-            collectionImage: 1,
-            nQuantity: 1,
-            nTokenID: 1,
-            oCurrentOwner: 1,
-            sTransactionStatus: 1,
-            eAuctionType: 1,
-
-            sGenre: 1,
-            sBpm: 1,
-            skey_equalTo: 1,
-            skey_harmonicTo: 1,
-            track_cover: 1,
-
-            user_likes: {
-              $size: {
-                $filter: {
-                  input: "$user_likes",
-                  as: "user_likes",
-                  cond: {
-                    $eq: ["$$user_likes", mongoose.Types.ObjectId(req.userId)],
-                  },
-                },
-              },
-            },
-            user_likes_size: {
-              $cond: {
-                if: {
-                  $isArray: "$user_likes",
-                },
-                then: {
-                  $size: "$user_likes",
-                },
-                else: 0,
-              },
-            },
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            sName: 1,
-            eType: 1,
-            nBasePrice: 1,
-            collectionImage: 1,
-            nQuantity: 1,
-            nTokenID: 1,
-            oCurrentOwner: 1,
-            sTransactionStatus: 1,
-            eAuctionType: 1,
-            sGenre: 1,
-            sBpm: 1,
-            skey_equalTo: 1,
-            skey_harmonicTo: 1,
-            track_cover: 1,
-
-            is_user_like: {
-              $cond: {
-                if: {
-                  $gte: ["$user_likes", 1],
-                },
-                then: "true",
-                else: "false",
-              },
-            },
-            user_likes_size: 1,
-          },
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "oCurrentOwner",
-            foreignField: "_id",
-            as: "oUser",
-          },
-        },
-        { $unwind: "$oUser" },
-        {
-          $facet: {
-            nfts: [
-              {
-                $skip: +nOffset,
-              },
-              {
-                $limit: +nLimit,
-              },
-            ],
-            totalCount: [
-              {
-                $count: "count",
-              },
-            ],
-          },
-        },
-      ]);
-      let iFiltered = data[0].nfts.length;
-      if (data[0].totalCount[0] == undefined) {
-        return res.reply(messages.success("Data"), {
-          data: 0,
-          draw: req.body.draw,
-          recordsTotal: 0,
-          recordsFiltered: iFiltered,
-        });
-      } else {
-        return res.reply(messages.no_prefix("NFT Details"), {
-          data: data[0].nfts,
-          draw: req.body.draw,
-          recordsTotal: data[0].totalCount[0].count,
-          recordsFiltered: iFiltered,
-        });
-      }
-    } catch (error) {
-      return res.reply(messages.server_error());
-    }
-  }
-
-  async getHotCollections(req, res) {
-    try {
-      let data = [];
-      let setConditions = {};
-      let sTextsearch = req.body.sTextsearch;
-      const erc721 = req.body.erc721;
-
-      if (req.body.conditions) {
-        setConditions = req.body.conditions;
-      }
-
-      //sortKey is the column
-      const sortKey = req.body.sortKey ? req.body.sortKey : "";
-
-      //sortType will let you choose from ASC 1 or DESC -1
-      const sortType = req.body.sortType ? req.body.sortType : -1;
-
-      var sortObject = {};
-      var stype = sortKey;
-      var sdir = sortType;
-      sortObject[stype] = sdir;
-
-      let CollectionSearchArray = [];
-      if (sTextsearch !== "") {
-        CollectionSearchArray["sName"] = {
-          $regex: new RegExp(sTextsearch),
-          $options: "<options>",
-        };
-      }
-
-      if (erc721 !== "" && erc721) {
-        CollectionSearchArray["erc721"] = true;
-      }
-      if (erc721 !== "" && erc721 === false) {
-        CollectionSearchArray["erc721"] = false;
-      }
-      let CollectionSearchObj = Object.assign({}, CollectionSearchArray);
-
-      const page = parseInt(req.body.page);
-      const limit = parseInt(req.body.limit);
-
-      const startIndex = (page - 1) * limit;
-      const endIndex = page * limit;
-
-      const results = {};
-
-      if (
-        endIndex < (await Collection.countDocuments(CollectionSearchObj).exec())
-      ) {
-        results.next = {
-          page: page + 1,
-          limit: limit,
-        };
-      }
-
-      if (startIndex > 0) {
-        results.previous = {
-          page: page - 1,
-          limit: limit,
-        };
-      }
-
-      let aCollections = await Collection.aggregate([
-        {
-          $lookup: {
-            from: "users",
-            localField: "oCreatedBy",
-            foreignField: "_id",
-            as: "oUser",
-          },
-        },
-        {
-          $sort: {
-            sCreated: req.body.sortType,
-          },
-        },
-        { $match: CollectionSearchObj },
-        {
-          $skip: (page - 1) * limit,
-        },
-        {
-          $limit: limit,
-        },
-      ]);
-
-      results.results = aCollections;
-      results.count = await Collection.countDocuments(
-        CollectionSearchObj
-      ).exec();
-      console.log("Collections", data);
-      res.header("Access-Control-Max-Age", 600);
-      return res.reply(messages.no_prefix("Collections List"), results);
-    } catch (e) {
-      return res.reply(messages.error(e));
-    }
-  }
-
-  async collectionlistMy(req, res) {
-    try {
-      if (!req.userId) return res.reply(messages.unauthorized());
-
-      var nLimit = parseInt(req.body.length);
-      var nOffset = parseInt(req.body.start);
-
-      let query = {
-        oCreatedBy: mongoose.Types.ObjectId(req.userId),
-      };
-      if (req && req.body.sTextsearch && req.body.sTextsearch != undefined) {
-        query["sName"] = new RegExp(req.body.sTextsearch, "i");
-      }
-
-      let aCollections = await Collection.aggregate([
-        {
-          $match: query,
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "oCreatedBy",
-            foreignField: "_id",
-            as: "oUser",
-          },
-        },
-        {
-          $unwind: { preserveNullAndEmptyArrays: true, path: "$oUser" },
-        },
-        {
-          $sort: {
-            sCreated: -1,
-          },
-        },
-        {
-          $facet: {
-            collections: [
-              {
-                $skip: +nOffset,
-              },
-              {
-                $limit: +nLimit,
-              },
-            ],
-            totalCount: [
-              {
-                $count: "count",
-              },
-            ],
-          },
-        },
-      ]);
-
-      let iFiltered = aCollections[0].collections.length;
-      if (aCollections[0].totalCount[0] == undefined) {
-        return res.reply(messages.success("Data"), {
-          aCollections: 0,
-          draw: req.body.draw,
-          recordsTotal: 0,
-          recordsFiltered: iFiltered,
-        });
-      } else {
-        return res.reply(messages.no_prefix("Collection Details"), {
-          data: aCollections[0].collections,
-          draw: req.body.draw,
-          recordsTotal: aCollections[0].totalCount[0].count,
-          recordsFiltered: iFiltered,
-        });
-      }
-    } catch (error) {
-      return res.reply(messages.server_error());
-    }
-  }
-
-  async nftListing(req, res) {
-    try {
-      var nLimit = parseInt(req.body.length);
-      var nOffset = parseInt(req.body.start);
-      let sBPMQuery = {};
-      let sGenreQuery = {};
-      let oTypeQuery = {},
-        oSellingTypeQuery = {},
-        oSortingOrder = {};
-      let oTtextQuery = {
-        sName: new RegExp(req.body.sTextsearch, "i"),
-      };
-      if (req.body.eType[0] != "All" && req.body.eType[0] != "") {
-        oTypeQuery = {
-          $or: [],
-        };
-        req.body.eType.forEach((element) => {
-          oTypeQuery["$or"].push({
-            eType: element,
-          });
-        });
-      }
-      if (
-        req.body.sFrom &&
-        req.body.sFrom != undefined &&
-        req.body.sFrom != "" &&
-        req.body.sTo &&
-        req.body.sTo != undefined &&
-        req.body.sTo != ""
-      ) {
-        sBPMQuery = {
-          sBpm: {
-            $gte: parseInt(req.body.sFrom),
-            $lte: parseInt(req.body.sTo),
-          },
-        };
-      }
-
-      if (req.body.sSortingType == "Recently Added") {
-        oSortingOrder["sCreated"] = -1;
-      } else if (req.body.sSortingType == "Most Viewed") {
-        oSortingOrder["nView"] = -1;
-      } else if (req.body.sSortingType == "Price Low to High") {
-        oSortingOrder["nBasePrice"] = 1;
-      } else if (req.body.sSortingType == "Price High to Low") {
-        oSortingOrder["nBasePrice"] = -1;
-      } else {
-        oSortingOrder["_id"] = -1;
-      }
-
-      if (
-        req.body.sGenre &&
-        req.body.sGenre != undefined &&
-        req.body.sGenre.length
-      ) {
-        sGenreQuery = {
-          sGenre: { $in: req.body.sGenre },
-        };
-      }
-
-      if (req.body.sSellingType != "") {
-        oSellingTypeQuery = {
-          $or: [
-            {
-              eAuctionType: req.body.sSellingType,
-            },
-          ],
-        };
-      }
-
-      let data = await NFT.aggregate([
-        {
-          $match: {
-            $and: [
-              {
-                sTransactionStatus: {
-                  $eq: 1,
-                },
-              },
-              {
-                eAuctionType: {
-                  $ne: "Unlockable",
-                },
-              },
-              oTypeQuery,
-              oTtextQuery,
-              oSellingTypeQuery,
-              sBPMQuery,
-              sGenreQuery,
-            ],
-          },
-        },
-        {
-          $sort: oSortingOrder,
-        },
-        {
-          $project: {
-            _id: 1,
-            sName: 1,
-            eType: 1,
-            nBasePrice: 1,
-            collectionImage: 1,
-            oCurrentOwner: 1,
-            eAuctionType: 1,
-            sGenre: 1,
-            sBpm: 1,
-            skey_equalTo: 1,
-            skey_harmonicTo: 1,
-            track_cover: 1,
-            user_likes: {
-              $size: {
-                $filter: {
-                  input: "$user_likes",
-                  as: "user_likes",
-                  cond: {
-                    $eq: [
-                      "$$user_likes",
-                      req.userId &&
-                      req.userId != undefined &&
-                      req.userId != null
-                        ? mongoose.Types.ObjectId(req.userId)
-                        : "",
-                    ],
-                  },
-                },
-              },
-            },
-            user_likes_size: {
-              $cond: {
-                if: {
-                  $isArray: "$user_likes",
-                },
-                then: {
-                  $size: "$user_likes",
-                },
-                else: 0,
-              },
-            },
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            sName: 1,
-            eType: 1,
-            nBasePrice: 1,
-            collectionImage: 1,
-            oCurrentOwner: 1,
-            eAuctionType: 1,
-            sGenre: 1,
-            sBpm: 1,
-            skey_equalTo: 1,
-            skey_harmonicTo: 1,
-            track_cover: 1,
-            is_user_like: {
-              $cond: {
-                if: {
-                  $gte: ["$user_likes", 1],
-                },
-                then: "true",
-                else: "false",
-              },
-            },
-            user_likes_size: 1,
-          },
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "oCurrentOwner",
-            foreignField: "_id",
-            as: "oUser",
-          },
-        },
-        { $unwind: "$oUser" },
-        {
-          $facet: {
-            nfts: [
-              {
-                $skip: +nOffset,
-              },
-              {
-                $limit: +nLimit,
-              },
-            ],
-            totalCount: [
-              {
-                $count: "count",
-              },
-            ],
-          },
-        },
-      ]);
-      let iFiltered = data[0].nfts.length;
-      if (data[0].totalCount[0] == undefined) {
-        return res.reply(messages.success("Data"), {
-          data: 0,
-          draw: req.body.draw,
-          recordsTotal: 0,
-          recordsFiltered: iFiltered,
-        });
-      } else {
-        return res.reply(messages.no_prefix("NFT Details"), {
-          data: data[0].nfts,
-          draw: req.body.draw,
-          recordsTotal: data[0].totalCount[0].count,
-          recordsFiltered: iFiltered,
-        });
-      }
-    } catch (error) {
-      return res.reply(messages.server_error());
-    }
-  }
-
-  async nftID(req, res) {
-    try {
-      if (!req.params.nNFTId) return res.reply(messages.not_found("NFT ID"));
-
-      if (!validators.isValidObjectID(req.params.nNFTId))
-        res.reply(messages.invalid("NFT ID"));
-
-      let aNFT = await NFT.findById(req.params.nNFTId).populate({
-        path: "nCreater",
-        options: {
-          limit: 1,
-        },
-        select: {
-          sWalletAddress: 1,
-          _id: 1,
-          sProfilePicUrl: 1,
-        },
-      });
-
-      if (!aNFT) return res.reply(messages.not_found("NFT"));
-      aNFT = aNFT.toObject();
-      aNFT.sCollectionDetail = {};
-
-      aNFT.sCollectionDetail = await Collection.findOne({
-        sName:
-          aNFT.sCollection && aNFT.sCollection != undefined
-            ? aNFT.sCollection
-            : "-",
-      });
-
-      var token = req.headers.authorization;
-
-      req.userId =
-        req.userId && req.userId != undefined && req.userId != null
-          ? req.userId
-          : "";
-
-      let likeARY =
-        aNFT.user_likes && aNFT.user_likes.length
-          ? aNFT.user_likes.filter((v) => v.toString() == req.userId.toString())
-          : [];
-
-      // if (likeARY && likeARY.length) {
-      //   aNFT.is_user_like = "true";
-      // } else {
-      //   aNFT.is_user_like = "false";
-      // }
-
-      //
-      if (token) {
-        token = token.replace("Bearer ", "");
-        jwt.verify(token, process.env.JWT_SECRET, function (err, decoded) {
-          if (decoded) req.userId = decoded.id;
-        });
-
-        if (aNFT.oCurrentOwner._id != req.userId)
-          await NFT.findByIdAndUpdate(req.params.nNFTId, {
-            $inc: {
-              nView: 1,
-            },
-          });
-      }
-      aNFT.loggedinUserId = req.userId;
-      console.log("---------------------------8");
-
-      if (!aNFT) {
-        console.log("---------------------------9");
-
-        return res.reply(messages.not_found("NFT"));
-      }
-      console.log("---------------------------10");
-
-      return res.reply(messages.success(), aNFT);
-    } catch (error) {
-      return res.reply(messages.server_error());
-    }
-  }
-
-  async deleteNFT(req, res) {
-    try {
-      if (!req.params.nNFTId) return res.reply(messages.not_found("NFT ID"));
-
-      if (!validators.isValidObjectID(req.params.nNFTId))
-        res.reply(messages.invalid("NFT ID"));
-
-      await NFT.findByIdAndDelete(req.params.nNFTId);
-      return res.reply(messages.success("NFT deleted"));
-    } catch (error) {
-      return res.reply(messages.server_error());
-    }
-  }
-
-  async getCollectionDetails(req, res) {
-    try {
-      // if (!req.userId) {
-      //     return res.reply(messages.unauthorized());
-      // }
-      Collection.findOne({ _id: req.body.collectionId }, (err, collection) => {
-        if (err) return res.reply(messages.server_error());
-        if (!collection) return res.reply(messages.not_found("Collection"));
-        return res.reply(messages.no_prefix("Collection Details"), collection);
-      });
-    } catch (error) {
-      return res.reply(messages.server_error());
-    }
-  }
-
-  async setTransactionHash(req, res) {
-    try {
-      // if (!req.body.nTokenID) return res.reply(messages.not_found("Token ID"));
-      if (!req.body.nNFTId) return res.reply(messages.not_found("NFT ID"));
-      if (!req.body.sTransactionHash)
-        return res.reply(messages.not_found("Transaction Hash"));
-
-      if (!validators.isValidObjectID(req.body.nNFTId))
-        res.reply(messages.invalid("NFT ID"));
-      // if (req.body.nTokenID <= 0) res.reply(messages.invalid("Token ID"));
-      if (!validators.isValidTransactionHash(req.body.sTransactionHash))
-        res.reply(messages.invalid("Transaction Hash"));
-
-      NFT.findByIdAndUpdate(
-        req.body.nNFTId,
-        {
-          // nTokenID: req.body.nTokenID,
-          sTransactionHash: req.body.sTransactionHash,
-          sTransactionStatus: 0,
-        },
-        (err, nft) => {
-          if (err) return res.reply(messages.server_error());
-          if (!nft) return res.reply(messages.not_found("NFT"));
-
-          return res.reply(messages.updated("NFT Details"));
-        }
-      );
-    } catch (error) {
-      return res.reply(messages.server_error());
-    }
-  }
-
-  async landing(req, res) {
-    try {
-      console.log("---------------------1");
-
-      req.userId =
-        req.userId && req.userId != undefined && req.userId != null
-          ? req.userId
-          : "";
-      console.log("---------------------2", req.userId);
-
-      let data = await NFT.aggregate([
-        {
-          $facet: {
-            recentlyAdded: [
-              {
-                $match: {
-                  sTransactionStatus: {
-                    $eq: 1,
-                  },
-                  eAuctionType: {
-                    $ne: "Unlockable",
-                  },
-                },
-              },
-              {
-                $sort: {
-                  _id: -1,
-                },
-              },
-              {
-                $limit: 10,
-              },
-              {
-                $lookup: {
-                  from: "users",
-                  localField: "oCurrentOwner",
-                  foreignField: "_id",
-                  as: "aCurrentOwner",
-                },
-              },
-              { $unwind: "$aCurrentOwner" },
-              {
-                $project: {
-                  collectionImage: 1,
-                  eType: 1,
-                  sCreated: 1,
-                  oCurrentOwner: 1,
-                  oPostedBy: 1,
-                  sCollection: 1,
-                  sName: 1,
-                  sCollaborator: 1,
-                  sNftdescription: 1,
-                  nCollaboratorPercentage: 1,
-                  sSetRRoyaltyPercentage: 1,
-                  nQuantity: 1,
-                  nView: 1,
-                  nBasePrice: 1,
-                  eAuctionType: 1,
-                  nTokenID: 1,
-                  sTransactionHash: 1,
-                  sTransactionStatus: 1,
-                  aCurrentOwner: 1,
-                  sGenre: 1,
-                  sBpm: 1,
-                  skey_equalTo: 1,
-                  skey_harmonicTo: 1,
-                  track_cover: 1,
-                  user_likes: {
-                    $size: {
-                      $filter: {
-                        input: "$user_likes",
-                        as: "user_likes",
-                        cond: {
-                          $eq: [
-                            "$$user_likes",
-                            req.userId &&
-                            req.userId != undefined &&
-                            req.userId != null
-                              ? mongoose.Types.ObjectId(req.userId)
-                              : "",
-                          ],
-                        },
-                      },
-                    },
-                  },
-                  user_likes_size: {
-                    $cond: {
-                      if: {
-                        $isArray: "$user_likes",
-                      },
-                      then: {
-                        $size: "$user_likes",
-                      },
-                      else: 0,
-                    },
-                  },
-                },
-              },
-              {
-                $project: {
-                  collectionImage: 1,
-                  eType: 1,
-                  sCreated: 1,
-                  oCurrentOwner: 1,
-                  oPostedBy: 1,
-                  sCollection: 1,
-                  sName: 1,
-                  sCollaborator: 1,
-                  sNftdescription: 1,
-                  nCollaboratorPercentage: 1,
-                  sSetRRoyaltyPercentage: 1,
-                  nQuantity: 1,
-                  nView: 1,
-                  nBasePrice: 1,
-                  eAuctionType: 1,
-                  nTokenID: 1,
-                  sGenre: 1,
-                  sBpm: 1,
-                  skey_equalTo: 1,
-                  skey_harmonicTo: 1,
-                  track_cover: 1,
-                  sTransactionHash: 1,
-                  sTransactionStatus: 1,
-                  aCurrentOwner: 1,
-                  is_user_like: {
-                    $cond: {
-                      if: {
-                        $gte: ["$user_likes", 1],
-                      },
-                      then: "true",
-                      else: "false",
-                    },
-                  },
-                  user_likes_size: 1,
-                },
-              },
-            ],
-            onSale: [
-              {
-                $match: {
-                  sTransactionStatus: {
-                    $eq: 1,
-                  },
-                  eAuctionType: {
-                    $eq: "Fixed Sale",
-                  },
-                },
-              },
-              {
-                $sort: {
-                  _id: -1,
-                },
-              },
-              {
-                $limit: 10,
-              },
-              {
-                $lookup: {
-                  from: "users",
-                  localField: "oCurrentOwner",
-                  foreignField: "_id",
-                  as: "aCurrentOwner",
-                },
-              },
-              { $unwind: "$aCurrentOwner" },
-              {
-                $project: {
-                  collectionImage: 1,
-                  eType: 1,
-                  sCreated: 1,
-                  oCurrentOwner: 1,
-                  oPostedBy: 1,
-                  sCollection: 1,
-                  sName: 1,
-                  sCollaborator: 1,
-                  sNftdescription: 1,
-                  nCollaboratorPercentage: 1,
-                  sSetRRoyaltyPercentage: 1,
-                  nQuantity: 1,
-                  nView: 1,
-                  nBasePrice: 1,
-                  eAuctionType: 1,
-                  sGenre: 1,
-                  sBpm: 1,
-                  skey_equalTo: 1,
-                  skey_harmonicTo: 1,
-                  track_cover: 1,
-                  nTokenID: 1,
-                  sTransactionHash: 1,
-                  sTransactionStatus: 1,
-                  aCurrentOwner: 1,
-                  user_likes: {
-                    $size: {
-                      $filter: {
-                        input: "$user_likes",
-                        as: "user_likes",
-                        cond: {
-                          $eq: [
-                            "$$user_likes",
-                            req.userId &&
-                            req.userId != undefined &&
-                            req.userId != null
-                              ? mongoose.Types.ObjectId(req.userId)
-                              : "",
-                          ],
-                        },
-                      },
-                    },
-                  },
-                  user_likes_size: {
-                    $cond: {
-                      if: {
-                        $isArray: "$user_likes",
-                      },
-                      then: {
-                        $size: "$user_likes",
-                      },
-                      else: 0,
-                    },
-                  },
-                },
-              },
-              {
-                $project: {
-                  collectionImage: 1,
-                  eType: 1,
-                  sCreated: 1,
-                  oCurrentOwner: 1,
-                  oPostedBy: 1,
-                  sCollection: 1,
-                  sName: 1,
-                  sCollaborator: 1,
-                  sNftdescription: 1,
-                  nCollaboratorPercentage: 1,
-                  sSetRRoyaltyPercentage: 1,
-                  nQuantity: 1,
-                  sGenre: 1,
-                  sBpm: 1,
-                  skey_equalTo: 1,
-                  skey_harmonicTo: 1,
-                  track_cover: 1,
-                  nView: 1,
-                  nBasePrice: 1,
-                  eAuctionType: 1,
-                  nTokenID: 1,
-                  sTransactionHash: 1,
-                  sTransactionStatus: 1,
-                  aCurrentOwner: 1,
-                  is_user_like: {
-                    $cond: {
-                      if: {
-                        $gte: ["$user_likes", 1],
-                      },
-                      then: "true",
-                      else: "false",
-                    },
-                  },
-                  user_likes_size: 1,
-                },
-              },
-            ],
-            onAuction: [
-              {
-                $match: {
-                  sTransactionStatus: {
-                    $eq: 1,
-                  },
-                  eAuctionType: {
-                    $eq: "Auction",
-                  },
-                },
-              },
-              {
-                $sort: {
-                  _id: -1,
-                },
-              },
-              {
-                $limit: 10,
-              },
-              {
-                $lookup: {
-                  from: "users",
-                  localField: "oCurrentOwner",
-                  foreignField: "_id",
-                  as: "aCurrentOwner",
-                },
-              },
-              { $unwind: "$aCurrentOwner" },
-              {
-                $project: {
-                  collectionImage: 1,
-                  eType: 1,
-                  sCreated: 1,
-                  oCurrentOwner: 1,
-                  oPostedBy: 1,
-                  sCollection: 1,
-                  sName: 1,
-                  sCollaborator: 1,
-                  sNftdescription: 1,
-                  nCollaboratorPercentage: 1,
-                  sSetRRoyaltyPercentage: 1,
-                  nQuantity: 1,
-                  nView: 1,
-                  sGenre: 1,
-                  sBpm: 1,
-                  skey_equalTo: 1,
-                  skey_harmonicTo: 1,
-                  track_cover: 1,
-                  nBasePrice: 1,
-                  eAuctionType: 1,
-                  nTokenID: 1,
-                  sTransactionHash: 1,
-                  sTransactionStatus: 1,
-                  aCurrentOwner: 1,
-                  user_likes: {
-                    $size: {
-                      $filter: {
-                        input: "$user_likes",
-                        as: "user_likes",
-                        cond: {
-                          $eq: [
-                            "$$user_likes",
-                            req.userId &&
-                            req.userId != undefined &&
-                            req.userId != null
-                              ? mongoose.Types.ObjectId(req.userId)
-                              : "",
-                          ],
-                        },
-                      },
-                    },
-                  },
-                  user_likes_size: {
-                    $cond: {
-                      if: {
-                        $isArray: "$user_likes",
-                      },
-                      then: {
-                        $size: "$user_likes",
-                      },
-                      else: 0,
-                    },
-                  },
-                },
-              },
-              {
-                $project: {
-                  collectionImage: 1,
-                  eType: 1,
-                  sCreated: 1,
-                  oCurrentOwner: 1,
-                  oPostedBy: 1,
-                  sCollection: 1,
-                  sName: 1,
-                  sCollaborator: 1,
-                  sNftdescription: 1,
-                  sGenre: 1,
-                  sBpm: 1,
-                  skey_equalTo: 1,
-                  skey_harmonicTo: 1,
-                  track_cover: 1,
-                  nCollaboratorPercentage: 1,
-                  sSetRRoyaltyPercentage: 1,
-                  nQuantity: 1,
-                  nView: 1,
-                  nBasePrice: 1,
-                  eAuctionType: 1,
-                  nTokenID: 1,
-                  sTransactionHash: 1,
-                  sTransactionStatus: 1,
-                  aCurrentOwner: 1,
-                  is_user_like: {
-                    $cond: {
-                      if: {
-                        $gte: ["$user_likes", 1],
-                      },
-                      then: "true",
-                      else: "false",
-                    },
-                  },
-                  user_likes_size: 1,
-                },
-              },
-            ],
-          },
-        },
-      ]);
-      console.log("---------------------data", data);
-
-      data[0].users = [];
-      data[0].users = await User.find({ sRole: "user" });
-
-      let agQuery = [
-        {
-          $lookup: {
-            from: "users",
-            localField: "oCreatedBy",
-            foreignField: "_id",
-            as: "oUser",
-          },
-        },
-        {
-          $sort: {
-            sCreated: -1,
-          },
-        },
-        { $unwind: "$oUser" },
-      ];
-
-      data[0].collections = [];
-      data[0].collections = await Collection.aggregate(agQuery);
-      return res.reply(messages.success(), data[0]);
-    } catch (error) {
-      return res.reply(messages.server_error());
-    }
-  }
-
-  async toggleSellingType(req, res) {
-    try {
-      if (!req.userId) return res.reply(messages.unauthorized());
-
-      if (!req.body.nNFTId) return res.reply(messages.not_found("NFT ID"));
-      if (!req.body.sSellingType)
-        return res.reply(messages.not_found("Selling Type"));
-
-      if (!validators.isValidObjectID(req.body.nNFTId))
-        return res.reply(messages.invalid("NFT ID"));
-      if (!validators.isValidSellingType(req.body.sSellingType))
-        return res.reply(messages.invalid("Selling Type"));
-
-      let oNFT = await NFT.findById(req.body.nNFTId);
-
-      if (!oNFT) return res.reply(messages.not_found("NFT"));
-      if (oNFT.oCurrentOwner != req.userId)
-        return res.reply(
-          message.bad_request("Only NFT Owner Can Set Selling Type")
-        );
-
-      let BIdsExist = await Bid.find({
-        oNFTId: mongoose.Types.ObjectId(req.body.nNFTId),
-        sTransactionStatus: 1,
-        eBidStatus: "Bid",
-      });
-
-      if (BIdsExist && BIdsExist != undefined && BIdsExist.length) {
-        return res.reply(
-          messages.bad_request("Please Cancel Active bids on this NFT.")
-        );
-      } else {
-        let updObj = {
-          eAuctionType: req.body.sSellingType,
-        };
-
-        if (
-          req.body.auction_end_date &&
-          req.body.auction_end_date != undefined
-        ) {
-          updObj.auction_end_date = req.body.auction_end_date;
-        }
-        NFT.findByIdAndUpdate(req.body.nNFTId, updObj, (err, nft) => {
-          if (err) return res.reply(messages.server_error());
-          if (!nft) return res.reply(messages.not_found("NFT"));
-
-          return res.reply(messages.updated("NFT Details"));
-        });
-      }
-    } catch (error) {
-      return res.reply(messages.server_error());
-    }
-  }
-
-  async allCollectionWiselist(req, res) {
-    console.log("------data--------", req.body);
-    //    let agQuery = [ {
-    //         '$lookup': {
-    //             'from': 'users',
-    //             'localField': 'oCreatedBy',
-    //             'foreignField': '_id',
-    //             'as': 'oUser'
-    //         }
-    //     }, {
-    //         '$sort': {
-    //             'sCreated': -1
-    //         }
-    //     }]
-
-    try {
-      //         let aCollections = await Collection.aggregate(agQuery);
-
-      //         if (!aCollections) {
-      //             return res.reply(messages.not_found('collection'));
-      //         }
-
-      //         return res.reply(messages.no_prefix('Collection Details'), aCollections);
-
-      //     } catch (error) {
-      //         return res.reply(messages.server_error());
-      //     }
-
-      var nLimit = parseInt(req.body.length);
-      var nOffset = parseInt(req.body.start);
-      let oTypeQuery = {},
-        oSellingTypeQuery = {},
-        oCollectionQuery = {},
-        oSortingOrder = {};
-      let oTtextQuery = {
-        sName: new RegExp(req.body.sTextsearch, "i"),
-      };
-      if (req.body.eType[0] != "All" && req.body.eType[0] != "") {
-        oTypeQuery = {
-          $or: [],
-        };
-        req.body.eType.forEach((element) => {
-          oTypeQuery["$or"].push({
-            eType: element,
-          });
-        });
-      }
-      if (req.body.sCollection != "All" && req.body.sCollection != "") {
-        oCollectionQuery = {
-          $or: [],
-        };
-        oCollectionQuery["$or"].push({
-          sCollection: req.body.sCollection,
-        });
-      }
-
-      if (req.body.sSortingType == "Recently Added") {
-        oSortingOrder["sCreated"] = -1;
-      } else if (req.body.sSortingType == "Most Viewed") {
-        oSortingOrder["nView"] = -1;
-      } else if (req.body.sSortingType == "Price Low to High") {
-        oSortingOrder["nBasePrice"] = 1;
-      } else if (req.body.sSortingType == "Price High to Low") {
-        oSortingOrder["nBasePrice"] = -1;
-      } else {
-        oSortingOrder["_id"] = -1;
-      }
-
-      if (req.body.sSellingType != "") {
-        oSellingTypeQuery = {
-          $or: [
-            {
-              eAuctionType: req.body.sSellingType,
-            },
-          ],
-        };
-      }
-
-      let data = await NFT.aggregate([
-        {
-          $match: {
-            $and: [
-              {
-                sTransactionStatus: {
-                  $eq: 1,
-                },
-              },
-              {
-                eAuctionType: {
-                  $ne: "Unlockable",
-                },
-              },
-              oTypeQuery,
-              oCollectionQuery,
-              oTtextQuery,
-              oSellingTypeQuery,
-            ],
-          },
-        },
-        {
-          $sort: oSortingOrder,
-        },
-        {
-          $project: {
-            _id: 1,
-            sName: 1,
-            eType: 1,
-            nBasePrice: 1,
-            collectionImage: 1,
-            oCurrentOwner: 1,
-            eAuctionType: 1,
-            sCollection: 1,
-            sGenre: 1,
-            sBpm: 1,
-            skey_equalTo: 1,
-            skey_harmonicTo: 1,
-            track_cover: 1,
-            user_likes: {
-              $size: {
-                $filter: {
-                  input: "$user_likes",
-                  as: "user_likes",
-                  cond: {
-                    $eq: [
-                      "$$user_likes",
-                      req.userId &&
-                      req.userId != undefined &&
-                      req.userId != null
-                        ? mongoose.Types.ObjectId(req.userId)
-                        : "",
-                    ],
-                  },
-                },
-              },
-            },
-            user_likes_size: {
-              $cond: {
-                if: {
-                  $isArray: "$user_likes",
-                },
-                then: {
-                  $size: "$user_likes",
-                },
-                else: 0,
-              },
-            },
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            sName: 1,
-            eType: 1,
-            nBasePrice: 1,
-            collectionImage: 1,
-            oCurrentOwner: 1,
-            eAuctionType: 1,
-            sCollection: 1,
-            sGenre: 1,
-            sBpm: 1,
-            skey_equalTo: 1,
-            skey_harmonicTo: 1,
-            track_cover: 1,
-            is_user_like: {
-              $cond: {
-                if: {
-                  $gte: ["$user_likes", 1],
-                },
-                then: "true",
-                else: "false",
-              },
-            },
-            user_likes_size: 1,
-          },
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "oCurrentOwner",
-            foreignField: "_id",
-            as: "oUser",
-          },
-        },
-        { $unwind: "$oUser" },
-        {
-          $facet: {
-            nfts: [
-              {
-                $skip: +nOffset,
-              },
-              {
-                $limit: +nLimit,
-              },
-            ],
-            totalCount: [
-              {
-                $count: "count",
-              },
-            ],
-          },
-        },
-      ]);
-      let iFiltered = data[0].nfts.length;
-      if (data[0].totalCount[0] == undefined) {
-        return res.reply(messages.success("Data"), {
-          data: 0,
-          draw: req.body.draw,
-          recordsTotal: 0,
-          recordsFiltered: iFiltered,
-        });
-      } else {
-        return res.reply(messages.no_prefix("NFT Details"), {
-          data: data[0].nfts,
-          draw: req.body.draw,
-          recordsTotal: data[0].totalCount[0].count,
-          recordsFiltered: iFiltered,
-        });
-      }
-    } catch (error) {
-      return res.reply(messages.server_error());
-    }
-  }
-
-  async updateBasePrice(req, res) {
-    try {
-      if (!req.userId) return res.reply(messages.unauthorized());
-
-      console.log(req.body);
-      if (!req.body.nNFTId) return res.reply(messages.not_found("NFT ID"));
-      if (!req.body.nBasePrice)
-        return res.reply(messages.not_found("Base Price"));
-
-      if (!validators.isValidObjectID(req.body.nNFTId))
-        return res.reply(messages.invalid("NFT ID"));
-      if (
-        isNaN(req.body.nBasePrice) ||
-        parseFloat(req.body.nBasePrice) <= 0 ||
-        parseFloat(req.body.nBasePrice) <= 0.000001
-      )
-        return res.reply(messages.invalid("Base Price"));
-
-      let oNFT = await NFT.findById(req.body.nNFTId);
-
-      if (!oNFT) return res.reply(messages.not_found("NFT"));
-      if (oNFT.oCurrentOwner != req.userId)
-        return res.reply(
-          message.bad_request("Only NFT Owner Can Set Base Price")
-        );
-
-      let BIdsExist = await Bid.find({
-        oNFTId: mongoose.Types.ObjectId(req.body.nNFTId),
-        sTransactionStatus: 1,
-        eBidStatus: "Bid",
-      });
-
-      if (BIdsExist && BIdsExist != undefined && BIdsExist.length) {
-        return res.reply(
-          messages.bad_request("Please Cancel Active bids on this NFT.")
-        );
-      } else {
-        NFT.findByIdAndUpdate(
-          req.body.nNFTId,
-          {
-            nBasePrice: req.body.nBasePrice,
-          },
-          (err, nft) => {
-            if (err) return res.reply(messages.server_error());
-            if (!nft) return res.reply(messages.not_found("NFT"));
-
-            return res.reply(messages.updated("Price"));
-          }
-        );
-      }
-    } catch (error) {
-      console.log(error);
-      return res.reply(messages.server_error());
-    }
-  }
-
   async updateNftOrder(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
@@ -2551,128 +653,6 @@ class NFTController {
     } catch (e) {
       console.log("Error is " + e);
       return res.reply(messages.server_error());
-    }
-  }
-
-  async uploadImage(req, res) {
-    try {
-      allowedMimes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
-      errAllowed = "JPG, JPEG, PNG,GIF";
-
-      upload(req, res, function (error) {
-        if (error) {
-          //instanceof multer.MulterError
-          fs.unlinkSync(req.file.path);
-          return res.reply(messages.bad_request(error.message));
-        } else {
-          if (!req.file) {
-            fs.unlinkSync(req.file.path);
-            return res.reply(messages.not_found("File"));
-          }
-
-          const oOptions = {
-            pinataMetadata: {
-              name: req.file.originalname,
-            },
-            pinataOptions: {
-              cidVersion: 0,
-            },
-          };
-          const readableStreamForFile = fs.createReadStream(req.file.path);
-          let testFile = fs.readFileSync(req.file.path);
-          //Creating buffer for ipfs function to add file to the system
-          let testBuffer = new Buffer(testFile);
-          try {
-            pinata
-              .pinFileToIPFS(readableStreamForFile, oOptions)
-              .then(async (result) => {
-                fs.unlinkSync(req.file.path);
-                return res.reply(messages.created("Collection"), {
-                  track_cover: result.IpfsHash,
-                });
-              })
-              .catch((err) => {
-                //handle error here
-                return res.reply(messages.error());
-              });
-          } catch (err) {
-            console.log("err", err);
-          }
-        }
-      });
-    } catch (error) {
-      return res.reply(messages.server_error());
-    }
-  }
-
-  async getAllNfts(req, res) {
-    try {
-      let aNft = await NFT.find({})
-        .select({
-          nTitle: 1,
-          nCollection: 1,
-          nHash: 1,
-          nLazyMintingStatus: 1,
-          nNftImage: 1,
-        })
-        .populate({
-          path: "nOrders",
-          options: {
-            limit: 1,
-          },
-          select: {
-            oPrice: 1,
-            oType: 1,
-            oValidUpto: 1,
-            auction_end_date: 1,
-            oStatus: 1,
-            _id: 0,
-          },
-        })
-        .populate({
-          path: "nCreater",
-          options: {
-            limit: 1,
-          },
-          select: {
-            _id: 0,
-          },
-        })
-        .limit(limit)
-        .skip(startIndex)
-        .exec()
-        .then((res) => {
-          data.push(res);
-        })
-        .catch((e) => {
-          console.log("Error", e);
-        });
-
-      results.results = data;
-      console.log("Collections", aNft);
-
-      if (!aNft) {
-        return res.reply(messages.not_found("nft"));
-      }
-      return res.reply(messages.no_prefix("nfts List"), aNft);
-    } catch (e) {
-      return res.reply(messages.error(e));
-    }
-  }
-
-  async setNFTOrder(req, res) {
-    try {
-      let aNft = await NFT.findById(req.body.nftId);
-      if (!aNft) {
-        return res.reply(messages.not_found("nft"));
-      }
-
-      aNft.nOrders.push(req.body.orderId);
-      await aNft.save();
-
-      return res.reply(messages.updated("nfts List"), aNft);
-    } catch (e) {
-      return res.reply(messages.error(e));
     }
   }
 
@@ -2941,110 +921,6 @@ class NFTController {
     }
   }
 
-  async getUserLikedNfts(req, res) {
-    try {
-      let data = [];
-
-      if (!req.body.userId)
-        res.reply(messages.invalid_req("User Id is required"));
-
-      //sortKey is the column
-      const sortKey = req.body.sortKey ? req.body.sortKey : "";
-
-      //sortType will let you choose from ASC 1 or DESC -1
-      const sortType = req.body.sortType ? req.body.sortType : -1;
-
-      var sortObject = {};
-      var stype = sortKey;
-      var sdir = sortType;
-      sortObject[stype] = sdir;
-
-      const page = parseInt(req.body.page);
-      const limit = parseInt(req.body.limit);
-
-      const startIndex = (page - 1) * limit;
-      const endIndex = page * limit;
-
-      const results = {};
-
-      if (
-        endIndex <
-        (await NFT.countDocuments({
-          nUser_likes: { $in: [mongoose.Types.ObjectId(req.body.userId)] },
-        }).exec())
-      ) {
-        results.next = {
-          page: page + 1,
-          limit: limit,
-        };
-      }
-
-      if (startIndex > 0) {
-        results.previous = {
-          page: page - 1,
-          limit: limit,
-        };
-      }
-
-      await NFT.find({
-        nUser_likes: { $in: [mongoose.Types.ObjectId(req.body.userId)] },
-      })
-        .select({
-          nTitle: 1,
-          nCollection: 1,
-          nHash: 1,
-          nType: 1,
-          nUser_likes: 1,
-          nNftImage: 1,
-          nLazyMintingStatus: 1,
-        })
-        .populate({
-          path: "nOrders",
-          options: {
-            limit: 1,
-          },
-          select: {
-            oPrice: 1,
-            oType: 1,
-            oValidUpto: 1,
-            auction_end_date: 1,
-            oStatus: 1,
-            _id: 0,
-          },
-        })
-        .populate({
-          path: "nCreater",
-          options: {
-            limit: 1,
-          },
-          select: {
-            _id: 1,
-            sProfilePicUrl: 1,
-            sWalletAddress: 1,
-          },
-        })
-        .limit(limit)
-        .skip(startIndex)
-        .exec()
-        .then((res) => {
-          data.push(res);
-        })
-        .catch((e) => {
-          console.log("Error", e);
-        });
-
-      results.count = await NFT.countDocuments({
-        nUser_likes: { $in: [mongoose.Types.ObjectId(req.body.userId)] },
-      }).exec();
-      results.results = data;
-
-      return res.reply(messages.success("NFTs List Liked By User"), results);
-    } catch (error) {
-      console.log("Error:", error);
-      return res.reply(messages.error());
-    }
-  }
-
   async getUserOnSaleNfts(req, res) {
     try {
       console.log("req", req.body);
@@ -3177,469 +1053,2607 @@ class NFTController {
     }
   }
 
-  async transferNfts(req, res) {
-    //deduct previous owner
-    console.log("req", req.body);
+  async updateCollection(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
+      allowedMimes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
+      errAllowed = "JPG, JPEG, PNG,GIF";
 
-      let _NFT = await NFT.findOne({
-        _id: mongoose.Types.ObjectId(req.body.nftId),
-        "nOwnedBy.address": req.body.sender,
-      }).select("nOwnedBy -_id");
-
-      console.log("_NFT-------->", _NFT);
-      let currentQty = _NFT.nOwnedBy.find(
-        (o) => o.address === req.body.sender.toLowerCase()
-      ).quantity;
-      let boughtQty = parseInt(req.body.qty);
-      let leftQty = currentQty - boughtQty;
-      if (leftQty < 1) {
-        await NFT.findOneAndUpdate(
-          { _id: mongoose.Types.ObjectId(req.body.nftId) },
-          {
-            $pull: {
-              nOwnedBy: { address: req.body.sender },
-            },
-          }
-        ).catch((e) => {
-          console.log("Error1", e.message);
-        });
-      } else {
-        await NFT.findOneAndUpdate(
-          {
-            _id: mongoose.Types.ObjectId(req.body.nftId),
-            "nOwnedBy.address": req.body.sender,
-          },
-          {
-            $set: {
-              "nOwnedBy.$.quantity": parseInt(leftQty),
-            },
-          }
-        ).catch((e) => {
-          console.log("Error2", e.message);
-        });
-      }
-
-      //Credit the buyer
-      console.log("Crediting Buyer");
-
-      let subDocId = await NFT.exists({
-        _id: mongoose.Types.ObjectId(req.body.nftId),
-        "nOwnedBy.address": req.body.receiver,
-      });
-      if (subDocId) {
-        console.log("Subdocument Id", subDocId);
-
-        let _NFTB = await NFT.findOne({
-          _id: mongoose.Types.ObjectId(req.body.nftId),
-          "nOwnedBy.address": req.body.receiver,
-        }).select("nOwnedBy -_id");
-        console.log("_NFTB-------->", _NFTB);
-        console.log(
-          "Quantity found for receiver",
-          _NFTB.nOwnedBy.find(
-            (o) => o.address === req.body.receiver.toLowerCase()
-          ).quantity
-        );
-        currentQty = _NFTB.nOwnedBy.find(
-          (o) => o.address === req.body.receiver.toLowerCase()
-        ).quantity
-          ? parseInt(
-              _NFTB.nOwnedBy.find(
-                (o) => o.address === req.body.receiver.toLowerCase()
-              ).quantity
-            )
-          : 0;
-        boughtQty = req.body.qty;
-        let ownedQty = currentQty + boughtQty;
-
-        await NFT.findOneAndUpdate(
-          {
-            _id: mongoose.Types.ObjectId(req.body.nftId),
-            "nOwnedBy.address": req.body.receiver,
-          },
-          {
-            $set: {
-              "nOwnedBy.$.quantity": parseInt(ownedQty),
-            },
-          },
-          { upsert: true, runValidators: true }
-        ).catch((e) => {
-          console.log("Error1", e.message);
-        });
-      } else {
-        console.log("Subdocument Id not found");
-        let dataToadd = {
-          address: req.body.receiver,
-          quantity: parseInt(req.body.qty),
-        };
-        await NFT.findOneAndUpdate(
-          { _id: mongoose.Types.ObjectId(req.body.nftId) },
-          { $addToSet: { nOwnedBy: dataToadd } },
-          { upsert: true }
-        );
-        console.log("wasn't there but added");
-      }
-      return res.reply(messages.updated("NFT"));
-    } catch (e) {
-      console.log("errr", e);
-      return res.reply(messages.error());
-    }
-  }
-
-  async getCollectionNFT(req, res) {
-    try {
-      let data = [];
-      let collection = req.body.collection;
-
-      const sortKey = req.body.sortKey ? req.body.sortKey : "";
-      //sortType will let you choose from ASC 1 or DESC -1
-      const sortType = req.body.sortType ? req.body.sortType : -1;
-
-      var sortObject = {};
-      var stype = sortKey;
-      var sdir = sortType;
-      sortObject[stype] = sdir;
-
-      const page = parseInt(req.body.page);
-      const limit = parseInt(req.body.limit);
-
-      const startIndex = (page - 1) * limit;
-      const endIndex = page * limit;
-      const results = {};
-      let orderQuery = {};
-
-      orderQuery["oStatus"] = 1; // we are getting only active orders
-
-      let OrderIdsss = await Order.distinct("oNftId", orderQuery);
-
-      if (
-        endIndex <
-        (await NFT.countDocuments({
-          nCollection: collection,
-          _id: { $in: OrderIdsss },
-        }).exec())
-      ) {
-        results.next = {
-          page: page + 1,
-          limit: limit,
-        };
-      }
-      if (startIndex > 0) {
-        results.previous = {
-          page: page - 1,
-          limit: limit,
-        };
-      }
-
-      await NFT.find({ nCollection: collection, _id: { $in: OrderIdsss } })
-        .select({
-          nTitle: 1,
-          nCollection: 1,
-          nHash: 1,
-          nCreater: 1,
-          nType: 1,
-          nUser_likes: 1,
-          nNftImage: 1,
-          nLazyMintingStatus: 1,
-        })
-        .populate({
-          path: "nOrders",
-          options: {
-            limit: 1,
-          },
-          select: {
-            oPrice: 1,
-            oType: 1,
-            oValidUpto: 1,
-            auction_end_date: 1,
-            oStatus: 1,
-            _id: 0,
-          },
-        })
-        .populate({
-          path: "nCreater",
-          options: {
-            limit: 1,
-          },
-          select: {
-            _id: 1,
-            sProfilePicUrl: 1,
-            sWalletAddress: 1,
-          },
-        })
-        .limit(limit)
-        .skip(startIndex)
-        .exec()
-        .then((res) => {
-          data.push(res);
-        })
-        .catch((e) => {
-          console.log("Error", e);
-        });
-      results.count = await NFT.countDocuments({
-        nCollection: collection,
-        _id: { $in: OrderIdsss },
-      }).exec();
-      results.results = data;
-      return res.reply(messages.success("Order List"), results);
-    } catch (error) {
-      console.log("Error:", error);
-      return res.reply(messages.error());
-    }
-  }
-
-  async getCollectionNFTOwned(req, res) {
-    try {
-      if (!req.userId) return res.reply(messages.unauthorized());
-      let data = [];
-      let collection = req.body.collection;
-      let userID = req.userId;
-      let UserData = await User.findById(userID);
-      if (UserData) {
-        let userWalletAddress = UserData.sWalletAddress;
-
-        const sortKey = req.body.sortKey ? req.body.sortKey : "";
-        //sortType will let you choose from ASC 1 or DESC -1
-        const sortType = req.body.sortType ? req.body.sortType : -1;
-
-        var sortObject = {};
-        var stype = sortKey;
-        var sdir = sortType;
-        sortObject[stype] = sdir;
-
-        const page = parseInt(req.body.page);
-        const limit = parseInt(req.body.limit);
-
-        const startIndex = (page - 1) * limit;
-        const endIndex = page * limit;
-        const results = {};
+      uploadBanner.fields([
+        { name: "logoImage", maxCount: 1 },
+        { name: "coverImage", maxCount: 1 },
+      ])(req, res, function (error) {
+        let updateData = [];
+        let collectionID = req.body.id;
         if (
-          endIndex <
-          (await NFT.countDocuments({
-            nCollection: collection,
-            "nOwnedBy.address": userWalletAddress,
-          }).exec())
+          req.files &&
+          req.files.logoImage &&
+          req.files.logoImage[0] &&
+          req.files.logoImage[0].location
         ) {
-          results.next = {
-            page: page + 1,
-            limit: limit,
-          };
+          updateData["logoImage"] = req.files.logoImage[0].location;
         }
-        if (startIndex > 0) {
-          results.previous = {
-            page: page - 1,
-            limit: limit,
-          };
+        if (
+          req.files &&
+          req.files.coverImage &&
+          req.files.coverImage[0] &&
+          req.files.coverImage[0].location
+        ) {
+          updateData["coverImage"] = req.files.coverImage[0].location;
         }
-        await NFT.find({
-          nCollection: collection,
-          "nOwnedBy.address": userWalletAddress,
-        })
-          .select({
-            nTitle: 1,
-            nCollection: 1,
-            nHash: 1,
-            nType: 1,
-            nUser_likes: 1,
-            nNftImage: 1,
-            nLazyMintingStatus: 1,
-          })
-          .populate({
-            path: "nOrders",
-            options: {
-              limit: 1,
-            },
-            select: {
-              oPrice: 1,
-              oType: 1,
-              oStatus: 1,
-              _id: 0,
-            },
-          })
-          .populate({
-            path: "nCreater",
-            options: {
-              limit: 1,
-            },
-            select: {
-              _id: 1,
-              sProfilePicUrl: 1,
-              sWalletAddress: 1,
-            },
-          })
-          .limit(limit)
-          .skip(startIndex)
-          .exec()
-          .then((res) => {
-            data.push(res);
-          })
-          .catch((e) => {
-            console.log("Error", e);
-          });
-
-        results.count = await NFT.countDocuments({
-          nCollection: collection,
-          "nOwnedBy.address": userWalletAddress,
-        }).exec();
-        results.results = data;
-        return res.reply(messages.success("Order List"), results);
-      } else {
-        console.log("Bid Not found");
-        return res.reply("User Not found");
-      }
-    } catch (error) {
-      console.log("Error:", error);
-      return res.reply(messages.error());
-    }
-  }
-
-  async getSearchedNft(req, res) {
-    try {
-      let data = [];
-      let setConditions = req.body.conditions;
-
-      //sortKey is the column
-      const sortKey = req.body.sortKey ? req.body.sortKey : "";
-
-      //sortType will let you choose from ASC 1 or DESC -1
-      const sortType = req.body.sortType ? req.body.sortType : -1;
-
-      var sortObject = {};
-      var stype = sortKey;
-      var sdir = sortType;
-      sortObject[stype] = sdir;
-
-      const page = parseInt(req.body.page);
-      const limit = parseInt(req.body.limit);
-
-      const startIndex = (page - 1) * limit;
-      const endIndex = page * limit;
-
-      const results = {};
-      let OrderIdsss = await Order.distinct("oNftId", setConditions);
-
-      if (
-        endIndex <
-        (await NFT.countDocuments({
-          nTitle: { $regex: req.body.sTextsearch, $options: "i" },
-          _id: { $in: OrderIdsss.map(String) },
-        }).exec())
-      ) {
-        results.next = {
-          page: page + 1,
-          limit: limit,
-        };
-      }
-
-      if (startIndex > 0) {
-        results.previous = {
-          page: page - 1,
-          limit: limit,
-        };
-      }
-
-      await NFT.find({
-        nTitle: { $regex: req.body.sTextsearch, $options: "i" },
-        _id: { $in: OrderIdsss.map(String) },
-      })
-        .select({
-          nTitle: 1,
-          nCollection: 1,
-          nHash: 1,
-          nType: 1,
-          nUser_likes: 1,
-          nNftImage: 1,
-          nLazyMintingStatus: 1,
-        })
-        .populate({
-          path: "nOrders",
-          options: {
-            limit: 1,
-          },
-          select: {
-            oPrice: 1,
-            oType: 1,
-            auction_end_date: 1,
-            oValidUpto: 1,
-            oStatus: 1,
-            _id: 0,
-          },
-        })
-        .populate({
-          path: "nCreater",
-          options: {
-            limit: 1,
-          },
-          select: {
-            _id: 0,
-          },
-        })
-        .limit(limit)
-        .skip(startIndex)
-        .exec()
-        .then((res) => {
-          data.push(res);
-          results.count = res.length;
-        })
-        .catch((e) => {
-          console.log("Error", e);
+        if (req.body) {
+          if (req.body.price) {
+            updateData["price"] = req.body.price;
+          }
+          if (req.body.name) {
+            updateData["name"] = req.body.name;
+          }
+          if (req.body.description) {
+            updateData["description"] = req.body.description;
+          }
+          if (req.body.symbol) {
+            updateData["symbol"] = req.body.symbol;
+          }
+          if (req.body.isHotCollection) {
+            updateData["isHotCollection"] = req.body.isHotCollection;
+          }
+          if (req.body.isMinted) {
+            updateData["isMinted"] = req.body.isMinted;
+          }
+          if (req.body.categoryID) {
+            updateData["categoryID"] = req.body.categoryID;
+          }
+          if (req.body.brandID) {
+            updateData["brandID"] = req.body.brandID;
+          }
+          if (req.body.totalSupply) {
+            updateData["totalSupply"] = req.body.totalSupply;
+          }
+          if (req.body.royalty) {
+            updateData["royalty"] = req.body.royalty;
+          }
+          if (req.body.isImported) {
+            updateData["isImported"] = req.body.isImported;
+          }
+          if (req.body.preSaleStartTime) {
+            updateData["preSaleStartTime"] = req.body.preSaleStartTime;
+          }
+          if (req.body.preSaleEndTime) {
+            updateData["preSaleEndTime"] = req.body.preSaleEndTime;
+          }
+          if (req.body.isDeployed !== "" && req.body.isDeployed !== undefined) {
+            updateData["isDeployed"] = req.body.isDeployed;
+          }
+          if (req.body.link !== "" && req.body.link !== undefined) {
+            updateData["link"] = req.body.link;
+          }
+          if (
+            req.body.contractAddress !== "" &&
+            req.body.contractAddress !== undefined
+          ) {
+            updateData["contractAddress"] = req.body.contractAddress;
+          }
+          if (
+            req.body.isOnMarketplace !== "" &&
+            req.body.isOnMarketplace !== undefined
+          ) {
+            updateData["isOnMarketplace"] = req.body.isOnMarketplace;
+          }
+          updateData["lastUpdatedBy"] = req.userId;
+          updateData["lastUpdatedOn"] = Date.now();
+        }
+        let updateObj = Object.assign({}, updateData);
+        Collection.findByIdAndUpdate(
+          { _id: mongoose.Types.ObjectId(collectionID) },
+          { $set: updateObj }
+        ).then((collection) => {
+          return res.reply(
+            messages.updated("Collection Updated successfully."),
+            collection
+          );
         });
-
-      results.count = await NFT.countDocuments({
-        nTitle: { $regex: req.body.sTextsearch, $options: "i" },
-        _id: { $in: OrderIdsss.map(String) },
-      }).exec();
-      results.results = data;
-
-      return res.reply(messages.success("NFTs List"), results);
-    } catch (error) {
-      console.log("Error:", error);
-      return res.reply(messages.error());
-    }
-  }
-
-  async updateCollectionMarketplace(req, res) {
-    try {
-      if (!req.userId) return res.reply(messages.unauthorized());
-      if (!req.body.collectionID) {
-        return res.reply(messages.not_found("Collection ID"));
-      }
-      let collectionID = req.body.collectionID;
-      let isOnMarketplace = req.body.isOnMarketplace;
-
-      let updateData = [];
-      updateData["isOnMarketplace"] = isOnMarketplace;
-      let updateObj = Object.assign({}, updateData);
-
-      Collection.findByIdAndUpdate(
-        { _id: mongoose.Types.ObjectId(collectionID) },
-        { $set: updateObj }
-      ).then((collection) => {
-        return res.reply(
-          messages.updated("Collection Updated successfully."),
-          collection
-        );
       });
     } catch (error) {
       return res.reply(messages.server_error());
     }
   }
 
-  async getImportedCollections(req, res){
-    try{
-      let result = await importedCollection.find();
-      console.log("collectionssss",result)
-      if (!result) {
-        return res.reply(messages.not_found("Imported Collection"));
-      }
-      return res.reply(messages.no_prefix("Imported Collection "), result);
-    }
-    catch(e){
-      res.reply(messages.error());
-    }
-  }
+  // async viewCollection(req, res) {
+  //   try {
+  //     if (!req.params.collectionID)
+  //       return res.reply(messages.not_found("Collection ID"));
+  //     if (!validators.isValidObjectID(req.params.collectionID))
+  //       res.reply(messages.invalid("Collection ID"));
+
+  //     let collectionData = await Collection.findById(
+  //       req.params.collectionID
+  //     ).populate({
+  //       path: "createdBy",
+  //       options: {
+  //         limit: 1,
+  //       },
+  //     });
+
+  //     if (!collectionData) return res.reply(messages.not_found("Collection"));
+  //     collectionData = collectionData.toObject();
+
+  //     var token = req.headers.authorization;
+
+  //     req.userId =
+  //       req.userId && req.userId != undefined && req.userId != null
+  //         ? req.userId
+  //         : "";
+
+  //     let likeARY =
+  //       aNFT.user_likes && aNFT.user_likes.length
+  //         ? aNFT.user_likes.filter((v) => v.toString() == req.userId.toString())
+  //         : [];
+  //     if (token) {
+  //       token = token.replace("Bearer ", "");
+  //       jwt.verify(token, process.env.JWT_SECRET, function (err, decoded) {
+  //         if (decoded) req.userId = decoded.id;
+  //       });
+
+  //       if (aNFT.oCurrentOwner._id != req.userId)
+  //         await NFT.findByIdAndUpdate(req.params.nNFTId, {
+  //           $inc: {
+  //             nView: 1,
+  //           },
+  //         });
+  //     }
+  //     aNFT.loggedinUserId = req.userId;
+  //     console.log("---------------------------8");
+
+  //     if (!aNFT) {
+  //       console.log("---------------------------9");
+
+  //       return res.reply(messages.not_found("NFT"));
+  //     }
+  //     console.log("---------------------------10");
+
+  //     return res.reply(messages.success(), aNFT);
+  //   } catch (error) {
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
+
+  // async getUpcomingCollections(req, res) {
+  //   try {
+  //     let data = [];
+  //     const page = parseInt(req.body.page);
+  //     const limit = parseInt(req.body.limit);
+  //     const startIndex = (page - 1) * limit;
+  //     const endIndex = page * limit;
+
+  //     let searchText = "";
+  //     if (req.body.searchText && req.body.searchText !== undefined) {
+  //       searchText = req.body.searchText;
+  //     }
+  //     let searchArray = [];
+  //     searchArray["preSaleStartTime"] = { $lt: new Date() };
+  //     if (searchText !== "") {
+  //       searchArray["$or"] = [
+  //         { name: { $regex: new RegExp(searchText), $options: "i" } },
+  //         {
+  //           contractAddress: { $regex: new RegExp(searchText), $options: "i" },
+  //         },
+  //       ];
+  //     }
+  //     let searchObj = Object.assign({}, searchArray);
+
+  //     const results = {};
+  //     if (endIndex < (await Collection.countDocuments(searchObj).exec())) {
+  //       results.next = {
+  //         page: page + 1,
+  //         limit: limit,
+  //       };
+  //     }
+  //     if (startIndex > 0) {
+  //       results.previous = {
+  //         page: page - 1,
+  //         limit: limit,
+  //       };
+  //     }
+
+  //     await Collection.find(searchObj)
+  //       .populate("categoryID")
+  //       .populate("brandID")
+  //       .sort({ createdOn: -1 })
+  //       .limit(limit)
+  //       .skip(startIndex)
+  //       .lean()
+  //       .exec()
+  //       .then((res) => {
+  //         data.push(res);
+  //       })
+  //       .catch((e) => {
+  //         console.log("Error", e);
+  //       });
+  //     results.count = await Collection.countDocuments(searchObj).exec();
+  //     results.results = data;
+  //     res.header("Access-Control-Max-Age", 600);
+  //     return res.reply(messages.success("Collection List"), results);
+  //   } catch (error) {
+  //     console.log("Error " + error);
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
+
+  // async createNFT(req, res) {
+  //   try {
+  //     if (!req.userId) return res.reply(messages.unauthorized());
+  //     allowedMimes = [
+  //       "image/jpeg",
+  //       "video/mp4",
+  //       "image/jpg",
+  //       "image/webp",
+  //       "image/png",
+  //       "image/gif",
+  //       "audio/mp3",
+  //       "audio/mpeg",
+  //     ];
+  //     errAllowed = "JPG, JPEG, PNG, GIF, MP3, WEBP & MPEG";
+  //     let attributes = req.body.attributes;
+  //     upload(req, res, function (error) {
+  //       if (error) {
+  //         log.red(error);
+  //         return res.reply(messages.bad_request(error.message));
+  //       } else {
+  //         if (!req.body.creatorAddress) {
+  //           return res.reply(messages.not_found("Creator Wallet Address"));
+  //         }
+  //         if (!req.body.name) {
+  //           return res.reply(messages.not_found("Name"));
+  //         }
+  //         if (!req.body.quantity) {
+  //           return res.reply(messages.not_found("Quantity"));
+  //         }
+  //         if (!validators.isValidString(req.body.name)) {
+  //           return res.reply(messages.invalid("Title"));
+  //         }
+  //         if (req.body.description.trim().length > 1000) {
+  //           return res.reply(messages.invalid("Description"));
+  //         }
+  //         if (isNaN(req.body.quantity) || !req.body.quantity > 0) {
+  //           return res.reply(messages.invalid("Quantity"));
+  //         }
+  //         if (!req.file) {
+  //           return res.reply(messages.not_found("File"));
+  //         }
+  //         const iOptions = {
+  //           pinataMetadata: {
+  //             name: req.file.originalname,
+  //           },
+  //           pinataOptions: {
+  //             cidVersion: 0,
+  //           },
+  //         };
+  //         try {
+  //           let creatorAddress = req.body.creatorAddress;
+  //           const pathString = "/tmp/";
+  //           const file = fs.createWriteStream(
+  //             pathString + req.file.originalname
+  //           );
+  //           const request = http.get(
+  //             `${req.file.location}`,
+  //             function (response) {
+  //               var stream = response.pipe(file);
+  //               const readableStreamForFile = fs.createReadStream(
+  //                 pathString + req.file.originalname
+  //               );
+  //               stream.on("finish", async function () {
+  //                 pinata
+  //                   .pinFileToIPFS(readableStreamForFile, iOptions)
+  //                   .then((res) => {
+  //                     attributes = JSON.parse(req.body.attributes);
+  //                     let uploadingData = {};
+  //                     uploadingData = {
+  //                       description: req.body.description,
+  //                       external_url: "",
+  //                       image: "https://ipfs.io/ipfs/" + res.IpfsHash,
+  //                       name: req.body.name,
+  //                       attributes: req.body.attributes,
+  //                     };
+  //                     console.log("uploadingData", uploadingData);
+  //                     const mOptions = {
+  //                       pinataMetadata: {
+  //                         name: "hello",
+  //                       },
+  //                       pinataOptions: {
+  //                         cidVersion: 0,
+  //                       },
+  //                     };
+  //                     console.log("res---", res.IpfsHash);
+  //                     return pinata.pinJSONToIPFS(uploadingData, mOptions);
+  //                   })
+  //                   .then(async (file2) => {
+  //                     console.log("111", req.body);
+  //                     const collectionID = req.body.collectionID;
+  //                     const collectionData = await Collection.findOne({
+  //                       _id: mongoose.Types.ObjectId(collectionID),
+  //                     });
+  //                     const brandID = collectionData.brandID;
+  //                     const categoryID = collectionData.categoryID;
+  //                     console.log("222", req.body);
+  //                     const nft = new NFT({
+  //                       name: req.body.name,
+  //                       collectionID:
+  //                         collectionID && collectionID != undefined
+  //                           ? collectionID
+  //                           : "",
+  //                       collectionAddress: req.body.collectionAddress,
+  //                       hash: file2.IpfsHash,
+  //                       ownedBy: [],
+  //                       totalQuantity: req.body.quantity,
+  //                       description: req.body.description,
+  //                       createdBy: req.userId,
+  //                       tokenID: req.body.tokenID,
+  //                       type: req.body.type,
+  //                       image: req.file.location,
+  //                       price: req.body.price,
+  //                       isMinted: req.body.isMinted,
+  //                       categoryID: categoryID,
+  //                       brandID: brandID,
+  //                       lazyMintingStatus: 1,
+  //                     });
+  //                     console.log("body", req.body);
+  //                     console.log("NFTAttr", req.body.attributes);
+  //                     let NFTAttr = JSON.parse(req.body.attributes);
+  //                     console.log("NFTAttr", NFTAttr);
+  //                     if (NFTAttr.length > 0) {
+  //                       NFTAttr.forEach((obj) => {
+  //                         for (let [key, value] of Object.entries(obj)) {
+  //                           nft.attributes.push({
+  //                             name: key,
+  //                             value: value,
+  //                           });
+  //                           console.log(key + " : " + value);
+  //                         }
+  //                       });
+  //                     }
+
+  //                     let NFTLevels = JSON.parse(req.body.levels);
+  //                     if (NFTLevels.length > 0) {
+  //                       NFTLevels.forEach((obj) => {
+  //                         for (let [key, value] of Object.entries(obj)) {
+  //                           nft.levels.push({
+  //                             name: key,
+  //                             value: value,
+  //                           });
+  //                           console.log(key + " : " + value);
+  //                         }
+  //                       });
+  //                     }
+
+  //                     nft.assetsInfo.push({
+  //                       size: req.body.imageSize,
+  //                       type: req.body.imageType,
+  //                       dimension: req.body.imageDimension,
+  //                     });
+  //                     nft.ownedBy.push({
+  //                       address: creatorAddress.toLowerCase(),
+  //                       quantity: req.body.quantity,
+  //                     });
+  //                     nft
+  //                       .save()
+  //                       .then(async (result) => {
+  //                         const collection = await Collection.findOne({
+  //                           _id: mongoose.Types.ObjectId(collectionID),
+  //                         });
+  //                         let nextID = collection.getNextID();
+  //                         collection.nextID = nextID;
+  //                         collection.save();
+  //                         await Collection.findOneAndUpdate(
+  //                           { _id: mongoose.Types.ObjectId(collectionID) },
+  //                           { $inc: { nftCount: 1 } },
+  //                           function () {}
+  //                         );
+  //                         await Brand.findOneAndUpdate(
+  //                           { _id: mongoose.Types.ObjectId(brandID) },
+  //                           { $inc: { nftCount: 1 } },
+  //                           function () {}
+  //                         );
+  //                         return res.reply(messages.created("NFT"), result);
+  //                       })
+  //                       .catch((error) => {
+  //                         console.log("Created NFT error", error);
+  //                         return res.reply(messages.error());
+  //                       });
+  //                   })
+  //                   .catch((e) => {
+  //                     console.log("Error " + e);
+  //                     return res.reply(messages.error());
+  //                   });
+  //               });
+  //             }
+  //           );
+  //         } catch (e) {
+  //           console.log("error in file upload..", e);
+  //         }
+  //       }
+  //     });
+  //   } catch (error) {
+  //     return res.reply(messages.error());
+  //   }
+  // }
+
+  // async likeNFT(req, res) {
+  //   try {
+  //     if (!req.userId) return res.reply(messages.unauthorized());
+  //     let { id } = req.body;
+  //     return NFT.findOne({ _id: mongoose.Types.ObjectId(id) }).then(
+  //       async (NFTData) => {
+  //         if (NFTData && NFTData != null) {
+  //           let likeMAINarray = [];
+  //           likeMAINarray = NFTData.nUser_likes;
+  //           let flag = "";
+  //           let likeARY =
+  //             likeMAINarray && likeMAINarray.length
+  //               ? likeMAINarray.filter(
+  //                   (v) => v.toString() == req.userId.toString()
+  //                 )
+  //               : [];
+  //           if (likeARY && likeARY.length) {
+  //             flag = "dislike";
+  //             var index = likeMAINarray.indexOf(likeARY[0]);
+  //             if (index != -1) {
+  //               likeMAINarray.splice(index, 1);
+  //             }
+  //           } else {
+  //             flag = "like";
+  //             likeMAINarray.push(mongoose.Types.ObjectId(req.userId));
+  //           }
+  //           await NFT.findByIdAndUpdate(
+  //             { _id: mongoose.Types.ObjectId(id) },
+  //             { $set: { nUser_likes: likeMAINarray } }
+  //           ).then((user) => {
+  //             if (flag == "like") {
+  //               return res.reply(messages.updated("NFT liked successfully."));
+  //             } else {
+  //               return res.reply(messages.updated("NFT unliked successfully."));
+  //             }
+  //           });
+  //         } else {
+  //           return res.reply(messages.bad_request("NFT not found."));
+  //         }
+  //       }
+  //     );
+  //   } catch (error) {
+  //     log.red(error);
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
+
+  // async getNftOwner(req, res) {
+  //   try {
+  //     // if (!req.userId) return res.reply(messages.unauthorized());
+  //     // if (!req.params.nNFTId) return res.reply(messages.not_found("NFT ID"));
+  //     console.log("user id && NFTId -->", req.userId, req.params.nNFTId);
+
+  //     let nftOwner = {};
+
+  //     nftOwner = await NFTowners.findOne({
+  //       nftId: req.params.nNFTId,
+  //       oCurrentOwner: req.userId,
+  //     });
+  //     if (!nftOwner) {
+  //       nftOwner = await NFTowners.findOne(
+  //         { nftId: req.params.nNFTId },
+  //         {},
+  //         { sort: { sCreated: -1 } }
+  //       );
+  //       console.log("nft owner is-->", nftOwner);
+  //       return res.reply(messages.success(), nftOwner);
+  //     } else {
+  //       if (nftOwner.oCurrentOwner) {
+  //         users = await User.findOne(nftOwner.oCurrentOwner);
+  //         nftOwner.oCurrentOwner = users;
+  //       }
+  //       console.log("nft owner is-->", nftOwner);
+  //       return res.reply(messages.success(), nftOwner);
+  //     }
+  //   } catch (e) {
+  //     console.log("error in getNftOwner is-->", e);
+  //     return e;
+  //   }
+  // }
+
+  // async getAllnftOwner(req, res) {
+  //   try {
+  //     console.log("All Nft Called -->", req.params.nNFTId);
+
+  //     let nftOwner = {};
+
+  //     nftOwner = await NFTowners.find({ nftId: req.params.nNFTId });
+  //     return res.reply(messages.success(), nftOwner);
+  //   } catch (e) {
+  //     console.log("error in getNftOwner is-->", e);
+  //     return e;
+  //   }
+  // }
+
+  // async mynftlist(req, res) {
+  //   try {
+  //     if (!req.userId) return res.reply(messages.unauthorized());
+
+  //     var nLimit = parseInt(req.body.length);
+  //     var nOffset = parseInt(req.body.start);
+  //     let oTypeQuery = {},
+  //       oSellingTypeQuery = {},
+  //       oSortingOrder = {};
+  //     log.red(req.body);
+  //     if (req.body.eType[0] != "All" && req.body.eType[0] != "") {
+  //       oTypeQuery = {
+  //         $or: [],
+  //       };
+  //       req.body.eType.forEach((element) => {
+  //         oTypeQuery["$or"].push({
+  //           eType: element,
+  //         });
+  //       });
+  //     }
+
+  //     let oCollectionQuery = {};
+  //     if (req.body.sCollection != "All" && req.body.sCollection != "") {
+  //       oCollectionQuery = {
+  //         sCollection: req.body.sCollection,
+  //       };
+  //     }
+
+  //     if (req.body.sSellingType != "") {
+  //       oSellingTypeQuery = {
+  //         eAuctionType: req.body.sSellingType,
+  //       };
+  //     }
+
+  //     if (req.body.sSortingType == "Recently Added") {
+  //       oSortingOrder["sCreated"] = -1;
+  //     } else if (req.body.sSortingType == "Most Viewed") {
+  //       oSortingOrder["nView"] = -1;
+  //     } else if (req.body.sSortingType == "Price Low to High") {
+  //       oSortingOrder["nBasePrice"] = 1;
+  //     } else if (req.body.sSortingType == "Price High to Low") {
+  //       oSortingOrder["nBasePrice"] = -1;
+  //     } else {
+  //       oSortingOrder["_id"] = -1;
+  //     }
+
+  //     let data = await NFT.aggregate([
+  //       {
+  //         $match: {
+  //           $and: [
+  //             oTypeQuery,
+  //             oCollectionQuery,
+  //             oSellingTypeQuery,
+  //             {
+  //               $or: [
+  //                 {
+  //                   oCurrentOwner: mongoose.Types.ObjectId(req.userId),
+  //                 },
+  //               ],
+  //             },
+  //           ],
+  //         },
+  //       },
+  //       {
+  //         $sort: oSortingOrder,
+  //       },
+  //       {
+  //         $project: {
+  //           _id: 1,
+  //           sName: 1,
+  //           eType: 1,
+  //           nBasePrice: 1,
+  //           collectionImage: 1,
+  //           nQuantity: 1,
+  //           nTokenID: 1,
+  //           oCurrentOwner: 1,
+  //           sTransactionStatus: 1,
+  //           eAuctionType: 1,
+
+  //           sGenre: 1,
+  //           sBpm: 1,
+  //           skey_equalTo: 1,
+  //           skey_harmonicTo: 1,
+  //           track_cover: 1,
+
+  //           user_likes: {
+  //             $size: {
+  //               $filter: {
+  //                 input: "$user_likes",
+  //                 as: "user_likes",
+  //                 cond: {
+  //                   $eq: ["$$user_likes", mongoose.Types.ObjectId(req.userId)],
+  //                 },
+  //               },
+  //             },
+  //           },
+  //           user_likes_size: {
+  //             $cond: {
+  //               if: {
+  //                 $isArray: "$user_likes",
+  //               },
+  //               then: {
+  //                 $size: "$user_likes",
+  //               },
+  //               else: 0,
+  //             },
+  //           },
+  //         },
+  //       },
+  //       {
+  //         $project: {
+  //           _id: 1,
+  //           sName: 1,
+  //           eType: 1,
+  //           nBasePrice: 1,
+  //           collectionImage: 1,
+  //           nQuantity: 1,
+  //           nTokenID: 1,
+  //           oCurrentOwner: 1,
+  //           sTransactionStatus: 1,
+  //           eAuctionType: 1,
+  //           sGenre: 1,
+  //           sBpm: 1,
+  //           skey_equalTo: 1,
+  //           skey_harmonicTo: 1,
+  //           track_cover: 1,
+
+  //           is_user_like: {
+  //             $cond: {
+  //               if: {
+  //                 $gte: ["$user_likes", 1],
+  //               },
+  //               then: "true",
+  //               else: "false",
+  //             },
+  //           },
+  //           user_likes_size: 1,
+  //         },
+  //       },
+  //       {
+  //         $lookup: {
+  //           from: "users",
+  //           localField: "oCurrentOwner",
+  //           foreignField: "_id",
+  //           as: "oUser",
+  //         },
+  //       },
+  //       { $unwind: "$oUser" },
+  //       {
+  //         $facet: {
+  //           nfts: [
+  //             {
+  //               $skip: +nOffset,
+  //             },
+  //             {
+  //               $limit: +nLimit,
+  //             },
+  //           ],
+  //           totalCount: [
+  //             {
+  //               $count: "count",
+  //             },
+  //           ],
+  //         },
+  //       },
+  //     ]);
+  //     let iFiltered = data[0].nfts.length;
+  //     if (data[0].totalCount[0] == undefined) {
+  //       return res.reply(messages.success("Data"), {
+  //         data: 0,
+  //         draw: req.body.draw,
+  //         recordsTotal: 0,
+  //         recordsFiltered: iFiltered,
+  //       });
+  //     } else {
+  //       return res.reply(messages.no_prefix("NFT Details"), {
+  //         data: data[0].nfts,
+  //         draw: req.body.draw,
+  //         recordsTotal: data[0].totalCount[0].count,
+  //         recordsFiltered: iFiltered,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
+
+  // async getHotCollections(req, res) {
+  //   try {
+  //     let data = [];
+  //     let setConditions = {};
+  //     let sTextsearch = req.body.sTextsearch;
+  //     const erc721 = req.body.erc721;
+
+  //     if (req.body.conditions) {
+  //       setConditions = req.body.conditions;
+  //     }
+
+  //     //sortKey is the column
+  //     const sortKey = req.body.sortKey ? req.body.sortKey : "";
+
+  //     //sortType will let you choose from ASC 1 or DESC -1
+  //     const sortType = req.body.sortType ? req.body.sortType : -1;
+
+  //     var sortObject = {};
+  //     var stype = sortKey;
+  //     var sdir = sortType;
+  //     sortObject[stype] = sdir;
+
+  //     let CollectionSearchArray = [];
+  //     if (sTextsearch !== "") {
+  //       CollectionSearchArray["sName"] = {
+  //         $regex: new RegExp(sTextsearch),
+  //         $options: "<options>",
+  //       };
+  //     }
+
+  //     if (erc721 !== "" && erc721) {
+  //       CollectionSearchArray["erc721"] = true;
+  //     }
+  //     if (erc721 !== "" && erc721 === false) {
+  //       CollectionSearchArray["erc721"] = false;
+  //     }
+  //     let CollectionSearchObj = Object.assign({}, CollectionSearchArray);
+
+  //     const page = parseInt(req.body.page);
+  //     const limit = parseInt(req.body.limit);
+
+  //     const startIndex = (page - 1) * limit;
+  //     const endIndex = page * limit;
+
+  //     const results = {};
+
+  //     if (
+  //       endIndex < (await Collection.countDocuments(CollectionSearchObj).exec())
+  //     ) {
+  //       results.next = {
+  //         page: page + 1,
+  //         limit: limit,
+  //       };
+  //     }
+
+  //     if (startIndex > 0) {
+  //       results.previous = {
+  //         page: page - 1,
+  //         limit: limit,
+  //       };
+  //     }
+
+  //     let aCollections = await Collection.aggregate([
+  //       {
+  //         $lookup: {
+  //           from: "users",
+  //           localField: "oCreatedBy",
+  //           foreignField: "_id",
+  //           as: "oUser",
+  //         },
+  //       },
+  //       {
+  //         $sort: {
+  //           sCreated: req.body.sortType,
+  //         },
+  //       },
+  //       { $match: CollectionSearchObj },
+  //       {
+  //         $skip: (page - 1) * limit,
+  //       },
+  //       {
+  //         $limit: limit,
+  //       },
+  //     ]);
+
+  //     results.results = aCollections;
+  //     results.count = await Collection.countDocuments(
+  //       CollectionSearchObj
+  //     ).exec();
+  //     console.log("Collections", data);
+  //     res.header("Access-Control-Max-Age", 600);
+  //     return res.reply(messages.no_prefix("Collections List"), results);
+  //   } catch (e) {
+  //     return res.reply(messages.error(e));
+  //   }
+  // }
+
+  // async collectionlistMy(req, res) {
+  //   try {
+  //     if (!req.userId) return res.reply(messages.unauthorized());
+
+  //     var nLimit = parseInt(req.body.length);
+  //     var nOffset = parseInt(req.body.start);
+
+  //     let query = {
+  //       oCreatedBy: mongoose.Types.ObjectId(req.userId),
+  //     };
+  //     if (req && req.body.sTextsearch && req.body.sTextsearch != undefined) {
+  //       query["sName"] = new RegExp(req.body.sTextsearch, "i");
+  //     }
+
+  //     let aCollections = await Collection.aggregate([
+  //       {
+  //         $match: query,
+  //       },
+  //       {
+  //         $lookup: {
+  //           from: "users",
+  //           localField: "oCreatedBy",
+  //           foreignField: "_id",
+  //           as: "oUser",
+  //         },
+  //       },
+  //       {
+  //         $unwind: { preserveNullAndEmptyArrays: true, path: "$oUser" },
+  //       },
+  //       {
+  //         $sort: {
+  //           sCreated: -1,
+  //         },
+  //       },
+  //       {
+  //         $facet: {
+  //           collections: [
+  //             {
+  //               $skip: +nOffset,
+  //             },
+  //             {
+  //               $limit: +nLimit,
+  //             },
+  //           ],
+  //           totalCount: [
+  //             {
+  //               $count: "count",
+  //             },
+  //           ],
+  //         },
+  //       },
+  //     ]);
+
+  //     let iFiltered = aCollections[0].collections.length;
+  //     if (aCollections[0].totalCount[0] == undefined) {
+  //       return res.reply(messages.success("Data"), {
+  //         aCollections: 0,
+  //         draw: req.body.draw,
+  //         recordsTotal: 0,
+  //         recordsFiltered: iFiltered,
+  //       });
+  //     } else {
+  //       return res.reply(messages.no_prefix("Collection Details"), {
+  //         data: aCollections[0].collections,
+  //         draw: req.body.draw,
+  //         recordsTotal: aCollections[0].totalCount[0].count,
+  //         recordsFiltered: iFiltered,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
+
+  // async nftListing(req, res) {
+  //   try {
+  //     var nLimit = parseInt(req.body.length);
+  //     var nOffset = parseInt(req.body.start);
+  //     let sBPMQuery = {};
+  //     let sGenreQuery = {};
+  //     let oTypeQuery = {},
+  //       oSellingTypeQuery = {},
+  //       oSortingOrder = {};
+  //     let oTtextQuery = {
+  //       sName: new RegExp(req.body.sTextsearch, "i"),
+  //     };
+  //     if (req.body.eType[0] != "All" && req.body.eType[0] != "") {
+  //       oTypeQuery = {
+  //         $or: [],
+  //       };
+  //       req.body.eType.forEach((element) => {
+  //         oTypeQuery["$or"].push({
+  //           eType: element,
+  //         });
+  //       });
+  //     }
+  //     if (
+  //       req.body.sFrom &&
+  //       req.body.sFrom != undefined &&
+  //       req.body.sFrom != "" &&
+  //       req.body.sTo &&
+  //       req.body.sTo != undefined &&
+  //       req.body.sTo != ""
+  //     ) {
+  //       sBPMQuery = {
+  //         sBpm: {
+  //           $gte: parseInt(req.body.sFrom),
+  //           $lte: parseInt(req.body.sTo),
+  //         },
+  //       };
+  //     }
+
+  //     if (req.body.sSortingType == "Recently Added") {
+  //       oSortingOrder["sCreated"] = -1;
+  //     } else if (req.body.sSortingType == "Most Viewed") {
+  //       oSortingOrder["nView"] = -1;
+  //     } else if (req.body.sSortingType == "Price Low to High") {
+  //       oSortingOrder["nBasePrice"] = 1;
+  //     } else if (req.body.sSortingType == "Price High to Low") {
+  //       oSortingOrder["nBasePrice"] = -1;
+  //     } else {
+  //       oSortingOrder["_id"] = -1;
+  //     }
+
+  //     if (
+  //       req.body.sGenre &&
+  //       req.body.sGenre != undefined &&
+  //       req.body.sGenre.length
+  //     ) {
+  //       sGenreQuery = {
+  //         sGenre: { $in: req.body.sGenre },
+  //       };
+  //     }
+
+  //     if (req.body.sSellingType != "") {
+  //       oSellingTypeQuery = {
+  //         $or: [
+  //           {
+  //             eAuctionType: req.body.sSellingType,
+  //           },
+  //         ],
+  //       };
+  //     }
+
+  //     let data = await NFT.aggregate([
+  //       {
+  //         $match: {
+  //           $and: [
+  //             {
+  //               sTransactionStatus: {
+  //                 $eq: 1,
+  //               },
+  //             },
+  //             {
+  //               eAuctionType: {
+  //                 $ne: "Unlockable",
+  //               },
+  //             },
+  //             oTypeQuery,
+  //             oTtextQuery,
+  //             oSellingTypeQuery,
+  //             sBPMQuery,
+  //             sGenreQuery,
+  //           ],
+  //         },
+  //       },
+  //       {
+  //         $sort: oSortingOrder,
+  //       },
+  //       {
+  //         $project: {
+  //           _id: 1,
+  //           sName: 1,
+  //           eType: 1,
+  //           nBasePrice: 1,
+  //           collectionImage: 1,
+  //           oCurrentOwner: 1,
+  //           eAuctionType: 1,
+  //           sGenre: 1,
+  //           sBpm: 1,
+  //           skey_equalTo: 1,
+  //           skey_harmonicTo: 1,
+  //           track_cover: 1,
+  //           user_likes: {
+  //             $size: {
+  //               $filter: {
+  //                 input: "$user_likes",
+  //                 as: "user_likes",
+  //                 cond: {
+  //                   $eq: [
+  //                     "$$user_likes",
+  //                     req.userId &&
+  //                     req.userId != undefined &&
+  //                     req.userId != null
+  //                       ? mongoose.Types.ObjectId(req.userId)
+  //                       : "",
+  //                   ],
+  //                 },
+  //               },
+  //             },
+  //           },
+  //           user_likes_size: {
+  //             $cond: {
+  //               if: {
+  //                 $isArray: "$user_likes",
+  //               },
+  //               then: {
+  //                 $size: "$user_likes",
+  //               },
+  //               else: 0,
+  //             },
+  //           },
+  //         },
+  //       },
+  //       {
+  //         $project: {
+  //           _id: 1,
+  //           sName: 1,
+  //           eType: 1,
+  //           nBasePrice: 1,
+  //           collectionImage: 1,
+  //           oCurrentOwner: 1,
+  //           eAuctionType: 1,
+  //           sGenre: 1,
+  //           sBpm: 1,
+  //           skey_equalTo: 1,
+  //           skey_harmonicTo: 1,
+  //           track_cover: 1,
+  //           is_user_like: {
+  //             $cond: {
+  //               if: {
+  //                 $gte: ["$user_likes", 1],
+  //               },
+  //               then: "true",
+  //               else: "false",
+  //             },
+  //           },
+  //           user_likes_size: 1,
+  //         },
+  //       },
+  //       {
+  //         $lookup: {
+  //           from: "users",
+  //           localField: "oCurrentOwner",
+  //           foreignField: "_id",
+  //           as: "oUser",
+  //         },
+  //       },
+  //       { $unwind: "$oUser" },
+  //       {
+  //         $facet: {
+  //           nfts: [
+  //             {
+  //               $skip: +nOffset,
+  //             },
+  //             {
+  //               $limit: +nLimit,
+  //             },
+  //           ],
+  //           totalCount: [
+  //             {
+  //               $count: "count",
+  //             },
+  //           ],
+  //         },
+  //       },
+  //     ]);
+  //     let iFiltered = data[0].nfts.length;
+  //     if (data[0].totalCount[0] == undefined) {
+  //       return res.reply(messages.success("Data"), {
+  //         data: 0,
+  //         draw: req.body.draw,
+  //         recordsTotal: 0,
+  //         recordsFiltered: iFiltered,
+  //       });
+  //     } else {
+  //       return res.reply(messages.no_prefix("NFT Details"), {
+  //         data: data[0].nfts,
+  //         draw: req.body.draw,
+  //         recordsTotal: data[0].totalCount[0].count,
+  //         recordsFiltered: iFiltered,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
+
+  // async nftID(req, res) {
+  //   try {
+  //     if (!req.params.nNFTId) return res.reply(messages.not_found("NFT ID"));
+
+  //     if (!validators.isValidObjectID(req.params.nNFTId))
+  //       res.reply(messages.invalid("NFT ID"));
+
+  //     let aNFT = await NFT.findById(req.params.nNFTId).populate({
+  //       path: "nCreater",
+  //       options: {
+  //         limit: 1,
+  //       },
+  //       select: {
+  //         sWalletAddress: 1,
+  //         _id: 1,
+  //         sProfilePicUrl: 1,
+  //       },
+  //     });
+
+  //     if (!aNFT) return res.reply(messages.not_found("NFT"));
+  //     aNFT = aNFT.toObject();
+  //     aNFT.sCollectionDetail = {};
+
+  //     aNFT.sCollectionDetail = await Collection.findOne({
+  //       sName:
+  //         aNFT.sCollection && aNFT.sCollection != undefined
+  //           ? aNFT.sCollection
+  //           : "-",
+  //     });
+
+  //     var token = req.headers.authorization;
+
+  //     req.userId =
+  //       req.userId && req.userId != undefined && req.userId != null
+  //         ? req.userId
+  //         : "";
+
+  //     let likeARY =
+  //       aNFT.user_likes && aNFT.user_likes.length
+  //         ? aNFT.user_likes.filter((v) => v.toString() == req.userId.toString())
+  //         : [];
+
+  //     // if (likeARY && likeARY.length) {
+  //     //   aNFT.is_user_like = "true";
+  //     // } else {
+  //     //   aNFT.is_user_like = "false";
+  //     // }
+
+  //     //
+  //     if (token) {
+  //       token = token.replace("Bearer ", "");
+  //       jwt.verify(token, process.env.JWT_SECRET, function (err, decoded) {
+  //         if (decoded) req.userId = decoded.id;
+  //       });
+
+  //       if (aNFT.oCurrentOwner._id != req.userId)
+  //         await NFT.findByIdAndUpdate(req.params.nNFTId, {
+  //           $inc: {
+  //             nView: 1,
+  //           },
+  //         });
+  //     }
+  //     aNFT.loggedinUserId = req.userId;
+  //     console.log("---------------------------8");
+
+  //     if (!aNFT) {
+  //       console.log("---------------------------9");
+
+  //       return res.reply(messages.not_found("NFT"));
+  //     }
+  //     console.log("---------------------------10");
+
+  //     return res.reply(messages.success(), aNFT);
+  //   } catch (error) {
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
+
+  // async deleteNFT(req, res) {
+  //   try {
+  //     if (!req.params.nNFTId) return res.reply(messages.not_found("NFT ID"));
+
+  //     if (!validators.isValidObjectID(req.params.nNFTId))
+  //       res.reply(messages.invalid("NFT ID"));
+
+  //     await NFT.findByIdAndDelete(req.params.nNFTId);
+  //     return res.reply(messages.success("NFT deleted"));
+  //   } catch (error) {
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
+
+  // async getCollectionDetails(req, res) {
+  //   try {
+  //     // if (!req.userId) {
+  //     //     return res.reply(messages.unauthorized());
+  //     // }
+  //     Collection.findOne({ _id: req.body.collectionId }, (err, collection) => {
+  //       if (err) return res.reply(messages.server_error());
+  //       if (!collection) return res.reply(messages.not_found("Collection"));
+  //       return res.reply(messages.no_prefix("Collection Details"), collection);
+  //     });
+  //   } catch (error) {
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
+
+  // async setTransactionHash(req, res) {
+  //   try {
+  //     // if (!req.body.nTokenID) return res.reply(messages.not_found("Token ID"));
+  //     if (!req.body.nNFTId) return res.reply(messages.not_found("NFT ID"));
+  //     if (!req.body.sTransactionHash)
+  //       return res.reply(messages.not_found("Transaction Hash"));
+
+  //     if (!validators.isValidObjectID(req.body.nNFTId))
+  //       res.reply(messages.invalid("NFT ID"));
+  //     // if (req.body.nTokenID <= 0) res.reply(messages.invalid("Token ID"));
+  //     if (!validators.isValidTransactionHash(req.body.sTransactionHash))
+  //       res.reply(messages.invalid("Transaction Hash"));
+
+  //     NFT.findByIdAndUpdate(
+  //       req.body.nNFTId,
+  //       {
+  //         // nTokenID: req.body.nTokenID,
+  //         sTransactionHash: req.body.sTransactionHash,
+  //         sTransactionStatus: 0,
+  //       },
+  //       (err, nft) => {
+  //         if (err) return res.reply(messages.server_error());
+  //         if (!nft) return res.reply(messages.not_found("NFT"));
+
+  //         return res.reply(messages.updated("NFT Details"));
+  //       }
+  //     );
+  //   } catch (error) {
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
+
+  // async landing(req, res) {
+  //   try {
+  //     console.log("---------------------1");
+
+  //     req.userId =
+  //       req.userId && req.userId != undefined && req.userId != null
+  //         ? req.userId
+  //         : "";
+  //     console.log("---------------------2", req.userId);
+
+  //     let data = await NFT.aggregate([
+  //       {
+  //         $facet: {
+  //           recentlyAdded: [
+  //             {
+  //               $match: {
+  //                 sTransactionStatus: {
+  //                   $eq: 1,
+  //                 },
+  //                 eAuctionType: {
+  //                   $ne: "Unlockable",
+  //                 },
+  //               },
+  //             },
+  //             {
+  //               $sort: {
+  //                 _id: -1,
+  //               },
+  //             },
+  //             {
+  //               $limit: 10,
+  //             },
+  //             {
+  //               $lookup: {
+  //                 from: "users",
+  //                 localField: "oCurrentOwner",
+  //                 foreignField: "_id",
+  //                 as: "aCurrentOwner",
+  //               },
+  //             },
+  //             { $unwind: "$aCurrentOwner" },
+  //             {
+  //               $project: {
+  //                 collectionImage: 1,
+  //                 eType: 1,
+  //                 sCreated: 1,
+  //                 oCurrentOwner: 1,
+  //                 oPostedBy: 1,
+  //                 sCollection: 1,
+  //                 sName: 1,
+  //                 sCollaborator: 1,
+  //                 sNftdescription: 1,
+  //                 nCollaboratorPercentage: 1,
+  //                 sSetRRoyaltyPercentage: 1,
+  //                 nQuantity: 1,
+  //                 nView: 1,
+  //                 nBasePrice: 1,
+  //                 eAuctionType: 1,
+  //                 nTokenID: 1,
+  //                 sTransactionHash: 1,
+  //                 sTransactionStatus: 1,
+  //                 aCurrentOwner: 1,
+  //                 sGenre: 1,
+  //                 sBpm: 1,
+  //                 skey_equalTo: 1,
+  //                 skey_harmonicTo: 1,
+  //                 track_cover: 1,
+  //                 user_likes: {
+  //                   $size: {
+  //                     $filter: {
+  //                       input: "$user_likes",
+  //                       as: "user_likes",
+  //                       cond: {
+  //                         $eq: [
+  //                           "$$user_likes",
+  //                           req.userId &&
+  //                           req.userId != undefined &&
+  //                           req.userId != null
+  //                             ? mongoose.Types.ObjectId(req.userId)
+  //                             : "",
+  //                         ],
+  //                       },
+  //                     },
+  //                   },
+  //                 },
+  //                 user_likes_size: {
+  //                   $cond: {
+  //                     if: {
+  //                       $isArray: "$user_likes",
+  //                     },
+  //                     then: {
+  //                       $size: "$user_likes",
+  //                     },
+  //                     else: 0,
+  //                   },
+  //                 },
+  //               },
+  //             },
+  //             {
+  //               $project: {
+  //                 collectionImage: 1,
+  //                 eType: 1,
+  //                 sCreated: 1,
+  //                 oCurrentOwner: 1,
+  //                 oPostedBy: 1,
+  //                 sCollection: 1,
+  //                 sName: 1,
+  //                 sCollaborator: 1,
+  //                 sNftdescription: 1,
+  //                 nCollaboratorPercentage: 1,
+  //                 sSetRRoyaltyPercentage: 1,
+  //                 nQuantity: 1,
+  //                 nView: 1,
+  //                 nBasePrice: 1,
+  //                 eAuctionType: 1,
+  //                 nTokenID: 1,
+  //                 sGenre: 1,
+  //                 sBpm: 1,
+  //                 skey_equalTo: 1,
+  //                 skey_harmonicTo: 1,
+  //                 track_cover: 1,
+  //                 sTransactionHash: 1,
+  //                 sTransactionStatus: 1,
+  //                 aCurrentOwner: 1,
+  //                 is_user_like: {
+  //                   $cond: {
+  //                     if: {
+  //                       $gte: ["$user_likes", 1],
+  //                     },
+  //                     then: "true",
+  //                     else: "false",
+  //                   },
+  //                 },
+  //                 user_likes_size: 1,
+  //               },
+  //             },
+  //           ],
+  //           onSale: [
+  //             {
+  //               $match: {
+  //                 sTransactionStatus: {
+  //                   $eq: 1,
+  //                 },
+  //                 eAuctionType: {
+  //                   $eq: "Fixed Sale",
+  //                 },
+  //               },
+  //             },
+  //             {
+  //               $sort: {
+  //                 _id: -1,
+  //               },
+  //             },
+  //             {
+  //               $limit: 10,
+  //             },
+  //             {
+  //               $lookup: {
+  //                 from: "users",
+  //                 localField: "oCurrentOwner",
+  //                 foreignField: "_id",
+  //                 as: "aCurrentOwner",
+  //               },
+  //             },
+  //             { $unwind: "$aCurrentOwner" },
+  //             {
+  //               $project: {
+  //                 collectionImage: 1,
+  //                 eType: 1,
+  //                 sCreated: 1,
+  //                 oCurrentOwner: 1,
+  //                 oPostedBy: 1,
+  //                 sCollection: 1,
+  //                 sName: 1,
+  //                 sCollaborator: 1,
+  //                 sNftdescription: 1,
+  //                 nCollaboratorPercentage: 1,
+  //                 sSetRRoyaltyPercentage: 1,
+  //                 nQuantity: 1,
+  //                 nView: 1,
+  //                 nBasePrice: 1,
+  //                 eAuctionType: 1,
+  //                 sGenre: 1,
+  //                 sBpm: 1,
+  //                 skey_equalTo: 1,
+  //                 skey_harmonicTo: 1,
+  //                 track_cover: 1,
+  //                 nTokenID: 1,
+  //                 sTransactionHash: 1,
+  //                 sTransactionStatus: 1,
+  //                 aCurrentOwner: 1,
+  //                 user_likes: {
+  //                   $size: {
+  //                     $filter: {
+  //                       input: "$user_likes",
+  //                       as: "user_likes",
+  //                       cond: {
+  //                         $eq: [
+  //                           "$$user_likes",
+  //                           req.userId &&
+  //                           req.userId != undefined &&
+  //                           req.userId != null
+  //                             ? mongoose.Types.ObjectId(req.userId)
+  //                             : "",
+  //                         ],
+  //                       },
+  //                     },
+  //                   },
+  //                 },
+  //                 user_likes_size: {
+  //                   $cond: {
+  //                     if: {
+  //                       $isArray: "$user_likes",
+  //                     },
+  //                     then: {
+  //                       $size: "$user_likes",
+  //                     },
+  //                     else: 0,
+  //                   },
+  //                 },
+  //               },
+  //             },
+  //             {
+  //               $project: {
+  //                 collectionImage: 1,
+  //                 eType: 1,
+  //                 sCreated: 1,
+  //                 oCurrentOwner: 1,
+  //                 oPostedBy: 1,
+  //                 sCollection: 1,
+  //                 sName: 1,
+  //                 sCollaborator: 1,
+  //                 sNftdescription: 1,
+  //                 nCollaboratorPercentage: 1,
+  //                 sSetRRoyaltyPercentage: 1,
+  //                 nQuantity: 1,
+  //                 sGenre: 1,
+  //                 sBpm: 1,
+  //                 skey_equalTo: 1,
+  //                 skey_harmonicTo: 1,
+  //                 track_cover: 1,
+  //                 nView: 1,
+  //                 nBasePrice: 1,
+  //                 eAuctionType: 1,
+  //                 nTokenID: 1,
+  //                 sTransactionHash: 1,
+  //                 sTransactionStatus: 1,
+  //                 aCurrentOwner: 1,
+  //                 is_user_like: {
+  //                   $cond: {
+  //                     if: {
+  //                       $gte: ["$user_likes", 1],
+  //                     },
+  //                     then: "true",
+  //                     else: "false",
+  //                   },
+  //                 },
+  //                 user_likes_size: 1,
+  //               },
+  //             },
+  //           ],
+  //           onAuction: [
+  //             {
+  //               $match: {
+  //                 sTransactionStatus: {
+  //                   $eq: 1,
+  //                 },
+  //                 eAuctionType: {
+  //                   $eq: "Auction",
+  //                 },
+  //               },
+  //             },
+  //             {
+  //               $sort: {
+  //                 _id: -1,
+  //               },
+  //             },
+  //             {
+  //               $limit: 10,
+  //             },
+  //             {
+  //               $lookup: {
+  //                 from: "users",
+  //                 localField: "oCurrentOwner",
+  //                 foreignField: "_id",
+  //                 as: "aCurrentOwner",
+  //               },
+  //             },
+  //             { $unwind: "$aCurrentOwner" },
+  //             {
+  //               $project: {
+  //                 collectionImage: 1,
+  //                 eType: 1,
+  //                 sCreated: 1,
+  //                 oCurrentOwner: 1,
+  //                 oPostedBy: 1,
+  //                 sCollection: 1,
+  //                 sName: 1,
+  //                 sCollaborator: 1,
+  //                 sNftdescription: 1,
+  //                 nCollaboratorPercentage: 1,
+  //                 sSetRRoyaltyPercentage: 1,
+  //                 nQuantity: 1,
+  //                 nView: 1,
+  //                 sGenre: 1,
+  //                 sBpm: 1,
+  //                 skey_equalTo: 1,
+  //                 skey_harmonicTo: 1,
+  //                 track_cover: 1,
+  //                 nBasePrice: 1,
+  //                 eAuctionType: 1,
+  //                 nTokenID: 1,
+  //                 sTransactionHash: 1,
+  //                 sTransactionStatus: 1,
+  //                 aCurrentOwner: 1,
+  //                 user_likes: {
+  //                   $size: {
+  //                     $filter: {
+  //                       input: "$user_likes",
+  //                       as: "user_likes",
+  //                       cond: {
+  //                         $eq: [
+  //                           "$$user_likes",
+  //                           req.userId &&
+  //                           req.userId != undefined &&
+  //                           req.userId != null
+  //                             ? mongoose.Types.ObjectId(req.userId)
+  //                             : "",
+  //                         ],
+  //                       },
+  //                     },
+  //                   },
+  //                 },
+  //                 user_likes_size: {
+  //                   $cond: {
+  //                     if: {
+  //                       $isArray: "$user_likes",
+  //                     },
+  //                     then: {
+  //                       $size: "$user_likes",
+  //                     },
+  //                     else: 0,
+  //                   },
+  //                 },
+  //               },
+  //             },
+  //             {
+  //               $project: {
+  //                 collectionImage: 1,
+  //                 eType: 1,
+  //                 sCreated: 1,
+  //                 oCurrentOwner: 1,
+  //                 oPostedBy: 1,
+  //                 sCollection: 1,
+  //                 sName: 1,
+  //                 sCollaborator: 1,
+  //                 sNftdescription: 1,
+  //                 sGenre: 1,
+  //                 sBpm: 1,
+  //                 skey_equalTo: 1,
+  //                 skey_harmonicTo: 1,
+  //                 track_cover: 1,
+  //                 nCollaboratorPercentage: 1,
+  //                 sSetRRoyaltyPercentage: 1,
+  //                 nQuantity: 1,
+  //                 nView: 1,
+  //                 nBasePrice: 1,
+  //                 eAuctionType: 1,
+  //                 nTokenID: 1,
+  //                 sTransactionHash: 1,
+  //                 sTransactionStatus: 1,
+  //                 aCurrentOwner: 1,
+  //                 is_user_like: {
+  //                   $cond: {
+  //                     if: {
+  //                       $gte: ["$user_likes", 1],
+  //                     },
+  //                     then: "true",
+  //                     else: "false",
+  //                   },
+  //                 },
+  //                 user_likes_size: 1,
+  //               },
+  //             },
+  //           ],
+  //         },
+  //       },
+  //     ]);
+  //     console.log("---------------------data", data);
+
+  //     data[0].users = [];
+  //     data[0].users = await User.find({ sRole: "user" });
+
+  //     let agQuery = [
+  //       {
+  //         $lookup: {
+  //           from: "users",
+  //           localField: "oCreatedBy",
+  //           foreignField: "_id",
+  //           as: "oUser",
+  //         },
+  //       },
+  //       {
+  //         $sort: {
+  //           sCreated: -1,
+  //         },
+  //       },
+  //       { $unwind: "$oUser" },
+  //     ];
+
+  //     data[0].collections = [];
+  //     data[0].collections = await Collection.aggregate(agQuery);
+  //     return res.reply(messages.success(), data[0]);
+  //   } catch (error) {
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
+
+  // async toggleSellingType(req, res) {
+  //   try {
+  //     if (!req.userId) return res.reply(messages.unauthorized());
+
+  //     if (!req.body.nNFTId) return res.reply(messages.not_found("NFT ID"));
+  //     if (!req.body.sSellingType)
+  //       return res.reply(messages.not_found("Selling Type"));
+
+  //     if (!validators.isValidObjectID(req.body.nNFTId))
+  //       return res.reply(messages.invalid("NFT ID"));
+  //     if (!validators.isValidSellingType(req.body.sSellingType))
+  //       return res.reply(messages.invalid("Selling Type"));
+
+  //     let oNFT = await NFT.findById(req.body.nNFTId);
+
+  //     if (!oNFT) return res.reply(messages.not_found("NFT"));
+  //     if (oNFT.oCurrentOwner != req.userId)
+  //       return res.reply(
+  //         message.bad_request("Only NFT Owner Can Set Selling Type")
+  //       );
+
+  //     let BIdsExist = await Bid.find({
+  //       oNFTId: mongoose.Types.ObjectId(req.body.nNFTId),
+  //       sTransactionStatus: 1,
+  //       eBidStatus: "Bid",
+  //     });
+
+  //     if (BIdsExist && BIdsExist != undefined && BIdsExist.length) {
+  //       return res.reply(
+  //         messages.bad_request("Please Cancel Active bids on this NFT.")
+  //       );
+  //     } else {
+  //       let updObj = {
+  //         eAuctionType: req.body.sSellingType,
+  //       };
+
+  //       if (
+  //         req.body.auction_end_date &&
+  //         req.body.auction_end_date != undefined
+  //       ) {
+  //         updObj.auction_end_date = req.body.auction_end_date;
+  //       }
+  //       NFT.findByIdAndUpdate(req.body.nNFTId, updObj, (err, nft) => {
+  //         if (err) return res.reply(messages.server_error());
+  //         if (!nft) return res.reply(messages.not_found("NFT"));
+
+  //         return res.reply(messages.updated("NFT Details"));
+  //       });
+  //     }
+  //   } catch (error) {
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
+
+  // async allCollectionWiselist(req, res) {
+  //   console.log("------data--------", req.body);
+  //   //    let agQuery = [ {
+  //   //         '$lookup': {
+  //   //             'from': 'users',
+  //   //             'localField': 'oCreatedBy',
+  //   //             'foreignField': '_id',
+  //   //             'as': 'oUser'
+  //   //         }
+  //   //     }, {
+  //   //         '$sort': {
+  //   //             'sCreated': -1
+  //   //         }
+  //   //     }]
+
+  //   try {
+  //     //         let aCollections = await Collection.aggregate(agQuery);
+
+  //     //         if (!aCollections) {
+  //     //             return res.reply(messages.not_found('collection'));
+  //     //         }
+
+  //     //         return res.reply(messages.no_prefix('Collection Details'), aCollections);
+
+  //     //     } catch (error) {
+  //     //         return res.reply(messages.server_error());
+  //     //     }
+
+  //     var nLimit = parseInt(req.body.length);
+  //     var nOffset = parseInt(req.body.start);
+  //     let oTypeQuery = {},
+  //       oSellingTypeQuery = {},
+  //       oCollectionQuery = {},
+  //       oSortingOrder = {};
+  //     let oTtextQuery = {
+  //       sName: new RegExp(req.body.sTextsearch, "i"),
+  //     };
+  //     if (req.body.eType[0] != "All" && req.body.eType[0] != "") {
+  //       oTypeQuery = {
+  //         $or: [],
+  //       };
+  //       req.body.eType.forEach((element) => {
+  //         oTypeQuery["$or"].push({
+  //           eType: element,
+  //         });
+  //       });
+  //     }
+  //     if (req.body.sCollection != "All" && req.body.sCollection != "") {
+  //       oCollectionQuery = {
+  //         $or: [],
+  //       };
+  //       oCollectionQuery["$or"].push({
+  //         sCollection: req.body.sCollection,
+  //       });
+  //     }
+
+  //     if (req.body.sSortingType == "Recently Added") {
+  //       oSortingOrder["sCreated"] = -1;
+  //     } else if (req.body.sSortingType == "Most Viewed") {
+  //       oSortingOrder["nView"] = -1;
+  //     } else if (req.body.sSortingType == "Price Low to High") {
+  //       oSortingOrder["nBasePrice"] = 1;
+  //     } else if (req.body.sSortingType == "Price High to Low") {
+  //       oSortingOrder["nBasePrice"] = -1;
+  //     } else {
+  //       oSortingOrder["_id"] = -1;
+  //     }
+
+  //     if (req.body.sSellingType != "") {
+  //       oSellingTypeQuery = {
+  //         $or: [
+  //           {
+  //             eAuctionType: req.body.sSellingType,
+  //           },
+  //         ],
+  //       };
+  //     }
+
+  //     let data = await NFT.aggregate([
+  //       {
+  //         $match: {
+  //           $and: [
+  //             {
+  //               sTransactionStatus: {
+  //                 $eq: 1,
+  //               },
+  //             },
+  //             {
+  //               eAuctionType: {
+  //                 $ne: "Unlockable",
+  //               },
+  //             },
+  //             oTypeQuery,
+  //             oCollectionQuery,
+  //             oTtextQuery,
+  //             oSellingTypeQuery,
+  //           ],
+  //         },
+  //       },
+  //       {
+  //         $sort: oSortingOrder,
+  //       },
+  //       {
+  //         $project: {
+  //           _id: 1,
+  //           sName: 1,
+  //           eType: 1,
+  //           nBasePrice: 1,
+  //           collectionImage: 1,
+  //           oCurrentOwner: 1,
+  //           eAuctionType: 1,
+  //           sCollection: 1,
+  //           sGenre: 1,
+  //           sBpm: 1,
+  //           skey_equalTo: 1,
+  //           skey_harmonicTo: 1,
+  //           track_cover: 1,
+  //           user_likes: {
+  //             $size: {
+  //               $filter: {
+  //                 input: "$user_likes",
+  //                 as: "user_likes",
+  //                 cond: {
+  //                   $eq: [
+  //                     "$$user_likes",
+  //                     req.userId &&
+  //                     req.userId != undefined &&
+  //                     req.userId != null
+  //                       ? mongoose.Types.ObjectId(req.userId)
+  //                       : "",
+  //                   ],
+  //                 },
+  //               },
+  //             },
+  //           },
+  //           user_likes_size: {
+  //             $cond: {
+  //               if: {
+  //                 $isArray: "$user_likes",
+  //               },
+  //               then: {
+  //                 $size: "$user_likes",
+  //               },
+  //               else: 0,
+  //             },
+  //           },
+  //         },
+  //       },
+  //       {
+  //         $project: {
+  //           _id: 1,
+  //           sName: 1,
+  //           eType: 1,
+  //           nBasePrice: 1,
+  //           collectionImage: 1,
+  //           oCurrentOwner: 1,
+  //           eAuctionType: 1,
+  //           sCollection: 1,
+  //           sGenre: 1,
+  //           sBpm: 1,
+  //           skey_equalTo: 1,
+  //           skey_harmonicTo: 1,
+  //           track_cover: 1,
+  //           is_user_like: {
+  //             $cond: {
+  //               if: {
+  //                 $gte: ["$user_likes", 1],
+  //               },
+  //               then: "true",
+  //               else: "false",
+  //             },
+  //           },
+  //           user_likes_size: 1,
+  //         },
+  //       },
+  //       {
+  //         $lookup: {
+  //           from: "users",
+  //           localField: "oCurrentOwner",
+  //           foreignField: "_id",
+  //           as: "oUser",
+  //         },
+  //       },
+  //       { $unwind: "$oUser" },
+  //       {
+  //         $facet: {
+  //           nfts: [
+  //             {
+  //               $skip: +nOffset,
+  //             },
+  //             {
+  //               $limit: +nLimit,
+  //             },
+  //           ],
+  //           totalCount: [
+  //             {
+  //               $count: "count",
+  //             },
+  //           ],
+  //         },
+  //       },
+  //     ]);
+  //     let iFiltered = data[0].nfts.length;
+  //     if (data[0].totalCount[0] == undefined) {
+  //       return res.reply(messages.success("Data"), {
+  //         data: 0,
+  //         draw: req.body.draw,
+  //         recordsTotal: 0,
+  //         recordsFiltered: iFiltered,
+  //       });
+  //     } else {
+  //       return res.reply(messages.no_prefix("NFT Details"), {
+  //         data: data[0].nfts,
+  //         draw: req.body.draw,
+  //         recordsTotal: data[0].totalCount[0].count,
+  //         recordsFiltered: iFiltered,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
+
+  // async updateBasePrice(req, res) {
+  //   try {
+  //     if (!req.userId) return res.reply(messages.unauthorized());
+
+  //     console.log(req.body);
+  //     if (!req.body.nNFTId) return res.reply(messages.not_found("NFT ID"));
+  //     if (!req.body.nBasePrice)
+  //       return res.reply(messages.not_found("Base Price"));
+
+  //     if (!validators.isValidObjectID(req.body.nNFTId))
+  //       return res.reply(messages.invalid("NFT ID"));
+  //     if (
+  //       isNaN(req.body.nBasePrice) ||
+  //       parseFloat(req.body.nBasePrice) <= 0 ||
+  //       parseFloat(req.body.nBasePrice) <= 0.000001
+  //     )
+  //       return res.reply(messages.invalid("Base Price"));
+
+  //     let oNFT = await NFT.findById(req.body.nNFTId);
+
+  //     if (!oNFT) return res.reply(messages.not_found("NFT"));
+  //     if (oNFT.oCurrentOwner != req.userId)
+  //       return res.reply(
+  //         message.bad_request("Only NFT Owner Can Set Base Price")
+  //       );
+
+  //     let BIdsExist = await Bid.find({
+  //       oNFTId: mongoose.Types.ObjectId(req.body.nNFTId),
+  //       sTransactionStatus: 1,
+  //       eBidStatus: "Bid",
+  //     });
+
+  //     if (BIdsExist && BIdsExist != undefined && BIdsExist.length) {
+  //       return res.reply(
+  //         messages.bad_request("Please Cancel Active bids on this NFT.")
+  //       );
+  //     } else {
+  //       NFT.findByIdAndUpdate(
+  //         req.body.nNFTId,
+  //         {
+  //           nBasePrice: req.body.nBasePrice,
+  //         },
+  //         (err, nft) => {
+  //           if (err) return res.reply(messages.server_error());
+  //           if (!nft) return res.reply(messages.not_found("NFT"));
+
+  //           return res.reply(messages.updated("Price"));
+  //         }
+  //       );
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
+
+  // async uploadImage(req, res) {
+  //   try {
+  //     allowedMimes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
+  //     errAllowed = "JPG, JPEG, PNG,GIF";
+
+  //     upload(req, res, function (error) {
+  //       if (error) {
+  //         //instanceof multer.MulterError
+  //         fs.unlinkSync(req.file.path);
+  //         return res.reply(messages.bad_request(error.message));
+  //       } else {
+  //         if (!req.file) {
+  //           fs.unlinkSync(req.file.path);
+  //           return res.reply(messages.not_found("File"));
+  //         }
+
+  //         const oOptions = {
+  //           pinataMetadata: {
+  //             name: req.file.originalname,
+  //           },
+  //           pinataOptions: {
+  //             cidVersion: 0,
+  //           },
+  //         };
+  //         const readableStreamForFile = fs.createReadStream(req.file.path);
+  //         let testFile = fs.readFileSync(req.file.path);
+  //         //Creating buffer for ipfs function to add file to the system
+  //         let testBuffer = new Buffer(testFile);
+  //         try {
+  //           pinata
+  //             .pinFileToIPFS(readableStreamForFile, oOptions)
+  //             .then(async (result) => {
+  //               fs.unlinkSync(req.file.path);
+  //               return res.reply(messages.created("Collection"), {
+  //                 track_cover: result.IpfsHash,
+  //               });
+  //             })
+  //             .catch((err) => {
+  //               //handle error here
+  //               return res.reply(messages.error());
+  //             });
+  //         } catch (err) {
+  //           console.log("err", err);
+  //         }
+  //       }
+  //     });
+  //   } catch (error) {
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
+
+  // async setNFTOrder(req, res) {
+  //   try {
+  //     let aNft = await NFT.findById(req.body.nftId);
+  //     if (!aNft) {
+  //       return res.reply(messages.not_found("nft"));
+  //     }
+
+  //     aNft.nOrders.push(req.body.orderId);
+  //     await aNft.save();
+
+  //     return res.reply(messages.updated("nfts List"), aNft);
+  //   } catch (e) {
+  //     return res.reply(messages.error(e));
+  //   }
+  // }
+
+  // async getUserLikedNfts(req, res) {
+  //   try {
+  //     let data = [];
+
+  //     if (!req.body.userId)
+  //       res.reply(messages.invalid_req("User Id is required"));
+
+  //     //sortKey is the column
+  //     const sortKey = req.body.sortKey ? req.body.sortKey : "";
+
+  //     //sortType will let you choose from ASC 1 or DESC -1
+  //     const sortType = req.body.sortType ? req.body.sortType : -1;
+
+  //     var sortObject = {};
+  //     var stype = sortKey;
+  //     var sdir = sortType;
+  //     sortObject[stype] = sdir;
+
+  //     const page = parseInt(req.body.page);
+  //     const limit = parseInt(req.body.limit);
+
+  //     const startIndex = (page - 1) * limit;
+  //     const endIndex = page * limit;
+
+  //     const results = {};
+
+  //     if (
+  //       endIndex <
+  //       (await NFT.countDocuments({
+  //         nUser_likes: { $in: [mongoose.Types.ObjectId(req.body.userId)] },
+  //       }).exec())
+  //     ) {
+  //       results.next = {
+  //         page: page + 1,
+  //         limit: limit,
+  //       };
+  //     }
+
+  //     if (startIndex > 0) {
+  //       results.previous = {
+  //         page: page - 1,
+  //         limit: limit,
+  //       };
+  //     }
+
+  //     await NFT.find({
+  //       nUser_likes: { $in: [mongoose.Types.ObjectId(req.body.userId)] },
+  //     })
+  //       .select({
+  //         nTitle: 1,
+  //         nCollection: 1,
+  //         nHash: 1,
+  //         nType: 1,
+  //         nUser_likes: 1,
+  //         nNftImage: 1,
+  //         nLazyMintingStatus: 1,
+  //       })
+  //       .populate({
+  //         path: "nOrders",
+  //         options: {
+  //           limit: 1,
+  //         },
+  //         select: {
+  //           oPrice: 1,
+  //           oType: 1,
+  //           oValidUpto: 1,
+  //           auction_end_date: 1,
+  //           oStatus: 1,
+  //           _id: 0,
+  //         },
+  //       })
+  //       .populate({
+  //         path: "nCreater",
+  //         options: {
+  //           limit: 1,
+  //         },
+  //         select: {
+  //           _id: 1,
+  //           sProfilePicUrl: 1,
+  //           sWalletAddress: 1,
+  //         },
+  //       })
+  //       .limit(limit)
+  //       .skip(startIndex)
+  //       .exec()
+  //       .then((res) => {
+  //         data.push(res);
+  //       })
+  //       .catch((e) => {
+  //         console.log("Error", e);
+  //       });
+
+  //     results.count = await NFT.countDocuments({
+  //       nUser_likes: { $in: [mongoose.Types.ObjectId(req.body.userId)] },
+  //     }).exec();
+  //     results.results = data;
+
+  //     return res.reply(messages.success("NFTs List Liked By User"), results);
+  //   } catch (error) {
+  //     console.log("Error:", error);
+  //     return res.reply(messages.error());
+  //   }
+  // }
+
+  // async transferNfts(req, res) {
+  //   //deduct previous owner
+  //   console.log("req", req.body);
+  //   try {
+  //     if (!req.userId) return res.reply(messages.unauthorized());
+
+  //     let _NFT = await NFT.findOne({
+  //       _id: mongoose.Types.ObjectId(req.body.nftId),
+  //       "nOwnedBy.address": req.body.sender,
+  //     }).select("nOwnedBy -_id");
+
+  //     console.log("_NFT-------->", _NFT);
+  //     let currentQty = _NFT.nOwnedBy.find(
+  //       (o) => o.address === req.body.sender.toLowerCase()
+  //     ).quantity;
+  //     let boughtQty = parseInt(req.body.qty);
+  //     let leftQty = currentQty - boughtQty;
+  //     if (leftQty < 1) {
+  //       await NFT.findOneAndUpdate(
+  //         { _id: mongoose.Types.ObjectId(req.body.nftId) },
+  //         {
+  //           $pull: {
+  //             nOwnedBy: { address: req.body.sender },
+  //           },
+  //         }
+  //       ).catch((e) => {
+  //         console.log("Error1", e.message);
+  //       });
+  //     } else {
+  //       await NFT.findOneAndUpdate(
+  //         {
+  //           _id: mongoose.Types.ObjectId(req.body.nftId),
+  //           "nOwnedBy.address": req.body.sender,
+  //         },
+  //         {
+  //           $set: {
+  //             "nOwnedBy.$.quantity": parseInt(leftQty),
+  //           },
+  //         }
+  //       ).catch((e) => {
+  //         console.log("Error2", e.message);
+  //       });
+  //     }
+
+  //     //Credit the buyer
+  //     console.log("Crediting Buyer");
+
+  //     let subDocId = await NFT.exists({
+  //       _id: mongoose.Types.ObjectId(req.body.nftId),
+  //       "nOwnedBy.address": req.body.receiver,
+  //     });
+  //     if (subDocId) {
+  //       console.log("Subdocument Id", subDocId);
+
+  //       let _NFTB = await NFT.findOne({
+  //         _id: mongoose.Types.ObjectId(req.body.nftId),
+  //         "nOwnedBy.address": req.body.receiver,
+  //       }).select("nOwnedBy -_id");
+  //       console.log("_NFTB-------->", _NFTB);
+  //       console.log(
+  //         "Quantity found for receiver",
+  //         _NFTB.nOwnedBy.find(
+  //           (o) => o.address === req.body.receiver.toLowerCase()
+  //         ).quantity
+  //       );
+  //       currentQty = _NFTB.nOwnedBy.find(
+  //         (o) => o.address === req.body.receiver.toLowerCase()
+  //       ).quantity
+  //         ? parseInt(
+  //             _NFTB.nOwnedBy.find(
+  //               (o) => o.address === req.body.receiver.toLowerCase()
+  //             ).quantity
+  //           )
+  //         : 0;
+  //       boughtQty = req.body.qty;
+  //       let ownedQty = currentQty + boughtQty;
+
+  //       await NFT.findOneAndUpdate(
+  //         {
+  //           _id: mongoose.Types.ObjectId(req.body.nftId),
+  //           "nOwnedBy.address": req.body.receiver,
+  //         },
+  //         {
+  //           $set: {
+  //             "nOwnedBy.$.quantity": parseInt(ownedQty),
+  //           },
+  //         },
+  //         { upsert: true, runValidators: true }
+  //       ).catch((e) => {
+  //         console.log("Error1", e.message);
+  //       });
+  //     } else {
+  //       console.log("Subdocument Id not found");
+  //       let dataToadd = {
+  //         address: req.body.receiver,
+  //         quantity: parseInt(req.body.qty),
+  //       };
+  //       await NFT.findOneAndUpdate(
+  //         { _id: mongoose.Types.ObjectId(req.body.nftId) },
+  //         { $addToSet: { nOwnedBy: dataToadd } },
+  //         { upsert: true }
+  //       );
+  //       console.log("wasn't there but added");
+  //     }
+  //     return res.reply(messages.updated("NFT"));
+  //   } catch (e) {
+  //     console.log("errr", e);
+  //     return res.reply(messages.error());
+  //   }
+  // }
+
+  // async getCollectionNFT(req, res) {
+  //   try {
+  //     let data = [];
+  //     let collection = req.body.collection;
+
+  //     const sortKey = req.body.sortKey ? req.body.sortKey : "";
+  //     //sortType will let you choose from ASC 1 or DESC -1
+  //     const sortType = req.body.sortType ? req.body.sortType : -1;
+
+  //     var sortObject = {};
+  //     var stype = sortKey;
+  //     var sdir = sortType;
+  //     sortObject[stype] = sdir;
+
+  //     const page = parseInt(req.body.page);
+  //     const limit = parseInt(req.body.limit);
+
+  //     const startIndex = (page - 1) * limit;
+  //     const endIndex = page * limit;
+  //     const results = {};
+  //     let orderQuery = {};
+
+  //     orderQuery["oStatus"] = 1; // we are getting only active orders
+
+  //     let OrderIdsss = await Order.distinct("oNftId", orderQuery);
+
+  //     if (
+  //       endIndex <
+  //       (await NFT.countDocuments({
+  //         nCollection: collection,
+  //         _id: { $in: OrderIdsss },
+  //       }).exec())
+  //     ) {
+  //       results.next = {
+  //         page: page + 1,
+  //         limit: limit,
+  //       };
+  //     }
+  //     if (startIndex > 0) {
+  //       results.previous = {
+  //         page: page - 1,
+  //         limit: limit,
+  //       };
+  //     }
+
+  //     await NFT.find({ nCollection: collection, _id: { $in: OrderIdsss } })
+  //       .select({
+  //         nTitle: 1,
+  //         nCollection: 1,
+  //         nHash: 1,
+  //         nCreater: 1,
+  //         nType: 1,
+  //         nUser_likes: 1,
+  //         nNftImage: 1,
+  //         nLazyMintingStatus: 1,
+  //       })
+  //       .populate({
+  //         path: "nOrders",
+  //         options: {
+  //           limit: 1,
+  //         },
+  //         select: {
+  //           oPrice: 1,
+  //           oType: 1,
+  //           oValidUpto: 1,
+  //           auction_end_date: 1,
+  //           oStatus: 1,
+  //           _id: 0,
+  //         },
+  //       })
+  //       .populate({
+  //         path: "nCreater",
+  //         options: {
+  //           limit: 1,
+  //         },
+  //         select: {
+  //           _id: 1,
+  //           sProfilePicUrl: 1,
+  //           sWalletAddress: 1,
+  //         },
+  //       })
+  //       .limit(limit)
+  //       .skip(startIndex)
+  //       .exec()
+  //       .then((res) => {
+  //         data.push(res);
+  //       })
+  //       .catch((e) => {
+  //         console.log("Error", e);
+  //       });
+  //     results.count = await NFT.countDocuments({
+  //       nCollection: collection,
+  //       _id: { $in: OrderIdsss },
+  //     }).exec();
+  //     results.results = data;
+  //     return res.reply(messages.success("Order List"), results);
+  //   } catch (error) {
+  //     console.log("Error:", error);
+  //     return res.reply(messages.error());
+  //   }
+  // }
+
+  // async getCollectionNFTOwned(req, res) {
+  //   try {
+  //     if (!req.userId) return res.reply(messages.unauthorized());
+  //     let data = [];
+  //     let collection = req.body.collection;
+  //     let userID = req.userId;
+  //     let UserData = await User.findById(userID);
+  //     if (UserData) {
+  //       let userWalletAddress = UserData.sWalletAddress;
+
+  //       const sortKey = req.body.sortKey ? req.body.sortKey : "";
+  //       //sortType will let you choose from ASC 1 or DESC -1
+  //       const sortType = req.body.sortType ? req.body.sortType : -1;
+
+  //       var sortObject = {};
+  //       var stype = sortKey;
+  //       var sdir = sortType;
+  //       sortObject[stype] = sdir;
+
+  //       const page = parseInt(req.body.page);
+  //       const limit = parseInt(req.body.limit);
+
+  //       const startIndex = (page - 1) * limit;
+  //       const endIndex = page * limit;
+  //       const results = {};
+  //       if (
+  //         endIndex <
+  //         (await NFT.countDocuments({
+  //           nCollection: collection,
+  //           "nOwnedBy.address": userWalletAddress,
+  //         }).exec())
+  //       ) {
+  //         results.next = {
+  //           page: page + 1,
+  //           limit: limit,
+  //         };
+  //       }
+  //       if (startIndex > 0) {
+  //         results.previous = {
+  //           page: page - 1,
+  //           limit: limit,
+  //         };
+  //       }
+  //       await NFT.find({
+  //         nCollection: collection,
+  //         "nOwnedBy.address": userWalletAddress,
+  //       })
+  //         .select({
+  //           nTitle: 1,
+  //           nCollection: 1,
+  //           nHash: 1,
+  //           nType: 1,
+  //           nUser_likes: 1,
+  //           nNftImage: 1,
+  //           nLazyMintingStatus: 1,
+  //         })
+  //         .populate({
+  //           path: "nOrders",
+  //           options: {
+  //             limit: 1,
+  //           },
+  //           select: {
+  //             oPrice: 1,
+  //             oType: 1,
+  //             oStatus: 1,
+  //             _id: 0,
+  //           },
+  //         })
+  //         .populate({
+  //           path: "nCreater",
+  //           options: {
+  //             limit: 1,
+  //           },
+  //           select: {
+  //             _id: 1,
+  //             sProfilePicUrl: 1,
+  //             sWalletAddress: 1,
+  //           },
+  //         })
+  //         .limit(limit)
+  //         .skip(startIndex)
+  //         .exec()
+  //         .then((res) => {
+  //           data.push(res);
+  //         })
+  //         .catch((e) => {
+  //           console.log("Error", e);
+  //         });
+
+  //       results.count = await NFT.countDocuments({
+  //         nCollection: collection,
+  //         "nOwnedBy.address": userWalletAddress,
+  //       }).exec();
+  //       results.results = data;
+  //       return res.reply(messages.success("Order List"), results);
+  //     } else {
+  //       console.log("Bid Not found");
+  //       return res.reply("User Not found");
+  //     }
+  //   } catch (error) {
+  //     console.log("Error:", error);
+  //     return res.reply(messages.error());
+  //   }
+  // }
+
+  // async getSearchedNft(req, res) {
+  //   try {
+  //     let data = [];
+  //     let setConditions = req.body.conditions;
+
+  //     //sortKey is the column
+  //     const sortKey = req.body.sortKey ? req.body.sortKey : "";
+
+  //     //sortType will let you choose from ASC 1 or DESC -1
+  //     const sortType = req.body.sortType ? req.body.sortType : -1;
+
+  //     var sortObject = {};
+  //     var stype = sortKey;
+  //     var sdir = sortType;
+  //     sortObject[stype] = sdir;
+
+  //     const page = parseInt(req.body.page);
+  //     const limit = parseInt(req.body.limit);
+
+  //     const startIndex = (page - 1) * limit;
+  //     const endIndex = page * limit;
+
+  //     const results = {};
+  //     let OrderIdsss = await Order.distinct("oNftId", setConditions);
+
+  //     if (
+  //       endIndex <
+  //       (await NFT.countDocuments({
+  //         nTitle: { $regex: req.body.sTextsearch, $options: "i" },
+  //         _id: { $in: OrderIdsss.map(String) },
+  //       }).exec())
+  //     ) {
+  //       results.next = {
+  //         page: page + 1,
+  //         limit: limit,
+  //       };
+  //     }
+
+  //     if (startIndex > 0) {
+  //       results.previous = {
+  //         page: page - 1,
+  //         limit: limit,
+  //       };
+  //     }
+
+  //     await NFT.find({
+  //       nTitle: { $regex: req.body.sTextsearch, $options: "i" },
+  //       _id: { $in: OrderIdsss.map(String) },
+  //     })
+  //       .select({
+  //         nTitle: 1,
+  //         nCollection: 1,
+  //         nHash: 1,
+  //         nType: 1,
+  //         nUser_likes: 1,
+  //         nNftImage: 1,
+  //         nLazyMintingStatus: 1,
+  //       })
+  //       .populate({
+  //         path: "nOrders",
+  //         options: {
+  //           limit: 1,
+  //         },
+  //         select: {
+  //           oPrice: 1,
+  //           oType: 1,
+  //           auction_end_date: 1,
+  //           oValidUpto: 1,
+  //           oStatus: 1,
+  //           _id: 0,
+  //         },
+  //       })
+  //       .populate({
+  //         path: "nCreater",
+  //         options: {
+  //           limit: 1,
+  //         },
+  //         select: {
+  //           _id: 0,
+  //         },
+  //       })
+  //       .limit(limit)
+  //       .skip(startIndex)
+  //       .exec()
+  //       .then((res) => {
+  //         data.push(res);
+  //         results.count = res.length;
+  //       })
+  //       .catch((e) => {
+  //         console.log("Error", e);
+  //       });
+
+  //     results.count = await NFT.countDocuments({
+  //       nTitle: { $regex: req.body.sTextsearch, $options: "i" },
+  //       _id: { $in: OrderIdsss.map(String) },
+  //     }).exec();
+  //     results.results = data;
+
+  //     return res.reply(messages.success("NFTs List"), results);
+  //   } catch (error) {
+  //     console.log("Error:", error);
+  //     return res.reply(messages.error());
+  //   }
+  // }
+
+  // async updateCollectionMarketplace(req, res) {
+  //   try {
+  //     if (!req.userId) return res.reply(messages.unauthorized());
+  //     if (!req.body.collectionID) {
+  //       return res.reply(messages.not_found("Collection ID"));
+  //     }
+  //     let collectionID = req.body.collectionID;
+  //     let isOnMarketplace = req.body.isOnMarketplace;
+
+  //     let updateData = [];
+  //     updateData["isOnMarketplace"] = isOnMarketplace;
+  //     let updateObj = Object.assign({}, updateData);
+
+  //     Collection.findByIdAndUpdate(
+  //       { _id: mongoose.Types.ObjectId(collectionID) },
+  //       { $set: updateObj }
+  //     ).then((collection) => {
+  //       return res.reply(
+  //         messages.updated("Collection Updated successfully."),
+  //         collection
+  //       );
+  //     });
+  //   } catch (error) {
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
 
   // async updateCollectionToken(req, res){
   //   try {
@@ -3659,6 +3673,61 @@ class NFTController {
   //     return res.reply(messages.server_error());
   //   }
   // };
+
+  // async getAllNfts(req, res) {
+  //   try {
+  //     let aNft = await NFT.find({})
+  //       .select({
+  //         nTitle: 1,
+  //         nCollection: 1,
+  //         nHash: 1,
+  //         nLazyMintingStatus: 1,
+  //         nNftImage: 1,
+  //       })
+  //       .populate({
+  //         path: "nOrders",
+  //         options: {
+  //           limit: 1,
+  //         },
+  //         select: {
+  //           oPrice: 1,
+  //           oType: 1,
+  //           oValidUpto: 1,
+  //           auction_end_date: 1,
+  //           oStatus: 1,
+  //           _id: 0,
+  //         },
+  //       })
+  //       .populate({
+  //         path: "nCreater",
+  //         options: {
+  //           limit: 1,
+  //         },
+  //         select: {
+  //           _id: 0,
+  //         },
+  //       })
+  //       .limit(limit)
+  //       .skip(startIndex)
+  //       .exec()
+  //       .then((res) => {
+  //         data.push(res);
+  //       })
+  //       .catch((e) => {
+  //         console.log("Error", e);
+  //       });
+
+  //     results.results = data;
+  //     console.log("Collections", aNft);
+
+  //     if (!aNft) {
+  //       return res.reply(messages.not_found("nft"));
+  //     }
+  //     return res.reply(messages.no_prefix("nfts List"), aNft);
+  //   } catch (e) {
+  //     return res.reply(messages.error(e));
+  //   }
+  // }
 
   async getCombinedNfts(req, res) {
     try {
@@ -3708,7 +3777,6 @@ class NFTController {
       return res.reply(messages.error());
     }
   }
-
- 
 }
+
 module.exports = NFTController;

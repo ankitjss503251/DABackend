@@ -1,6 +1,6 @@
 const fs = require("fs");
 const http = require("https");
-const { importedNFT, importedCollection, NFT } = require("../../models");
+const { importedNFT, importedCollection } = require("../../models");
 const pinataSDK = require("@pinata/sdk");
 const aws = require("aws-sdk");
 const multer = require("multer");
@@ -15,11 +15,10 @@ var jwt = require("jsonwebtoken");
 const e = require("express");
 
 class ImportedController {
-  constructor() { }
+  constructor() {}
 
   async createCollection(req, res) {
     try {
-      if (!req.userId) return res.reply(messages.unauthorized());
       if (!req.body.address) {
         return res.reply(messages.not_found("Collection Address"));
       }
@@ -72,7 +71,7 @@ class ImportedController {
     }
   }
 
-  async getCollection(req, res) {
+  async getImportedCollection(req, res) {
     try {
       let data = [];
       const page = parseInt(req.body.page);
@@ -87,10 +86,7 @@ class ImportedController {
       let searchArray = [];
 
       if (searchText !== "") {
-        searchArray["contractAddress"] = {
-          $regex: new RegExp(searchText),
-          $options: "i",
-        };
+        searchArray["contractAddress"] =  searchText ;
       }
       let searchObj = Object.assign({}, searchArray);
       console.log("searchArray", searchArray);
@@ -112,7 +108,6 @@ class ImportedController {
       }
 
       console.log("search obkj", searchObj);
-
       await importedCollection
         .find(searchObj)
         .sort({ createdOn: -1 })
@@ -120,14 +115,16 @@ class ImportedController {
         .skip(startIndex)
         .lean()
         .exec()
-        .then((res) => {
-          data.push(res);
+        .then((resp1) => {
+          data.push(resp1);
+          console.log("Total Supply" , resp1[0].totalSupply)
         })
         .catch((e) => {
           console.log("Error", e);
         });
       results.count = await importedCollection.countDocuments(searchObj).exec();
       results.results = data;
+      console.log("result", data);
       res.header("Access-Control-Max-Age", 600);
       return res.reply(messages.success("Collection List"), results);
     } catch (error) {
@@ -136,214 +133,175 @@ class ImportedController {
     }
   }
 
-  async createNFT(req, res) {
-    try {
-      if (!req.userId) return res.reply(messages.unauthorized());
-      if (!req.body.nftData) {
-        return res.reply(messages.not_found("NFT Data"));
-      }
-      let NFTData = req.body.nftData;
-      if (NFTData.length > 0) {
-        NFTData.forEach((nftElement) => {
-          let nft = new importedNFT({
-            name: nftElement.name,
-            description: nftElement.description,
-            image: nftElement.image,
-            tokenID: nftElement.tokenID,
-            collectionAddress: nftElement.collectionAddress,
-            ownedBy: [],
-          });
-          let NFTAttr = nftElement.attributes;
-          if (NFTAttr.length > 0) {
-            NFTAttr.forEach((obj) => {
-              nft.attributes.push(obj);
-            });
-          }
-          nft.ownedBy.push({
-            address: nftElement.owner,
-            quantity: 1,
-          });
-          nft.save().then(async (result) => { });
-        });
-        return res.reply(messages.created("NFT"));
-      } else {
-        return res.reply("Empty Request");
-      }
-    } catch (error) {
-      console.log(error);
-      return res.reply(messages.server_error());
-    }
-  }
+  // async createNFT(req, res) {
+  //   try {
+  //     if (!req.body.nftData) {
+  //       return res.reply(messages.not_found("NFT Data"));
+  //     }
+  //     let NFTData = req.body.nftData;
+  //     if (NFTData.length > 0) {
+  //       NFTData.forEach((nftElement) => {
+  //         console.log("nftElement.owner", nftElement.owner);
+  //         let nft = new importedNFT({
+  //           name: nftElement.name,
+  //           description: nftElement.description,
+  //           image: nftElement.image,
+  //           tokenID: nftElement.tokenID,
+  //           collectionAddress: nftElement.collectionAddress,
+  //           ownedBy: [],
+  //         });
+  //         let NFTAttr = nftElement.attributes;
+  //         if (NFTAttr.length > 0) {
+  //           NFTAttr.forEach((obj) => {
+  //             nft.attributes.push(obj);
+  //           });
+  //         }
+  //         nft.ownedBy.push({
+  //           address: nftElement.owner,
+  //           quantity: 1,
+  //         });
+  //         nft.save().then(async (result) => {});
+  //       });
+  //       return res.reply(messages.created("NFT"));
+  //     } else {
+  //       return res.reply("Empty Request");
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
 
+  // async updateNFT(req, res) {
+  //   try {
+  //     if (!req.body.name) {
+  //       return res.reply(messages.not_found("NFT Name"));
+  //     }
+  //     if (!req.body.description) {
+  //       return res.reply(messages.not_found("NFT Description"));
+  //     }
+  //     if (!req.body.collectionAddress) {
+  //       return res.reply(messages.not_found("Collection Address"));
+  //     }
+  //     if (!req.body.tokenID) {
+  //       return res.reply(messages.not_found("Token ID"));
+  //     }
+  //     if (!req.body.image) {
+  //       return res.reply(messages.not_found("Image"));
+  //     }
 
-  async updateNFT(req, res) {
-    try {
-      if (!req.userId) return res.reply(messages.unauthorized());
-      if (!req.body.name) {
-        return res.reply(messages.not_found("NFT Name"));
-      }
-      if (!req.body.description) {
-        return res.reply(messages.not_found("NFT Description"));
-      }
-      if (!req.body.collectionAddress) {
-        return res.reply(messages.not_found("Collection Address"));
-      }
-      if (!req.body.tokenID) {
-        return res.reply(messages.not_found("Token ID"));
-      }
-      if (!req.body.image) {
-        return res.reply(messages.not_found("Image"));
-      }
-      let attributes = [];
-      let NFTAttr = req.body.attributes;
-      if (NFTAttr.length > 0) {
-        NFTAttr.forEach((obj) => {
-          attributes.push(obj);
-        });
-      }
+  //     let attributes = [];
+  //     let NFTAttr = req.body.attributes;
+  //     if (NFTAttr.length > 0) {
+  //       NFTAttr.forEach((obj) => {
+  //         attributes.push(obj);
+  //       });
+  //     }
 
-      await importedNFT.updateOne(
-        {
-          collectionAddress: req.body.collectionAddress,
-          tokenID: req.body.tokenID,
-        },
-        {
-          $set: {
-            name: req.body.name,
-            description: req.body.description,
-            image: req.body.image,
-            attributes: attributes,
-          },
-        },
-        {
-          upsert: true,
-        },
-        (err) => {
-          if (err) throw error;
-        }
-      );
+  //     let dataToadd = {
+  //       address: req.body.owner,
+  //       quantity: 1,
+  //     };
+  //     importedNFT
+  //       .findOneAndUpdate(
+  //         {
+  //           collectionAddress: req.body.collectionAddress,
+  //           tokenID: req.body.tokenID,
+  //         },
+  //         {
+  //           name: req.body.name,
+  //           description: req.body.description,
+  //           image: req.body.image,
+  //           attributes: attributes,
+  //           ownedBy: [],
+  //         },
+  //         // { $addToSet: { ownedBy: dataToadd } },
+  //         { new: true }
+  //       )
 
-      let hasOwner = await importedNFT.exists({
-        collectionAddress: req.body.collectionAddress,
-        tokenID: req.body.tokenID,
-        "ownedBy.address": req.body.owner.toLowerCase(),
-      });
-      if (hasOwner) {
-        let NFTData = await importedNFT.findOne({
-          collectionAddress: req.body.collectionAddress,
-          tokenID: req.body.tokenID,
-          "ownedBy.address": req.body.owner.toLowerCase(),
-        }).select("ownedBy -_id");
-        console.log("NFTData-------->", NFTData);
-        let currentQty = NFTData.ownedBy.find(
-          (o) => o.address === req.body.owner.toLowerCase()
-        ).quantity;
+  //       .then((result) => {
+  //         return res.reply(messages.updated("NFT"), result);
+  //       })
+  //       .catch((error) => {
+  //         console.log(error);
+  //         return res.reply(error);
+  //       });
+  //   } catch (error) {
+  //     console.log(error);
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
 
-        await NFT.importedNFT(
-          {
-            collectionAddress: req.body.collectionAddress,
-            tokenID: req.body.tokenID,
-            "ownedBy.address": req.body.owner,
-          },
-          {
-            $set: {
-              "ownedBy.$.quantity": req.body.quantity,
-            },
-          }
-        ).catch((e) => {
-          console.log("Error2", e.message);
-        });
-      } else {
-        let dataToadd = {
-          address: req.body.owner,
-          quantity: parseInt(req.body.quantity),
-        };
-        await NFT.findOneAndUpdate(
-          {
-            collectionAddress: req.body.collectionAddress,
-            tokenID: req.body.tokenID,
-          },
-          { $addToSet: { ownedBy: dataToadd } },
+  // async getNFT(req, res) {
+  //   try {
+  //     let data = [];
+  //     const page = parseInt(req.body.page);
+  //     const limit = parseInt(req.body.limit);
+  //     const startIndex = (page - 1) * limit;
+  //     const endIndex = page * limit;
 
-          { upsert: true }
-        );
-      }
-      return res.reply(messages.updated("Imported NFT"));
-    } catch (error) {
-      return res.reply(messages.error(), error.message);
-    }
-  }
+  //     let collectionAddress = "";
+  //     if (
+  //       req.body.collectionAddress &&
+  //       req.body.collectionAddress !== undefined
+  //     ) {
+  //       collectionAddress = req.body.collectionAddress;
+  //     }
+  //     let searchText = "";
+  //     if (req.body.searchText && req.body.searchText !== undefined) {
+  //       searchText = req.body.searchText;
+  //     }
+  //     let searchArray = [];
 
-  async getNFT(req, res) {
-    try {
-      let data = [];
-      const page = parseInt(req.body.page);
-      const limit = parseInt(req.body.limit);
-      const startIndex = (page - 1) * limit;
-      const endIndex = page * limit;
+  //     if (collectionAddress !== "") {
+  //       searchArray["collectionAddress"] = collectionAddress;
+  //     }
+  //     if (req.body.tokenID !== "" && req.body.tokenID != undefined) {
+  //       searchArray["tokenID"] = req.body.tokenID;
+  //     }
+  //     if (searchText !== "") {
+  //       searchArray["name"] = { $regex: new RegExp(searchText), $options: "i" };
+  //     }
+  //     let searchObj = Object.assign({}, searchArray);
+  //     console.log("searchArray", searchArray);
 
-      let collectionAddress = "";
-      if (
-        req.body.collectionAddress &&
-        req.body.collectionAddress !== undefined
-      ) {
-        collectionAddress = req.body.collectionAddress;
-      }
-      let searchText = "";
-      if (req.body.searchText && req.body.searchText !== undefined) {
-        searchText = req.body.searchText;
-      }
-      let searchArray = [];
+  //     const results = {};
+  //     if (endIndex < (await importedNFT.countDocuments(searchObj).exec())) {
+  //       results.next = {
+  //         page: page + 1,
+  //         limit: limit,
+  //       };
+  //     }
+  //     if (startIndex > 0) {
+  //       results.previous = {
+  //         page: page - 1,
+  //         limit: limit,
+  //       };
+  //     }
 
-      if (collectionAddress !== "") {
-        searchArray["collectionAddress"] = collectionAddress;
-      }
-      if (req.body.tokenID !== "" && req.body.tokenID != undefined) {
-        searchArray["tokenID"] = req.body.tokenID;
-      }
-      if (searchText !== "") {
-        searchArray["name"] = { $regex: new RegExp(searchText), $options: "i" };
-      }
-      let searchObj = Object.assign({}, searchArray);
-      console.log("searchArray", searchArray);
+  //     console.log("search obkj", searchObj);
 
-      const results = {};
-      if (endIndex < (await importedNFT.countDocuments(searchObj).exec())) {
-        results.next = {
-          page: page + 1,
-          limit: limit,
-        };
-      }
-      if (startIndex > 0) {
-        results.previous = {
-          page: page - 1,
-          limit: limit,
-        };
-      }
-
-      console.log("search obkj", searchObj);
-
-      await importedNFT
-        .find(searchObj)
-        .sort({ createdOn: -1 })
-        .limit(limit)
-        .skip(startIndex)
-        .lean()
-        .exec()
-        .then((res) => {
-          data.push(res);
-        })
-        .catch((e) => {
-          console.log("Error", e);
-        });
-      results.count = await importedNFT.countDocuments(searchObj).exec();
-      results.results = data;
-      res.header("Access-Control-Max-Age", 600);
-      return res.reply(messages.success("NFT List"), results);
-    } catch (error) {
-      console.log("Error " + error);
-      return res.reply(messages.server_error());
-    }
-  }
+  //     await importedNFT
+  //       .find(searchObj)
+  //       .sort({ createdOn: -1 })
+  //       .limit(limit)
+  //       .skip(startIndex)
+  //       .lean()
+  //       .exec()
+  //       .then((res) => {
+  //         data.push(res);
+  //       })
+  //       .catch((e) => {
+  //         console.log("Error", e);
+  //       });
+  //     results.count = await importedNFT.countDocuments(searchObj).exec();
+  //     results.results = data;
+  //     res.header("Access-Control-Max-Age", 600);
+  //     return res.reply(messages.success("NFT List"), results);
+  //   } catch (error) {
+  //     console.log("Error " + error);
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
 }
 module.exports = ImportedController;

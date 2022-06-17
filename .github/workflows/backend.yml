@@ -16,11 +16,11 @@ jobs:
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.KEY }}
+        password: ${{ secrets.PASSWORD }}
         port: ${{ secrets.PORT }}
         script: |
           cd /var/www/html/project/DABackend
           pwd
           ls -la
-          sudo git pull origin main
-          sudo yarn
+          git pull origin main
+          yarn

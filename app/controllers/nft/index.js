@@ -1,27 +1,59 @@
 const router = require("express").Router();
 const NFTController = require("./controllers");
 const nftController = new NFTController();
-const nftMiddleware = require('./../helpers/middleware');
+const nftMiddleware = require("./../helpers/middleware");
 
-
-router.post("/createCollection", nftMiddleware.verifyUserToken, nftController.createCollection );
+router.post(
+  "/createCollection",
+  nftMiddleware.verifyUserToken,
+  nftController.createCollection
+);
 router.post("/getCollections", nftController.getCollections);
-router.post("/myCollections", nftMiddleware.verifyUserToken, nftController.myCollections);
+router.post(
+  "/myCollections",
+  nftMiddleware.verifyUserToken,
+  nftController.myCollections
+);
 router.post("/myNFTs", nftMiddleware.verifyUserToken, nftController.myNFTs);
-router.post("/updateCollectionMarketplace", nftMiddleware.verifyUserToken, nftController.updateCollectionMarketplace );
-router.get("/getImportedCollections",nftController.getImportedCollections);
 
-router.get("/viewCollection/:collectionID", nftMiddleware.verifyWithoutToken, nftController.viewCollection );
-router.post( "/updateCollection", nftMiddleware.verifyUserToken, nftController.updateCollection );
-router.post("/getUpcomingCollections", nftController.getUpcomingCollections);
+// router.post(
+//   "/updateCollectionMarketplace",
+//   nftMiddleware.verifyUserToken,
+//   nftController.updateCollectionMarketplace
+// );
 
-router.post("/createNFT", nftMiddleware.verifyUserToken, nftController.createNFT);
+// router.get(
+//   "/viewCollection/:collectionID",
+//   nftMiddleware.verifyWithoutToken,
+//   nftController.viewCollection
+// );
+
+router.post(
+  "/updateCollection",
+  nftMiddleware.verifyUserToken,
+  nftController.updateCollection
+);
+
+// router.post("/getUpcomingCollections", nftController.getUpcomingCollections);
+
+router.post(
+  "/createNFT",
+  nftMiddleware.verifyUserToken,
+  nftController.createNFT
+);
 router.post("/viewNFTs", nftController.viewNFTs);
-router.post( "/getHotCollections", nftMiddleware.verifyWithoutToken, nftController.getHotCollections );
+// router.post(
+//   "/getHotCollections",
+//   nftMiddleware.verifyWithoutToken,
+//   nftController.getHotCollections
+// );
 router.post("/getOwnedNFTList", nftController.getOwnedNFTlist);
-router.put( "/updateNftOrder", nftMiddleware.verifyUserToken, nftController.updateNftOrder );
-router.post("/getCombinedNfts",nftController.getCombinedNfts);
-
+router.put(
+  "/updateNftOrder",
+  nftMiddleware.verifyUserToken,
+  nftController.updateNftOrder
+);
+router.post("/getCombinedNfts", nftController.getCombinedNfts);
 
 // router.post("/likeNFT", nftMiddleware.verifyUserToken, nftController.likeNFT);
 // router.post("/mynftlist", nftMiddleware.verifyUserToken, nftController.mynftlist);
@@ -35,7 +67,6 @@ router.post("/getCombinedNfts",nftController.getCombinedNfts);
 //   nftMiddleware.verifyWithoutToken,
 //   nftController.getCollectionDetailsByAddress
 // );
-
 
 // router.post(
 //   "/collectionList",
