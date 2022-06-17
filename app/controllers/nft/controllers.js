@@ -513,7 +513,7 @@ class NFTController {
         { $match: searchObj },
         {
           $lookup: {
-            from: "Collection",
+            from: "collections",
             let: { collectionID: "collectionID" },
             pipeline: [
               {
@@ -527,33 +527,27 @@ class NFTController {
         },
         {
           $lookup: {
-            from: "Category",
-            let: { categoryID: "categoryID" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: [{ _id: categoryID }],
-                },
-              },
-            ],
+            from: "categories",
+            localField: "categoryID",
+            foreignField: "_id",
             as: "CategoryData",
           },
         },
         {
           $lookup: {
-            from: "Brand",
+            from: "brands",
             localField: "brandID",
-            foreignField: "_id.str",
+            foreignField: "_id",
             as: "BrandData",
           },
         },
         {
           $lookup: {
-            from: "User",
+            from: "users",
             localField: "createdBy",
-            foreignField: "_id.str",
-            as: "UserData",
-          },
+            foreignField: "_id",
+            as: "UserData"
+          }
         },
         { $skip: startIndex },
         { $limit: limit },
@@ -802,35 +796,114 @@ class NFTController {
         { $match: searchObj },
         {
           $lookup: {
-            from: "Collection",
+            from: "collections",
             localField: "collectionID",
-            foreignField: "_id.str",
-            as: "CollectionData",
-          },
+            foreignField: "_id",
+            as: "CollectionData"
+          }
         },
         {
           $lookup: {
-            from: "Category",
+            from: "categories",
             localField: "categoryID",
-            foreignField: "_id.str",
+            foreignField: "_id",
             as: "CategoryData",
           },
         },
         {
           $lookup: {
-            from: "Brand",
+            from: "brands",
             localField: "brandID",
-            foreignField: "_id.str",
+            foreignField: "_id",
             as: "BrandData",
           },
         },
         {
           $lookup: {
-            from: "User",
+            from: "users",
             localField: "createdBy",
-            foreignField: "_id.str",
-            as: "UserData",
+            foreignField: "_id",
+            as: "UserData"
+          }
+        },
+        { $skip: startIndex },
+        { $limit: limit },
+        { $sort: { createdOn: -1 } },
+      ]).exec(function (e, nftData) {
+        console.log("Error ", e);
+        return res.reply(messages.success("NFT List"), nftData);
+      });
+    } catch (error) {
+      console.log("Error " + error);
+      return res.reply(messages.server_error());
+    }
+  }
+
+  async viewNFTByOrder(req, res) {
+    try {
+      let data = [];
+      const page = parseInt(req.body.page);
+      const limit = parseInt(req.body.limit);
+      const startIndex = (page - 1) * limit;
+      const endIndex = page * limit;
+
+      const salesType = req.body.salesType;
+      const sortColumn = req.body.sortColumn;
+      const sortOrder = req.body.sortOrder;
+
+      let orderData = [];
+      await Order.find()
+        .distinct('nftID')
+        .exec()
+        .then((resData) => {
+          resData.forEach((element) => {
+            orderData.push(mongoose.Types.ObjectId(element.nftID));
+          });
+        })
+        .catch((e) => {
+          console.log("Error", e);
+        });
+    
+      console.log("orderData ", orderData);
+      let searchArray = [];
+      searchArray["_id"] = { $in: orderData };
+
+      let searchObj = Object.assign({}, searchArray);
+      console.log("searchArray", searchArray);
+
+      let nfts = await NFT.aggregate([
+        { $match: searchObj },
+        {
+          $lookup: {
+            from: "collections",
+            localField: "collectionID",
+            foreignField: "_id",
+            as: "CollectionData"
+          }
+        },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categoryID",
+            foreignField: "_id",
+            as: "CategoryData",
           },
+        },
+        {
+          $lookup: {
+            from: "brands",
+            localField: "brandID",
+            foreignField: "_id",
+            as: "BrandData",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "createdBy",
+            foreignField: "_id",
+            as: "UserData"
+          }
         },
         { $skip: startIndex },
         { $limit: limit },
