@@ -204,9 +204,21 @@ class NFTController {
         isOnMarketplace = req.body.isOnMarketplace;
       }
 
+      let contractAddress = "";
+      if (
+        req.body.contractAddress &&
+        req.body.contractAddress !== undefined
+      ) {
+        contractAddress = req.body.contractAddress;
+      }
+
       let searchArray = [];
       if (collectionID !== "") {
         searchArray["_id"] = mongoose.Types.ObjectId(collectionID);
+      }
+      if (contractAddress !== "" && contractAddress != undefined) {
+        searchArray["contractAddress"] =
+          mongoose.Types.ObjectId(contractAddress);
       }
       if (userID !== "") {
         searchArray["createdBy"] = mongoose.Types.ObjectId(userID);
@@ -363,6 +375,8 @@ class NFTController {
             tokenID: nftElement.tokenID,
             collectionAddress: nftElement.collectionAddress,
             isOnMarketplace: nftElement.isOnMarketplace,
+            categoryID: nftElement.categoryID,
+            brandID: nftElement.brandID,
             isImported: nftElement.isImported,
             ownedBy: [],
           });
@@ -766,6 +780,7 @@ class NFTController {
   }
 
   async getOwnedNFTlist(req, res) {
+    console.log("req", req.body);
     try {
       const page = parseInt(req.body.page);
       const limit = parseInt(req.body.limit);
@@ -774,9 +789,16 @@ class NFTController {
 
       let searchArray = [];
       if (req.body.searchType === "owned") {
-        searchArray['ownedBy'] = { $elemMatch: { address: req.body.userWalletAddress, quantity: { $gt: 0 } } };
-      }else{
-        searchArray['createdBy'] = { $in: [mongoose.Types.ObjectId(req.body.userId)] };
+        searchArray["ownedBy"] = {
+          $elemMatch: {
+            address: req.body.userWalletAddress,
+            quantity: { $gt: 0 },
+          },
+        };
+      } else {
+        searchArray["createdBy"] = {
+          $in: [mongoose.Types.ObjectId(req.body.userId)],
+        };
       }
       let searchObj = Object.assign({}, searchArray);
       let nfts = await NFT.aggregate([
@@ -788,36 +810,36 @@ class NFTController {
             as: "CollectionData",
           },
         },
-        {
-          $lookup: {
-            from: "Category",
-            let: { categoryID: "categoryID" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: [{ _id: categoryID }],
-                },
-              },
-            ],
-            as: "CategoryData",
-          },
-        },
-        {
-          $lookup: {
-            from: "Brand",
-            localField: "brandID",
-            foreignField: "_id.str",
-            as: "BrandData",
-          },
-        },
-        {
-          $lookup: {
-            from: "User",
-            localField: "createdBy",
-            foreignField: "_id.str",
-            as: "UserData",
-          },
-        },
+        // {
+        //   $lookup: {
+        //     from: "Category",
+        //     let: { categoryID: "categoryID" },
+        //     pipeline: [
+        //       {
+        //         $match: {
+        //           $expr: [{ _id: categoryID }],
+        //         },
+        //       },
+        //     ],
+        //     as: "CategoryData",
+        //   },
+        // },
+        // {
+        //   $lookup: {
+        //     from: "Brand",
+        //     localField: "brandID",
+        //     foreignField: "_id.str",
+        //     as: "BrandData",
+        //   },
+        // },
+        // {
+        //   $lookup: {
+        //     from: "User",
+        //     localField: "createdBy",
+        //     foreignField: "_id.str",
+        //     as: "UserData",
+        //   },
+        // },
         { $skip: startIndex },
         { $limit: limit },
         { $sort: { createdOn: -1 } },
