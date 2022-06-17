@@ -15,23 +15,26 @@ router.post(
   nftController.myCollections
 );
 router.post("/myNFTs", nftMiddleware.verifyUserToken, nftController.myNFTs);
-router.post(
-  "/updateCollectionMarketplace",
-  nftMiddleware.verifyUserToken,
-  nftController.updateCollectionMarketplace
-);
 
-router.get(
-  "/viewCollection/:collectionID",
-  nftMiddleware.verifyWithoutToken,
-  nftController.viewCollection
-);
+// router.post(
+//   "/updateCollectionMarketplace",
+//   nftMiddleware.verifyUserToken,
+//   nftController.updateCollectionMarketplace
+// );
+
+// router.get(
+//   "/viewCollection/:collectionID",
+//   nftMiddleware.verifyWithoutToken,
+//   nftController.viewCollection
+// );
+
 router.post(
   "/updateCollection",
   nftMiddleware.verifyUserToken,
   nftController.updateCollection
 );
-router.post("/getUpcomingCollections", nftController.getUpcomingCollections);
+
+// router.post("/getUpcomingCollections", nftController.getUpcomingCollections);
 
 router.post(
   "/createNFT",
@@ -39,11 +42,11 @@ router.post(
   nftController.createNFT
 );
 router.post("/viewNFTs", nftController.viewNFTs);
-router.post(
-  "/getHotCollections",
-  nftMiddleware.verifyWithoutToken,
-  nftController.getHotCollections
-);
+// router.post(
+//   "/getHotCollections",
+//   nftMiddleware.verifyWithoutToken,
+//   nftController.getHotCollections
+// );
 router.post("/getOwnedNFTList", nftController.getOwnedNFTlist);
 router.put(
   "/updateNftOrder",
