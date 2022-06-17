@@ -205,10 +205,7 @@ class NFTController {
       }
 
       let contractAddress = "";
-      if (
-        req.body.contractAddress &&
-        req.body.contractAddress !== undefined
-      ) {
+      if (req.body.contractAddress && req.body.contractAddress !== undefined) {
         contractAddress = req.body.contractAddress;
       }
 
@@ -217,8 +214,7 @@ class NFTController {
         searchArray["_id"] = mongoose.Types.ObjectId(collectionID);
       }
       if (contractAddress !== "" && contractAddress != undefined) {
-        searchArray["contractAddress"] =
-          mongoose.Types.ObjectId(contractAddress);
+        searchArray["contractAddress"] = contractAddress;
       }
       if (userID !== "") {
         searchArray["createdBy"] = mongoose.Types.ObjectId(userID);
@@ -373,10 +369,11 @@ class NFTController {
             description: nftElement.description,
             image: nftElement.image,
             tokenID: nftElement.tokenID,
+            collectionID: nftElement.collectionID,
             collectionAddress: nftElement.collectionAddress,
             isOnMarketplace: nftElement.isOnMarketplace,
-            categoryID: nftElement.categoryID,
-            brandID: nftElement.brandID,
+            // categoryID: nftElement.categoryID,
+            // brandID: nftElement.brandID,
             isImported: nftElement.isImported,
             ownedBy: [],
           });
@@ -806,40 +803,35 @@ class NFTController {
         {
           $lookup: {
             from: "Collection",
-            let: { collectionID: "collectionID" },
+            localField: "collectionID",
+            foreignField: "_id.str",
             as: "CollectionData",
           },
         },
-        // {
-        //   $lookup: {
-        //     from: "Category",
-        //     let: { categoryID: "categoryID" },
-        //     pipeline: [
-        //       {
-        //         $match: {
-        //           $expr: [{ _id: categoryID }],
-        //         },
-        //       },
-        //     ],
-        //     as: "CategoryData",
-        //   },
-        // },
-        // {
-        //   $lookup: {
-        //     from: "Brand",
-        //     localField: "brandID",
-        //     foreignField: "_id.str",
-        //     as: "BrandData",
-        //   },
-        // },
-        // {
-        //   $lookup: {
-        //     from: "User",
-        //     localField: "createdBy",
-        //     foreignField: "_id.str",
-        //     as: "UserData",
-        //   },
-        // },
+        {
+          $lookup: {
+            from: "Category",
+            localField: "categoryID",
+            foreignField: "_id.str",
+            as: "CategoryData",
+          },
+        },
+        {
+          $lookup: {
+            from: "Brand",
+            localField: "brandID",
+            foreignField: "_id.str",
+            as: "BrandData",
+          },
+        },
+        {
+          $lookup: {
+            from: "User",
+            localField: "createdBy",
+            foreignField: "_id.str",
+            as: "UserData",
+          },
+        },
         { $skip: startIndex },
         { $limit: limit },
         { $sort: { createdOn: -1 } },
