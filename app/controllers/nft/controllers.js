@@ -845,15 +845,6 @@ class NFTController {
           $lookup: {
             from: "Collection",
             let: { collectionID: "collectionID" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [{ $eq: ["$isOnMarketplace", 1] }],
-                  },
-                },
-              },
-            ],
             as: "CollectionData",
           },
         },
@@ -894,43 +885,6 @@ class NFTController {
         console.log("Error ", e);
         return res.reply(messages.success("NFT List"), nftData);
       });
-      // return res.reply(messages.success("NFT List"), nfts);
-      // const results = {};
-      // if (endIndex < (await NFT.countDocuments(searchObj).exec())) {
-      //   results.next = {
-      //     page: page + 1,
-      //     limit: limit,
-      //   };
-      // }
-      // if (startIndex > 0) {
-      //   results.previous = {
-      //     page: page - 1,
-      //     limit: limit,
-      //   };
-      // }
-
-      // console.log("search obkj", searchObj);
-
-      // await NFT.find(searchObj)
-      //   .populate("collectionID")
-      //   .populate("categoryID")
-      //   .populate("brandID")
-      //   .populate("createdBy")
-      //   .sort({ createdOn: -1 })
-      //   .limit(limit)
-      //   .skip(startIndex)
-      //   .lean()
-      //   .exec()
-      //   .then((res) => {
-      //     data.push(res);
-      //   })
-      //   .catch((e) => {
-      //     console.log("Error", e);
-      //   });
-      // results.count = await NFT.countDocuments(searchObj).exec();
-      // results.results = data;
-      // res.header("Access-Control-Max-Age", 600);
-      // return res.reply(messages.success("NFT List"), results);
     } catch (error) {
       console.log("Error " + error);
       return res.reply(messages.server_error());
