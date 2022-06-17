@@ -538,6 +538,14 @@ class NFTController {
             as: "UserData"
           }
         },
+        {
+          $lookup: {
+            from: "orders",
+            localField: "_id",
+            foreignField: "nftID",
+            as: "OrderData"
+          }
+        },
         { $skip: startIndex },
         { $limit: limit },
         { $sort: { createdOn: -1 } },
