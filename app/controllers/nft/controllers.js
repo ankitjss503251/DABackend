@@ -504,6 +504,13 @@ class NFTController {
           $lookup: {
             from: "Collection",
             let: { collectionID: "collectionID" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: [{ _id: collectionID }],
+                },
+              },
+            ],
             as: "CollectionData",
           },
         },
@@ -760,164 +767,67 @@ class NFTController {
 
   async getOwnedNFTlist(req, res) {
     try {
-      let data = [];
-      console.log("req", req.body);
-      //sortKey is the column
-      const sortKey = req.body.sortKey ? req.body.sortKey : "";
-
-      //sortType will let you choose from ASC 1 or DESC -1
-      const sortType = req.body.sortType ? req.body.sortType : -1;
-
-      var sortObject = {};
-      var stype = sortKey;
-      var sdir = sortType;
-      sortObject[stype] = sdir;
-
       const page = parseInt(req.body.page);
       const limit = parseInt(req.body.limit);
-
       const startIndex = (page - 1) * limit;
       const endIndex = page * limit;
 
-      const results = {};
-
+      let searchArray = [];
       if (req.body.searchType === "owned") {
-        if (
-          endIndex <
-          (await NFT.countDocuments({
-            ownedBy: {
-              $elemMatch: {
-                address: req.body.userWalletAddress,
-                quantity: { $gt: 0 },
-              },
-            },
-          }).exec())
-        ) {
-          results.next = {
-            page: page + 1,
-            limit: limit,
-          };
-        }
-
-        if (startIndex > 0) {
-          results.previous = {
-            page: page - 1,
-            limit: limit,
-          };
-        }
-
-        await NFT.find({
-          ownedBy: {
-            $elemMatch: {
-              address: req.body.userWalletAddress,
-              quantity: { $gt: 0 },
-            },
-          },
-        })
-          .select({
-            name: 1,
-            collectionID: 1,
-            hash: 1,
-            image: 1,
-            lazyMintingStatus: 1,
-          })
-          .populate("collectionID")
-          .populate({
-            path: "createdBy",
-            options: {
-              limit: 1,
-            },
-            select: {
-              _id: 1,
-              profileIcon: 1,
-              walletAddress: 1,
-            },
-          })
-          .limit(limit)
-          .skip(startIndex)
-          .exec()
-          .then((res) => {
-            console.log("dataa", res);
-            data.push(res);
-          })
-          .catch((e) => {
-            console.log("Error", e);
-          });
-
-        // console.log("ress", resust);
-        results.count = await NFT.countDocuments({
-          ownedBy: {
-            $elemMatch: {
-              address: req.body.userWalletAddress,
-              quantity: { $gt: 0 },
-            },
-          },
-        }).exec();
-      } else {
-        if (
-          endIndex <
-          (await NFT.countDocuments({
-            nCreater: { $in: [mongoose.Types.ObjectId(req.body.userId)] },
-          }).exec())
-        ) {
-          results.next = {
-            page: page + 1,
-            limit: limit,
-          };
-        }
-
-        if (startIndex > 0) {
-          results.previous = {
-            page: page - 1,
-            limit: limit,
-          };
-        }
-
-        await NFT.find({
-          createdBy: { $in: [mongoose.Types.ObjectId(req.body.userId)] },
-        })
-          .select({
-            name: 1,
-            collectionID: 1,
-            hash: 1,
-            image: 1,
-            lazyMintingStatus: 1,
-          })
-          .populate("collectionID")
-          .populate({
-            path: "createdBy",
-            options: {
-              limit: 1,
-            },
-            select: {
-              _id: 1,
-              profileIcon: 1,
-              walletAddress: 1,
-            },
-          })
-          .limit(limit)
-          .skip(startIndex)
-          .exec()
-          .then((res) => {
-            console.log("dataa", res);
-            data.push(res);
-          })
-          .catch((e) => {
-            console.log("Error", e);
-          });
-
-        // console.log("ress", resust);
-        results.count = await NFT.countDocuments({
-          createdBy: { $in: [mongoose.Types.ObjectId(req.body.userId)] },
-        }).exec();
+        searchArray['ownedBy'] = { $elemMatch: { address: req.body.userWalletAddress, quantity: { $gt: 0 } } };
+      }else{
+        searchArray['createdBy'] = { $in: [mongoose.Types.ObjectId(req.body.userId)] };
       }
-
-      results.results = data;
-
-      return res.reply(messages.success("NFTs List"), results);
+      let searchObj = Object.assign({}, searchArray);
+      let nfts = await NFT.aggregate([
+        { $match: searchObj },
+        {
+          $lookup: {
+            from: "Collection",
+            let: { collectionID: "collectionID" },
+            as: "CollectionData",
+          },
+        },
+        {
+          $lookup: {
+            from: "Category",
+            let: { categoryID: "categoryID" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: [{ _id: categoryID }],
+                },
+              },
+            ],
+            as: "CategoryData",
+          },
+        },
+        {
+          $lookup: {
+            from: "Brand",
+            localField: "brandID",
+            foreignField: "_id.str",
+            as: "BrandData",
+          },
+        },
+        {
+          $lookup: {
+            from: "User",
+            localField: "createdBy",
+            foreignField: "_id.str",
+            as: "UserData",
+          },
+        },
+        { $skip: startIndex },
+        { $limit: limit },
+        { $sort: { createdOn: -1 } },
+      ]).exec(function (e, nftData) {
+        console.log("Error ", e);
+        return res.reply(messages.success("NFT List"), nftData);
+      });
     } catch (error) {
-      console.log("Error:", error);
-      return res.reply(messages.error());
+      console.log("Error " + error);
+      return res.reply(messages.server_error());
     }
   }
 
