@@ -443,11 +443,11 @@ class NFTController {
       if (req.body.isLazyMinted !== undefined) {
         isLazyMinted = req.body.isLazyMinted;
       }
-      let isOnMarketplace = -1;
+      let isOnMarketplace = "";
       if (req.body.isOnMarketplace !== undefined) {
         isOnMarketplace = req.body.isOnMarketplace;
       }
-      let salesType = -1;
+      let salesType = "";
       if (req.body.salesType !== undefined) {
         salesType = req.body.salesType;
       }
@@ -484,271 +484,76 @@ class NFTController {
       }
 
       let searchObj = Object.assign({}, searchArray);
-      if (isOnMarketplace == 1 || isOnMarketplace == 0) {
-        if (salesType == 1 || salesType == 0) {
-          let nfts = await NFT.aggregate([
-            { $match: searchObj },
-            {
-              $lookup: {
-                from: "collections",
-                let: { collectionID: "collectionID" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $eq: ['$_id', collectionID],
-                        $eq: ['$isOnMarketplace', isOnMarketplace]
-                      }
-                    }
-                  }
-                ],
-                as: "CollectionData",
-              },
-            },
-            {
-              $unwind: "$CollectionData"
-            },
-            {
-              $lookup: {
-                from: "categories",
-                localField: "categoryID",
-                foreignField: "_id",
-                as: "CategoryData",
-              },
-            },
-            {
-              $lookup: {
-                from: "brands",
-                localField: "brandID",
-                foreignField: "_id",
-                as: "BrandData",
-              },
-            },
-            {
-              $lookup: {
-                from: "users",
-                localField: "createdBy",
-                foreignField: "_id",
-                as: "UserData"
-              }
-            },
-            {
-              $lookup: {
-                from: "orders",
-                let: { nftID: "_id" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $eq: ['$nftID', nftID],
-                        $eq: ['$salesType', salesType]
-                      }
-                    }
-                  }
-                ],
-                as: "OrderData",
-              },
-            },
-            {
-              $unwind: "$OrderData"
-            },
-            { $skip: startIndex },
-            { $limit: limit },
-            { $sort: { createdOn: -1 } },
-          ]).exec(function (e, nftData) {
-            console.log("Error ", e);
-            return res.reply(messages.success("NFT List"), nftData);
-          });
-        } else {
-          let nfts = await NFT.aggregate([
-            { $match: searchObj },
-            {
-              $lookup: {
-                from: "collections",
-                let: { collectionID: "collectionID" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $eq: ['$_id', collectionID],
-                        $eq: ['$isOnMarketplace', isOnMarketplace]
-                      }
-                    }
-                  }
-                ],
-                as: "CollectionData",
-              },
-            },
-            {
-              $unwind: "$CollectionData"
-            },
-            {
-              $lookup: {
-                from: "categories",
-                localField: "categoryID",
-                foreignField: "_id",
-                as: "CategoryData",
-              },
-            },
-            {
-              $lookup: {
-                from: "brands",
-                localField: "brandID",
-                foreignField: "_id",
-                as: "BrandData",
-              },
-            },
-            {
-              $lookup: {
-                from: "users",
-                localField: "createdBy",
-                foreignField: "_id",
-                as: "UserData"
-              }
-            },
-            {
-              $lookup: {
-                from: "orders",
-                localField: "_id",
-                foreignField: "nftID",
-                as: "OrderData"
-              }
-            },
-            { $skip: startIndex },
-            { $limit: limit },
-            { $sort: { createdOn: -1 } },
-          ]).exec(function (e, nftData) {
-            console.log("Error ", e);
-            return res.reply(messages.success("NFT List"), nftData);
-          });
-        }
-      } else {
-        if (salesType == 1 || salesType == 0) {
-          let nfts = await NFT.aggregate([
-            { $match: searchObj },
-            {
-              $lookup: {
-                from: "collections",
-                let: { collectionID: "collectionID" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $eq: ['$_id', collectionID],
-                        $eq: ['$isOnMarketplace', isOnMarketplace]
-                      }
-                    }
-                  }
-                ],
-                as: "CollectionData",
-              },
-            },
-            {
-              $unwind: "$CollectionData"
-            },
-            {
-              $lookup: {
-                from: "categories",
-                localField: "categoryID",
-                foreignField: "_id",
-                as: "CategoryData",
-              },
-            },
-            {
-              $lookup: {
-                from: "brands",
-                localField: "brandID",
-                foreignField: "_id",
-                as: "BrandData",
-              },
-            },
-            {
-              $lookup: {
-                from: "users",
-                localField: "createdBy",
-                foreignField: "_id",
-                as: "UserData"
-              }
-            },
-            {
-              $lookup: {
-                from: "orders",
-                let: { nftID: "_id" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $eq: ['$nftID', nftID],
-                        $eq: ['$salesType', salesType]
-                      }
-                    }
-                  }
-                ],
-                as: "OrderData",
-              },
-            },
-            {
-              $unwind: "$OrderData"
-            },
-            { $skip: startIndex },
-            { $limit: limit },
-            { $sort: { createdOn: -1 } },
-          ]).exec(function (e, nftData) {
-            console.log("Error ", e);
-            return res.reply(messages.success("NFT List"), nftData);
-          });
-        } else {
-          let nfts = await NFT.aggregate([
-            { $match: searchObj },
-            {
-              $lookup: {
-                from: "collections",
-                localField: "collectionID",
-                foreignField: "_id",
-                as: "CollectionData",
-              },
-            },
-            {
-              $lookup: {
-                from: "categories",
-                localField: "categoryID",
-                foreignField: "_id",
-                as: "CategoryData",
-              },
-            },
-            {
-              $lookup: {
-                from: "brands",
-                localField: "brandID",
-                foreignField: "_id",
-                as: "BrandData",
-              },
-            },
-            {
-              $lookup: {
-                from: "users",
-                localField: "createdBy",
-                foreignField: "_id",
-                as: "UserData"
-              }
-            },
-            {
-              $lookup: {
-                from: "orders",
-                localField: "_id",
-                foreignField: "nftID",
-                as: "OrderData"
-              }
-            },
-            { $skip: startIndex },
-            { $limit: limit },
-            { $sort: { createdOn: -1 } },
-          ]).exec(function (e, nftData) {
-            console.log("Error ", e);
-            return res.reply(messages.success("NFT List"), nftData);
-          });
-        }
+
+      let isOnMarketplaceSearchArray = [];
+      isOnMarketplaceSearchArray["$match"] = { }
+      if (isOnMarketplace === 1 || isOnMarketplace === 0) {
+        isOnMarketplaceSearchArray["$match"] = { "CollectionData.isOnMarketplace": isOnMarketplace }
       }
+      let isOnMarketplaceSearchObj = Object.assign({}, isOnMarketplaceSearchArray);
+
+      console.log("isOnMarketplaceSearchObj", isOnMarketplaceSearchObj);
+
+      let salesTypeSearchArray = [];
+      salesTypeSearchArray["$match"] = { }
+      if (salesType === 1 || salesType === 0) {
+        salesTypeSearchArray["$match"] = { "OrderData.salesType": salesType }
+      }
+      let salesTypeSearchObj = Object.assign({}, salesTypeSearchArray);
+
+      console.log("salesTypeSearchObj", salesTypeSearchObj);
+     
+      let nfts = await NFT.aggregate([
+        { $match: searchObj },
+        {
+          $lookup:{
+            from:"collections",
+            localField:"collectionID",
+            foreignField:"_id",
+            as:"CollectionData"
+          }
+        },
+        isOnMarketplaceSearchObj,
+        {
+          $lookup:{
+            from:"orders",
+            localField:"_id",
+            foreignField:"nftID",
+            as:"OrderData"
+          }
+        },
+        salesTypeSearchObj,
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categoryID",
+            foreignField: "_id",
+            as: "CategoryData",
+          },
+        },
+        {
+          $lookup: {
+            from: "brands",
+            localField: "brandID",
+            foreignField: "_id",
+            as: "BrandData",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "createdBy",
+            foreignField: "_id",
+            as: "UserData"
+          }
+        },
+        { $skip: startIndex },
+        { $limit: limit },
+        { $sort: { createdOn: -1 } },
+      ]).exec(function (e, nftData) {
+        console.log("Error ", e);
+        return res.reply(messages.success("NFT List"), nftData);
+      });
     } catch (error) {
       console.log("Error " + error);
       return res.reply(messages.server_error());

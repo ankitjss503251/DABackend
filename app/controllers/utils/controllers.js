@@ -160,16 +160,35 @@ class UtilsController {
     }
   }
 
-  async getAllCategory(req, res) {
+  async getCategory(req, res) {
     try {
-      let category = await Category.find({});
-
-      console.log("category", category);
-
-      if (!category) {
-        return res.reply(messages.not_found("category"));
+      let categoryID = "";
+      if (req.body.categoryID && req.body.categoryID !== undefined) {
+        categoryID = req.body.categoryID;
       }
-      return res.reply(messages.no_prefix("category "), category);
+      let name = "";
+      if (req.body.name && req.body.name !== undefined) {
+        name = req.body.name;
+      }
+
+      let searchArray = [];
+      if (categoryID !== "") {
+        searchArray["_id"] = mongoose.Types.ObjectId(categoryID);
+      }
+
+      if (name !== "") {
+        searchArray["name"] = name;
+      }
+      let searchObj = Object.assign({}, searchArray);
+      await Category.find(searchObj)
+        .then((result) => {
+          if (!result)
+             res.reply(messages.not_found("Category"));
+          res.reply(messages.successfully("Category Found"), result);
+        })
+        .catch((err) => {
+          res.reply(messages.server_error());
+        });
     } catch (e) {
       return res.reply(messages.error(e));
     }
