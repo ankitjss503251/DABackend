@@ -204,9 +204,17 @@ class NFTController {
         isOnMarketplace = req.body.isOnMarketplace;
       }
 
+      let contractAddress = "";
+      if (req.body.contractAddress && req.body.contractAddress !== undefined) {
+        contractAddress = req.body.contractAddress;
+      }
+
       let searchArray = [];
       if (collectionID !== "") {
         searchArray["_id"] = mongoose.Types.ObjectId(collectionID);
+      }
+      if (contractAddress !== "" && contractAddress != undefined) {
+        searchArray["contractAddress"] = contractAddress;
       }
       if (userID !== "") {
         searchArray["createdBy"] = mongoose.Types.ObjectId(userID);
@@ -361,8 +369,11 @@ class NFTController {
             description: nftElement.description,
             image: nftElement.image,
             tokenID: nftElement.tokenID,
+            collectionID: nftElement.collectionID,
             collectionAddress: nftElement.collectionAddress,
             isOnMarketplace: nftElement.isOnMarketplace,
+            // categoryID: nftElement.categoryID,
+            // brandID: nftElement.brandID,
             isImported: nftElement.isImported,
             ownedBy: [],
           });
@@ -758,6 +769,7 @@ class NFTController {
   }
 
   async getOwnedNFTlist(req, res) {
+    console.log("req", req.body);
     try {
       const page = parseInt(req.body.page);
       const limit = parseInt(req.body.limit);
@@ -766,9 +778,16 @@ class NFTController {
 
       let searchArray = [];
       if (req.body.searchType === "owned") {
-        searchArray['ownedBy'] = { $elemMatch: { address: req.body.userWalletAddress, quantity: { $gt: 0 } } };
+        searchArray["ownedBy"] = {
+          $elemMatch: {
+            address: req.body.userWalletAddress,
+            quantity: { $gt: 0 },
+          },
+        };
       } else {
-        searchArray['createdBy'] = { $in: [mongoose.Types.ObjectId(req.body.userId)] };
+        searchArray["createdBy"] = {
+          $in: [mongoose.Types.ObjectId(req.body.userId)],
+        };
       }
       let searchObj = Object.assign({}, searchArray);
       let nfts = await NFT.aggregate([
