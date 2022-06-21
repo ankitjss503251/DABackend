@@ -38,16 +38,6 @@ const nftSchema = mongoose.Schema({
   ],
   attributes: [
     {
-      name: {
-        type: String,
-      },
-      value: {
-        type: String,
-      },
-    },
-  ],
-  attributesImported: [
-    {
       trait_type: {
         type: String,
       },

@@ -771,6 +771,7 @@ class NFTController {
   async getOwnedNFTlist(req, res) {
     console.log("req", req.body);
     try {
+      let data = [];
       const page = parseInt(req.body.page);
       const limit = parseInt(req.body.limit);
       const startIndex = (page - 1) * limit;
@@ -780,7 +781,7 @@ class NFTController {
       if (req.body.searchType === "owned") {
         searchArray["ownedBy"] = {
           $elemMatch: {
-            address: req.body.userWalletAddress,
+            address: req.body.userWalletAddress?.toLowerCase(),
             quantity: { $gt: 0 },
           },
         };
@@ -789,6 +790,7 @@ class NFTController {
           $in: [mongoose.Types.ObjectId(req.body.userId)],
         };
       }
+      const results = {};
       let searchObj = Object.assign({}, searchArray);
       let nfts = await NFT.aggregate([
         { $match: searchObj },
@@ -827,10 +829,22 @@ class NFTController {
         { $skip: startIndex },
         { $limit: limit },
         { $sort: { createdOn: -1 } },
-      ]).exec(function (e, nftData) {
-        console.log("Error ", e);
-        return res.reply(messages.success("NFT List"), nftData);
+      ]).exec()
+      .then((res) => {
+        data.push(res);
+      })
+      .catch((e) => {
+        console.log("Error", e);
       });
+      results.results = data;
+      results.count = await NFT.countDocuments(searchObj).exec();
+      return res.reply(messages.success("NFT List"), results);
+      // .exec(function (e, nftData) {
+      //   results.results = nftData;
+      //   results.count = NFT.countDocuments(searchObj).exec();
+      //   console.log("Error ", e);
+      //   return res.reply(messages.success("NFT List"), results);
+      // });
     } catch (error) {
       console.log("Error " + error);
       return res.reply(messages.server_error());
