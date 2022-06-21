@@ -134,6 +134,8 @@ class NFTController {
             nextId: 0,
             price: req.body.price,
             createdBy: req.userId,
+            isOnMarketplace: req.body.isOnMarketplace,
+            isImported: req.body.isImported
           });
           collection
             .save()
