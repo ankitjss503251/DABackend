@@ -22,14 +22,15 @@ const orderSchema = mongoose.Schema({
   },
   quantity_sold: {
     type: Number,
+    default: 0,
   },
-  price: { 
-    type: mongoose.Types.Decimal128 
+  price: {
+    type: mongoose.Types.Decimal128,
   },
   tokenID: {
     type: String,
   },
- 
+
   deadlineDate: {
     type: Date,
   },
@@ -45,7 +46,7 @@ const orderSchema = mongoose.Schema({
   },
   bundleTokens: Array,
   bundleTokensQuantities: Array,
-  status : {
+  status: {
     type: Number,
     default: 0,
     enum: [0, 1],

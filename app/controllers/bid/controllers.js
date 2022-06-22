@@ -49,6 +49,7 @@ class BidController {
         bidQuantity: req.body.bidQuantity,
         buyerSignature: req.body.buyerSignature,
         bidDeadline: req.body.bidDeadline,
+        isOffer: req.body.isOffer
       });
       bidData
         .save()
@@ -142,7 +143,7 @@ class BidController {
         {
           $match: {
             $and: [
-              { oBidQuantity: { $gte: 1 } },
+              { bidQuantity: { $gte: 1 } },
               { bidStatus: "Bid" },
               oTypeQuery,
               nftIDQuery,
@@ -157,12 +158,12 @@ class BidController {
             bidderID: 1,
             owner: 1,
             bidStatus: 1,
-            oBidPrice: 1,
+            bidPrice: 1,
             nftID: 1,
             orderID: 1,
-            oBidQuantity: 1,
+            bidQuantity: 1,
             buyerSignature: 1,
-            oBidDeadline: 1,
+            bidDeadline: 1,
           },
         },
         {
