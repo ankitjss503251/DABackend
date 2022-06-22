@@ -66,9 +66,9 @@ Router.prototype.setupMiddleware = function () {
       parameterLimit: 50000,
     })
   );
-  this.app.set("views", "./seeds");
-  this.app.set("view engine", "ejs");
-  this.app.use(express.static("./seeds"));
+  // this.app.set("views", "./seeds");
+  // this.app.set("view engine", "ejs");
+  // this.app.use(express.static("./seeds"));
   this.app.use(this.routeConfig);
   this.app.use("/api/v1", routes);
   this.app.use("*", this.routeHandler);

@@ -113,7 +113,6 @@ class AuthController{
     try {
       if (!req.body.walletAddress)
         return res.reply(messages.required_field("Wallet Address"));
-
       User.findOne(
         {
           walletAddress: _.toChecksumAddress(req.body.walletAddress),
