@@ -244,9 +244,11 @@ class BidController {
         let BuyerData = await User.findById(bidderID);
         let buyer = BuyerData.walletAddress;
         let owner = BidData.owner;
+        console.log("owner", owner);
         let OwnerData = await User.findById(owner);
         let seller = OwnerData.walletAddress;
 
+        console.log("seller", seller, nftID);
         await Order.updateOne(
           { _id: orderId },
           {
@@ -264,14 +266,16 @@ class BidController {
         );
         //deduct previous owner
 
-        let _NFT = await NFT.findOne({
+        let _NFT = await NFT.find({
           _id: mongoose.Types.ObjectId(nftID),
           "ownedBy.address": seller,
         }).select("ownedBy -_id");
         console.log("_NFT-------->", _NFT);
-        let currentQty = _NFT.ownedBy.find(
-          (o) => o.address === seller.toLowerCase()
-        ).quantity;
+        let currentQty;
+        if (_NFT.length > 0)
+          currentQty = _NFT[0].ownedBy.find(
+            (o) => o.address === seller.toLowerCase()
+          ).quantity;
 
         let leftQty = currentQty - boughtQty;
         if (leftQty < 1) {
