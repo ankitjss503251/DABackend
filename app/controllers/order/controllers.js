@@ -73,7 +73,7 @@ class OrderController {
   async updateOrder(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
-      console.log("111")
+      console.log("111");
       let lazyMintingStatus = Number(req.body.LazyMintingStatus);
 
       if (!req.body.nftID) {
@@ -94,19 +94,23 @@ class OrderController {
           }
         );
       }
-      console.log("222")
-      let NFTData = await NFT.findOne({
+      console.log("222");
+      let NFTData = await NFT.find({
         _id: mongoose.Types.ObjectId(req.body.nftID),
         "ownedBy.address": req.body.seller.toLowerCase(),
       }).select("ownedBy -_id");
-      console.log("333")
+      console.log("333");
       console.log("NFTData-------->", NFTData);
-      let currentQty = NFTData.ownedBy.find(
-        (o) => o.address === req.body.seller.toLowerCase()
-      ).quantity;
+      let currentQty;
+      if (NFTData.length > 0) {
+        currentQty = NFTData[0].ownedBy.find(
+          (o) => o.address === req.body.seller.toLowerCase()
+        ).quantity;
+      }
+
       let boughtQty = parseInt(req.body.qtyBought);
       let leftQty = currentQty - boughtQty;
-      console.log("444")
+      console.log("444");
       if (leftQty < 1) {
         await NFT.findOneAndUpdate(
           { _id: mongoose.Types.ObjectId(req.body.nftID) },
@@ -133,7 +137,7 @@ class OrderController {
           console.log("Error2", e.message);
         });
       }
-      console.log("555")
+      console.log("555");
       //Credit the buyer
       console.log("Crediting Buyer");
 
@@ -141,7 +145,7 @@ class OrderController {
         _id: mongoose.Types.ObjectId(req.body.nftID),
         "ownedBy.address": req.body.buyer,
       });
-      console.log("666")
+      console.log("666");
       if (subDocId) {
         console.log("Subdocument Id", subDocId);
 
@@ -167,7 +171,7 @@ class OrderController {
           : 0;
         boughtQty = req.body.qtyBought;
         let ownedQty = currentQty + boughtQty;
-        console.log("777")
+        console.log("777");
         await NFT.findOneAndUpdate(
           {
             _id: mongoose.Types.ObjectId(req.body.nftID),
@@ -183,7 +187,7 @@ class OrderController {
           console.log("Error1", e.message);
         });
       } else {
-        console.log("888")
+        console.log("888");
         console.log("Subdocument Id not found");
         let dataToadd = {
           address: req.body.buyer,
@@ -208,7 +212,7 @@ class OrderController {
       ).catch((e) => {
         console.log("Error1", e.message);
       });
-      console.log("999")
+      console.log("999");
       return res.reply(messages.updated("order"));
     } catch (error) {
       return res.reply(messages.error(), error.message);
@@ -373,7 +377,7 @@ class OrderController {
                   importedNFT.deleteOne({
                     _id: mongoose.Types.ObjectId(importedNFTID),
                   });
-                  console.log("Delete Imported NFT"),importedNFTID;
+                  console.log("Delete Imported NFT"), importedNFTID;
                   resolve(result._id);
                 })
                 .catch((error) => {
