@@ -4,10 +4,7 @@ const mongoose = require("mongoose");
 const nodemailer = require("../../utils/lib/nodemailer");
 
 class BidController {
-
-  constructor() {
-
-  }
+  constructor() {}
 
   async createBidNft(req, res) {
     console.log("req", req.body);
@@ -49,7 +46,7 @@ class BidController {
         bidQuantity: req.body.bidQuantity,
         buyerSignature: req.body.buyerSignature,
         bidDeadline: req.body.bidDeadline,
-        isOffer: req.body.isOffer
+        isOffer: req.body.isOffer,
       });
       bidData
         .save()
@@ -64,7 +61,7 @@ class BidController {
       console.log("errr", e);
       return res.reply(messages.error());
     }
-  };
+  }
 
   async updateBidNft(req, res) {
     console.log("req", req.body);
@@ -110,7 +107,7 @@ class BidController {
       console.log("errr", e);
       return res.reply(messages.error());
     }
-  };
+  }
 
   async fetchBidNft(req, res) {
     console.log("req", req.body);
@@ -224,7 +221,7 @@ class BidController {
     } catch (error) {
       return res.reply(messages.server_error());
     }
-  };
+  }
 
   async acceptBidNft(req, res) {
     console.log("req", req.body);
@@ -234,7 +231,7 @@ class BidController {
         return res.reply(messages.bad_request(), "Bid is required.");
 
       console.log("Checking Old Bids");
-      let ERC721 = req.body.ERC721;
+      let ERC721 = req.body.erc721;
       let bidID = req.body.bidID;
       let status = req.body.status;
       let qty_sold = req.body.qty_sold;
@@ -242,7 +239,7 @@ class BidController {
       if (BidData) {
         let nftID = BidData.nftID;
         let orderId = BidData.orderID;
-        let boughtQty = parseInt(BidData.oBidQuantity);
+        let boughtQty = parseInt(BidData.bidQuantity);
         let bidderID = BidData.bidderID;
         let BuyerData = await User.findById(bidderID);
         let buyer = BuyerData.walletAddress;
@@ -269,10 +266,10 @@ class BidController {
 
         let _NFT = await NFT.findOne({
           _id: mongoose.Types.ObjectId(nftID),
-          "nOwnedBy.address": seller,
-        }).select("nOwnedBy -_id");
+          "ownedBy.address": seller,
+        }).select("ownedBy -_id");
         console.log("_NFT-------->", _NFT);
-        let currentQty = _NFT.nOwnedBy.find(
+        let currentQty = _NFT.ownedBy.find(
           (o) => o.address === seller.toLowerCase()
         ).quantity;
 
@@ -282,7 +279,7 @@ class BidController {
             { _id: mongoose.Types.ObjectId(nftID) },
             {
               $pull: {
-                nOwnedBy: { address: seller },
+                ownedBy: { address: seller },
               },
             }
           ).catch((e) => {
@@ -292,11 +289,11 @@ class BidController {
           await NFT.findOneAndUpdate(
             {
               _id: mongoose.Types.ObjectId(nftID),
-              "nOwnedBy.address": seller,
+              "ownedBy.address": seller,
             },
             {
               $set: {
-                "nOwnedBy.$.quantity": parseInt(leftQty),
+                "ownedBy.$.quantity": parseInt(leftQty),
               },
             }
           ).catch((e) => {
@@ -307,39 +304,40 @@ class BidController {
         console.log("Crediting Buyer");
         let subDocId = await NFT.exists({
           _id: mongoose.Types.ObjectId(nftID),
-          "nOwnedBy.address": buyer,
+          "ownedBy.address": buyer,
         });
         if (subDocId) {
           console.log("Subdocument Id", subDocId);
           let NFTNewData = await NFT.findOne({
             _id: mongoose.Types.ObjectId(nftID),
-            "nOwnedBy.address": buyer,
-          }).select("nOwnedBy -_id");
+            "ownedBy.address": buyer,
+          }).select("ownedBy -_id");
           console.log("NFTNewData-------->", NFTNewData);
           console.log(
             "Quantity found for buyers",
-            NFTNewData.nOwnedBy.find((o) => o.address === buyer.toLowerCase())
+            NFTNewData.ownedBy.find((o) => o.address === buyer.toLowerCase())
               .quantity
           );
 
-          currentQty = NFTNewData.nOwnedBy.find(
+          currentQty = NFTNewData.ownedBy.find(
             (o) => o.address === buyer.toLowerCase()
           ).quantity
             ? parseInt(
-              NFTNewData.nOwnedBy.find((o) => o.address === buyer.toLowerCase())
-                .quantity
-            )
+                NFTNewData.ownedBy.find(
+                  (o) => o.address === buyer.toLowerCase()
+                ).quantity
+              )
             : 0;
 
           let ownedQty = currentQty + boughtQty;
           await NFT.findOneAndUpdate(
             {
               _id: mongoose.Types.ObjectId(nftID),
-              "nOwnedBy.address": buyer,
+              "ownedBy.address": buyer,
             },
             {
               $set: {
-                "nOwnedBy.$.quantity": parseInt(ownedQty),
+                "ownedBy.$.quantity": parseInt(ownedQty),
               },
             },
             { upsert: true, runValidators: true }
@@ -354,7 +352,7 @@ class BidController {
           };
           await NFT.findOneAndUpdate(
             { _id: mongoose.Types.ObjectId(nftID) },
-            { $addToSet: { nOwnedBy: dataToadd } },
+            { $addToSet: { ownedBy: dataToadd } },
             { upsert: true }
           );
           console.log("wasn't there but added");
@@ -390,7 +388,7 @@ class BidController {
           let _order = await Order.findOne({
             _id: mongoose.Types.ObjectId(orderId),
           });
-          let leftQty = _order.oQuantity - qty_sold;
+          let leftQty = _order.quantity - qty_sold;
           if (leftQty <= 0) {
             await Order.deleteOne({ _id: mongoose.Types.ObjectId(orderId) });
           }
@@ -399,7 +397,7 @@ class BidController {
             owner: mongoose.Types.ObjectId(owner),
             nftID: mongoose.Types.ObjectId(nftID),
             bidStatus: "Bid",
-            oBidQuantity: { $gt: leftQty },
+            bidQuantity: { $gt: leftQty },
           })
             .then(function () {
               console.log("Data deleted from 1155");
@@ -418,7 +416,6 @@ class BidController {
       console.log("errr", e);
       return res.reply(messages.error());
     }
-  };
-
+  }
 }
 module.exports = BidController;
