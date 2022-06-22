@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha **/*.test.js",
     "start": "nodemon index.js",
     "debug": "nodemon --inspect index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "test": "mocha app/test/apistest.js"
   },
   "nodemonConfig": {
     "ignore": [
@@ -50,7 +50,7 @@
     "web3": "^1.3.6"
   },
   "devDependencies": {
-    "chai": "^4.3.4",
+    "chai": "^4.3.6",
     "chai-http": "^4.3.0",
     "ipfs-api": "^19.0.0",
     "mocha": "^10.0.0",
