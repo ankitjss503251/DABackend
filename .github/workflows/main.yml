@@ -16,10 +16,10 @@ jobs:
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
-        password: ${{ secrets.PASSWORD }}
+        key: ${{ secrets.KEY }}
         port: ${{ secrets.PORT }}
         script: |
-          cd /var/www/html/project/DABackend
+          cd /var/www/html/DABackend
           pwd
           ls -la
           git pull origin main

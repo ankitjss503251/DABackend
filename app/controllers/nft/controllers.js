@@ -1117,6 +1117,9 @@ class NFTController {
           if (req.body.isHotCollection) {
             updateData["isHotCollection"] = req.body.isHotCollection;
           }
+          if (req.body.isExclusive) {
+            updateData["isExclusive"] = req.body.isExclusive;
+          }
           if (req.body.isMinted) {
             updateData["isMinted"] = req.body.isMinted;
           }
