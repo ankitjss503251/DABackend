@@ -42,7 +42,7 @@ const bidSchema = new mongoose.Schema({
   buyerSignature: Array,
   isOffer: {
     type: Boolean,
-    default: true,
+    default: false,
   },
   createdBy: {
     type: mongoose.Schema.ObjectId,
