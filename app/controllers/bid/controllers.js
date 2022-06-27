@@ -63,6 +63,69 @@ class BidController {
     }
   }
 
+  //Create Offer API
+  
+  
+  async createOffer(req, res) {
+    console.log("req in create offer", req.body);
+    try {
+      if (!req.userId) return res.reply(messages.unauthorized());
+      console.log("Checking Old Offer");
+      let CheckBid = await Bid.findOne({
+        bidderID: mongoose.Types.ObjectId(req.userId),
+        owner: mongoose.Types.ObjectId(req.body.owner._id),
+        nftID: mongoose.Types.ObjectId(req.body.nftID),
+        //orderID: mongoose.Types.ObjectId(req.body.orderID),
+        bidStatus: "MakeOffer",
+      });
+      if (CheckBid) {
+        await Bid.findOneAndDelete(
+          {
+            bidderID: mongoose.Types.ObjectId(req.userId),
+            owner: mongoose.Types.ObjectId(req.body.owner._id),
+            nftID: mongoose.Types.ObjectId(req.body.nftID),
+            //orderID: mongoose.Types.ObjectId(req.body.orderID),
+            bidStatus: "MakeOffer",
+          },
+          function (err, bidDel) {
+            if (err) {
+              console.log("Error in deleting Old Bid" + err);
+              return res.reply(messages.error("Failed"));
+            } else {
+              console.log("Old Bid record Deleted" + bidDel);
+            }
+          }
+        );
+      }
+      const bidData = new Bid({
+        bidderID: req.userId,
+        owner: req.body.owner,
+        bidStatus: "MakeOffer",
+        bidPrice: req.body.bidPrice,
+        nftID: req.body.nftID,
+        //orderID: req.body.orderID,
+        bidQuantity: req.body.bidQuantity,
+        buyerSignature: req.body.buyerSignature,
+        bidDeadline: req.body.bidDeadline,
+        isOffer:true,
+      });
+      console.log("bidDat is--->",bidData)
+      bidData
+        .save()
+        .then(async (result) => {
+          return res.reply(messages.created("Offer Placed"), result);
+        })
+        .catch((error) => {
+          console.log("Created Offer error", error);
+          return res.reply(messages.error("Failed"));
+        });
+    } catch (e) {
+      console.log("errr", e);
+      return res.reply(messages.error("Offer Failed"));
+    }
+  }
+  
+  
   async updateBidNft(req, res) {
     console.log("req", req.body);
     try {
@@ -201,6 +264,8 @@ class BidController {
           },
         },
       ]);
+      
+      
       console.log("Datat" + data[0].bids.length);
       let iFiltered = data[0].bids.length;
       if (data[0].totalCount[0] == undefined) {
@@ -219,6 +284,125 @@ class BidController {
         });
       }
     } catch (error) {
+      return res.reply(messages.server_error());
+    }
+  }
+  
+  async fetchOfferNft(req, res) {
+    console.log("req in fetchOffer nft", req.body);
+    try {
+      //if (!req.userId) return res.reply(messages.unauthorized());
+      let nftID = req.body.nftID;
+  
+      let buyerID = req.body.buyerID;
+      let bidStatus = req.body.bidStatus;
+      let oTypeQuery = {};
+      let nftIDQuery = {};
+    
+      let buyerIDQuery = {};
+     
+      
+
+      let filters = [];
+      if (bidStatus != "All") {
+        oTypeQuery = { bidStatus: mongoose.Types.ObjectId(bidStatus) };
+      }
+      if (nftID != "All") {
+        nftIDQuery = { nftID: mongoose.Types.ObjectId(nftID) };
+      }
+      //if (orderID != "All") {
+      //  orderIDQuery = { orderID: mongoose.Types.ObjectId(orderID) };
+      //}
+      if (buyerID != "All") {
+        buyerIDQuery = { bidderID: mongoose.Types.ObjectId(buyerID) };
+      }
+      console.log("filters",oTypeQuery,nftIDQuery);
+      let data = await Bid.aggregate([
+        {
+          $match: {
+            $and: [
+              { bidQuantity: { $gte: 1 } },
+              { isOffer: true },
+             
+              oTypeQuery,
+              nftIDQuery,
+              buyerIDQuery,
+            ],
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            bidderID: 1,
+            owner: 1,
+            bidStatus: 1,
+            bidPrice: 1,
+            nftID: 1,
+            bidQuantity: 1,
+            buyerSignature: 1,
+            bidDeadline: 1,
+            isOffer:1,
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "bidderID",
+            foreignField: "_id",
+            as: "bidderID",
+          },
+        },
+        //{
+        //  $lookup: {
+        //    from: "users",
+        //    localField: "owner",
+        //    foreignField: "_id",
+        //    as: "owner",
+        //  },
+        //},
+        {
+          $sort: {
+            sCreated: -1,
+          },
+        },
+        { $unwind: "$bidderID" },
+        //{ $unwind: "$owner" },
+        {
+          $facet: {
+            bids: [
+              {
+                $skip: +0,
+              },
+            ],
+            totalCount: [
+              {
+                $count: "count",
+              },
+            ],
+          },
+        },
+      ]);
+      
+      
+      console.log("Data" + data[0].bids.length);
+      let iFiltered = data[0].bids.length;
+      if (data[0].totalCount[0] == undefined) {
+        return res.reply(messages.no_prefix("Offer Details"), {
+          data: [],
+          draw: req.body.draw,
+          recordsTotal: 0,
+          recordsFiltered: 0,
+        });
+      } else {
+        return res.reply(messages.no_prefix("Offer Details"), {
+          data: data[0].bids,
+          draw: req.body.draw,
+          recordsTotal: data[0].totalCount[0].count,
+          recordsFiltered: iFiltered,
+        });
+      }
+    } catch (error) {
+      console.log("error is",error)
       return res.reply(messages.server_error());
     }
   }
