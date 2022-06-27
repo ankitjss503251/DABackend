@@ -271,6 +271,7 @@ class OrderController {
 
       let AllOrders = await Order.find(searchObj)
         .populate("sellerID")
+        .populate("orderID")
         .sort(sortObject)
         .limit(limit)
         .skip(startIndex)
