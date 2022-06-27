@@ -523,11 +523,17 @@ class AuthController{
   }
 
   async superAdminLogin(req, res, next){
+    console.log("123");
     try {
       if (!req.body.username) return res.reply(messages.required_field("Username"));
       if (!req.body.password) return res.reply(messages.required_field("Password"));
 
-      User.findOne({ password: req.body.password, username: req.body.username, role: "superadmin" }, (err, user) => {
+      User.findOne({$or: [
+        {username: req.body.username},
+        {email: req.body.username}
+          ], password: req.body.password,
+           role: "superadmin" }, (err, user) => {
+        
         if (err) console.log(err);
         if (!user) return res.reply(messages.not_found("User"));
         var token = signJWT(user);
