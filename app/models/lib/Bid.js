@@ -19,14 +19,24 @@ const bidSchema = new mongoose.Schema({
   },
   bidStatus: {
     type: String,
-    enum: ["Bid", "Cancelled", "Accepted", "Sold", "Rejected", "MakeOffer", "AcceptOffer", "RejectOffer", "CancelledOffer"],
+    enum: [
+      "Bid",
+      "Cancelled",
+      "Accepted",
+      "Sold",
+      "Rejected",
+      "MakeOffer",
+      "AcceptOffer",
+      "RejectOffer",
+      "CancelledOffer",
+    ],
   },
   bidPrice: {
     type: mongoose.Types.Decimal128,
     required: true,
   },
   bidDeadline: {
-    type: Date
+    type: Number,
   },
   bidQuantity: Number,
   buyerSignature: Array,

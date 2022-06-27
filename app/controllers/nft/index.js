@@ -16,25 +16,11 @@ router.post(
 );
 router.post("/myNFTs", nftMiddleware.verifyUserToken, nftController.myNFTs);
 
-// router.post(
-//   "/updateCollectionMarketplace",
-//   nftMiddleware.verifyUserToken,
-//   nftController.updateCollectionMarketplace
-// );
-
-// router.get(
-//   "/viewCollection/:collectionID",
-//   nftMiddleware.verifyWithoutToken,
-//   nftController.viewCollection
-// );
-
 router.post(
   "/updateCollection",
   nftMiddleware.verifyUserToken,
   nftController.updateCollection
 );
-
-// router.post("/getUpcomingCollections", nftController.getUpcomingCollections);
 
 router.post(
   "/createNFT",
