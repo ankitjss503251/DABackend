@@ -136,6 +136,7 @@ class NFTController {
             createdBy: req.userId,
             isOnMarketplace: req.body.isOnMarketplace,
             isImported: req.body.isImported,
+            link: req.body.link
           });
           collection
             .save()
@@ -375,6 +376,7 @@ class NFTController {
         collectionID: nftElement.collectionID,
         collectionAddress: nftElement.collectionAddress,
         isOnMarketplace: nftElement.isOnMarketplace,
+        totalQuantity: nftElement.totalQuantity,
         // categoryID: nftElement.categoryID,
         // brandID: nftElement.brandID,
         isImported: nftElement.isImported,
@@ -1297,203 +1299,7 @@ class NFTController {
   //   }
   // }
 
-  // async createNFT(req, res) {
-  //   try {
-  //     if (!req.userId) return res.reply(messages.unauthorized());
-  //     allowedMimes = [
-  //       "image/jpeg",
-  //       "video/mp4",
-  //       "image/jpg",
-  //       "image/webp",
-  //       "image/png",
-  //       "image/gif",
-  //       "audio/mp3",
-  //       "audio/mpeg",
-  //     ];
-  //     errAllowed = "JPG, JPEG, PNG, GIF, MP3, WEBP & MPEG";
-  //     let attributes = req.body.attributes;
-  //     upload(req, res, function (error) {
-  //       if (error) {
-  //         log.red(error);
-  //         return res.reply(messages.bad_request(error.message));
-  //       } else {
-  //         if (!req.body.creatorAddress) {
-  //           return res.reply(messages.not_found("Creator Wallet Address"));
-  //         }
-  //         if (!req.body.name) {
-  //           return res.reply(messages.not_found("Name"));
-  //         }
-  //         if (!req.body.quantity) {
-  //           return res.reply(messages.not_found("Quantity"));
-  //         }
-  //         if (!validators.isValidString(req.body.name)) {
-  //           return res.reply(messages.invalid("Title"));
-  //         }
-  //         if (req.body.description.trim().length > 1000) {
-  //           return res.reply(messages.invalid("Description"));
-  //         }
-  //         if (isNaN(req.body.quantity) || !req.body.quantity > 0) {
-  //           return res.reply(messages.invalid("Quantity"));
-  //         }
-  //         if (!req.file) {
-  //           return res.reply(messages.not_found("File"));
-  //         }
-  //         const iOptions = {
-  //           pinataMetadata: {
-  //             name: req.file.originalname,
-  //           },
-  //           pinataOptions: {
-  //             cidVersion: 0,
-  //           },
-  //         };
-  //         try {
-  //           let creatorAddress = req.body.creatorAddress;
-  //           const pathString = "/tmp/";
-  //           const file = fs.createWriteStream(
-  //             pathString + req.file.originalname
-  //           );
-  //           const request = http.get(
-  //             `${req.file.location}`,
-  //             function (response) {
-  //               var stream = response.pipe(file);
-  //               const readableStreamForFile = fs.createReadStream(
-  //                 pathString + req.file.originalname
-  //               );
-  //               stream.on("finish", async function () {
-  //                 pinata
-  //                   .pinFileToIPFS(readableStreamForFile, iOptions)
-  //                   .then((res) => {
-  //                     attributes = JSON.parse(req.body.attributes);
-  //                     let uploadingData = {};
-  //                     uploadingData = {
-  //                       description: req.body.description,
-  //                       external_url: "",
-  //                       image: "https://ipfs.io/ipfs/" + res.IpfsHash,
-  //                       name: req.body.name,
-  //                       attributes: req.body.attributes,
-  //                     };
-  //                     console.log("uploadingData", uploadingData);
-  //                     const mOptions = {
-  //                       pinataMetadata: {
-  //                         name: "hello",
-  //                       },
-  //                       pinataOptions: {
-  //                         cidVersion: 0,
-  //                       },
-  //                     };
-  //                     console.log("res---", res.IpfsHash);
-  //                     return pinata.pinJSONToIPFS(uploadingData, mOptions);
-  //                   })
-  //                   .then(async (file2) => {
-  //                     console.log("111", req.body);
-  //                     const collectionID = req.body.collectionID;
-  //                     const collectionData = await Collection.findOne({
-  //                       _id: mongoose.Types.ObjectId(collectionID),
-  //                     });
-  //                     const brandID = collectionData.brandID;
-  //                     const categoryID = collectionData.categoryID;
-  //                     console.log("222", req.body);
-  //                     const nft = new NFT({
-  //                       name: req.body.name,
-  //                       collectionID:
-  //                         collectionID && collectionID != undefined
-  //                           ? collectionID
-  //                           : "",
-  //                       collectionAddress: req.body.collectionAddress,
-  //                       hash: file2.IpfsHash,
-  //                       ownedBy: [],
-  //                       totalQuantity: req.body.quantity,
-  //                       description: req.body.description,
-  //                       createdBy: req.userId,
-  //                       tokenID: req.body.tokenID,
-  //                       type: req.body.type,
-  //                       image: req.file.location,
-  //                       price: req.body.price,
-  //                       isMinted: req.body.isMinted,
-  //                       categoryID: categoryID,
-  //                       brandID: brandID,
-  //                       lazyMintingStatus: 1,
-  //                     });
-  //                     console.log("body", req.body);
-  //                     console.log("NFTAttr", req.body.attributes);
-  //                     let NFTAttr = JSON.parse(req.body.attributes);
-  //                     console.log("NFTAttr", NFTAttr);
-  //                     if (NFTAttr.length > 0) {
-  //                       NFTAttr.forEach((obj) => {
-  //                         for (let [key, value] of Object.entries(obj)) {
-  //                           nft.attributes.push({
-  //                             name: key,
-  //                             value: value,
-  //                           });
-  //                           console.log(key + " : " + value);
-  //                         }
-  //                       });
-  //                     }
-
-  //                     let NFTLevels = JSON.parse(req.body.levels);
-  //                     if (NFTLevels.length > 0) {
-  //                       NFTLevels.forEach((obj) => {
-  //                         for (let [key, value] of Object.entries(obj)) {
-  //                           nft.levels.push({
-  //                             name: key,
-  //                             value: value,
-  //                           });
-  //                           console.log(key + " : " + value);
-  //                         }
-  //                       });
-  //                     }
-
-  //                     nft.assetsInfo.push({
-  //                       size: req.body.imageSize,
-  //                       type: req.body.imageType,
-  //                       dimension: req.body.imageDimension,
-  //                     });
-  //                     nft.ownedBy.push({
-  //                       address: creatorAddress.toLowerCase(),
-  //                       quantity: req.body.quantity,
-  //                     });
-  //                     nft
-  //                       .save()
-  //                       .then(async (result) => {
-  //                         const collection = await Collection.findOne({
-  //                           _id: mongoose.Types.ObjectId(collectionID),
-  //                         });
-  //                         let nextID = collection.getNextID();
-  //                         collection.nextID = nextID;
-  //                         collection.save();
-  //                         await Collection.findOneAndUpdate(
-  //                           { _id: mongoose.Types.ObjectId(collectionID) },
-  //                           { $inc: { nftCount: 1 } },
-  //                           function () {}
-  //                         );
-  //                         await Brand.findOneAndUpdate(
-  //                           { _id: mongoose.Types.ObjectId(brandID) },
-  //                           { $inc: { nftCount: 1 } },
-  //                           function () {}
-  //                         );
-  //                         return res.reply(messages.created("NFT"), result);
-  //                       })
-  //                       .catch((error) => {
-  //                         console.log("Created NFT error", error);
-  //                         return res.reply(messages.error());
-  //                       });
-  //                   })
-  //                   .catch((e) => {
-  //                     console.log("Error " + e);
-  //                     return res.reply(messages.error());
-  //                   });
-  //               });
-  //             }
-  //           );
-  //         } catch (e) {
-  //           console.log("error in file upload..", e);
-  //         }
-  //       }
-  //     });
-  //   } catch (error) {
-  //     return res.reply(messages.error());
-  //   }
-  // }
+ 
 
   // async likeNFT(req, res) {
   //   try {
