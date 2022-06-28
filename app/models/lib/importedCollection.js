@@ -3,8 +3,6 @@ const mongoose = require("mongoose");
 const importedcollectionSchema = mongoose.Schema({
   name: {
     type: String,
-    require: true,
-    unique: true,
   },
   type: {
     type: Number,
