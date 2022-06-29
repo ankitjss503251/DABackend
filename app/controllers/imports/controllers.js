@@ -38,6 +38,7 @@ class ImportedController {
               contractAddress: contractAddress,
               totalSupply: totalSupply,
               link: req.body.link,
+              name: req.body.name,
             });
             insertCollection
               .save()
@@ -86,7 +87,7 @@ class ImportedController {
       let searchArray = [];
 
       if (searchText !== "") {
-        searchArray["contractAddress"] =  searchText ;
+        searchArray["contractAddress"] = searchText;
       }
       let searchObj = Object.assign({}, searchArray);
       console.log("searchArray", searchArray);
@@ -117,7 +118,7 @@ class ImportedController {
         .exec()
         .then((resp1) => {
           data.push(resp1);
-          console.log("Total Supply" , resp1[0].totalSupply)
+          console.log("Total Supply", resp1[0].totalSupply);
         })
         .catch((e) => {
           console.log("Error", e);

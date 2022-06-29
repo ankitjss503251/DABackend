@@ -521,30 +521,103 @@ class AuthController{
     }
   }
 
-  async superAdminLogin(req, res, next){
+  async superAdminRegister(req, res){
+    const user = new User({
+      fullname : "DA Super Admin",
+      email : "shivam.decrypt@gmail.com",
+      username : "superadmin",
+      walletAddress:"00000000000000000000000000000000000000",
+      password : "admin@123",
+      satus : 1,
+      role: "superadmin"
+    });
+    user.save().then((result) => {
+      let token = signJWT(user);
+      return res.reply(messages.created("User"), {
+        auth: true,
+        token,
+        userData : user
+      });
+    })
+    .catch((error) => {
+      console.log("Error" + error)
+      return res.reply(messages.already_exists("User"));
+    });
+  };
+
+  async superAdminLogin(req, res, next) {
     try {
       if (!req.body.username) return res.reply(messages.required_field("Username"));
       if (!req.body.password) return res.reply(messages.required_field("Password"));
-
-      User.findOne({ password: req.body.password, username: req.body.username, role: "superadmin" }, (err, user) => {
-        if (err) console.log(err);
-        if (!user) return res.reply(messages.not_found("User"));
-        var token = signJWT(user);
-        req.session["_id"] = user._id;
-        req.session["username"] = user.username;
-        return res.reply(messages.successfully("Super Admin Logged In"), {
-          auth: true,
-          token,
-          walletAddress: user.walletAddress,
-          userId: user._id,
-          userType: user.role,
-          userData: user,
+      let username = req.body.username;
+      let password = req.body.password;
+      User.findOne(
+        {
+          $or: [
+            { username: username },
+            { email: username }
+          ],
+          role: "superadmin"
+        }, (err, user) => {
+          if (err) console.log(err);
+          if (!user) {
+            return res.reply(messages.wrong_credentials(""));
+          } else {
+            console.log(user);
+            user.comparePassword(password, function (err, isMatch) {
+              if (err) throw err;
+              if (isMatch) {
+                if (user.status == 0) {
+                  return res.reply(messages.blocked("User"));
+                } else {
+                  var token = signJWT(user);
+                  req.session["_id"] = user._id;
+                  req.session["username"] = user.username;
+                  return res.reply(messages.successfully("Super Admin Logged In"), {
+                    auth: true,
+                    token,
+                    walletAddress: user.walletAddress,
+                    userId: user._id,
+                    userType: user.role,
+                    userData: user,
+                  });
+                }
+              } else {
+                return res.reply(messages.wrong_credentials(""));
+              }
+            });
+          }
         });
-      });
     } catch (error) {
       console.log(error);
       return res.reply(messages.server_error());
     }
   };
+
+//   async superAdminLogin(req, res, next){
+//     try {
+//       if (!req.body.username) return res.reply(messages.required_field("Username"));
+//       if (!req.body.password) return res.reply(messages.required_field("Password"));
+
+//       User.findOne({ password: req.body.password, username: req.body.username, role: "superadmin" }, (err, user) => {
+//         if (err) console.log(err);
+//         if (!user) return res.reply(messages.not_found("User"));
+//         var token = signJWT(user);
+//         req.session["_id"] = user._id;
+//         req.session["username"] = user.username;
+//         return res.reply(messages.successfully("Super Admin Logged In"), {
+//           auth: true,
+//           token,
+//           walletAddress: user.walletAddress,
+//           userId: user._id,
+//           userType: user.role,
+//           userData: user,
+//         });
+//       });
+//     } catch (error) {
+//       console.log(error);
+//       return res.reply(messages.server_error());
+//     }
+//   };
 }
 module.exports = AuthController;
