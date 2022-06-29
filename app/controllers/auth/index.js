@@ -7,6 +7,7 @@ router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.post('/checkuseraddress', authController.checkuseraddress);
 router.post('/adminlogin', authController.adminlogin);
+router.get('/superAdminRegister', authController.superAdminRegister);
 router.post('/superAdminLogin', authController.superAdminLogin);
 router.post('/logout', authMiddleware.verifyUserToken, authController.logout);
 router.post('/changePassword', authMiddleware.verifyUserToken, authController.changePassword);
