@@ -72,22 +72,20 @@ const AdminProfileIcon = multer(oMulterObj).single("profileImg");
 
 const uploadBanner = multer(oMulterObj);
 
-class AuthController{
-  
-  constructor(){
-    
+class AuthController {
+
+  constructor() {
+
   }
 
-  register(req, res){
+  register(req, res) {
     try {
-      if (!req.body.walletAddress)
-      {
+      if (!req.body.walletAddress) {
         return res.reply(messages.required_field("Wallet Address"));
-      }    
+      }
       bcrypt.hash(req.body.walletAddress?.toLowerCase(), saltRounds, (err, hash) => {
         if (err) { return res.reply(messages.error()); }
-        if (!req.body.walletAddress?.toLowerCase())
-        {
+        if (!req.body.walletAddress?.toLowerCase()) {
           return res.reply(messages.required_field("Wallet Address"));
         }
         const user = new User({
@@ -111,7 +109,7 @@ class AuthController{
       return res.reply(messages.server_error());
     }
   };
-  login(req, res){
+  login(req, res) {
     try {
       if (!req.body.walletAddress)
         return res.reply(messages.required_field("Wallet Address"));
@@ -147,7 +145,7 @@ class AuthController{
     }
   };
 
-  logout(req, res, next){
+  logout(req, res, next) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
       User.findOne(
@@ -169,7 +167,7 @@ class AuthController{
     }
   };
 
-  async adminregister(req, res){
+  async adminregister(req, res) {
     try {
       if (!req.body.walletAddress)
         return res.reply(messages.required_field("Wallet Address"));
@@ -279,7 +277,7 @@ class AuthController{
   };
   */
 
-  async adminlogin(req, res, next){
+  async adminlogin(req, res, next) {
     try {
       if (!req.body.username) return res.reply(messages.required_field("Username"));
       if (!req.body.password) return res.reply(messages.required_field("Password"));
@@ -305,7 +303,7 @@ class AuthController{
     }
   };
 
-  async changePassword(req, res, next){ 
+  async changePassword(req, res, next) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
       if (!req.body.password) return res.reply(messages.required_field("Password"));
@@ -340,7 +338,7 @@ class AuthController{
     }
   };
 
-  checkuseraddress(req, res){ 
+  checkuseraddress(req, res) {
     try {
       if (!req.body.walletAddress)
         return res.reply(messages.required_field("Wallet Address"));
@@ -406,7 +404,7 @@ class AuthController{
     }
   };*/
 
-  passwordReset(req, res, next){
+  passwordReset(req, res, next) {
     try {
       log.red(req.body);
       if (!req.body.email) return res.reply(messages.required_field("Email ID"));
@@ -463,7 +461,7 @@ class AuthController{
     }
   };
 
-  passwordResetGet(req, res, next){
+  passwordResetGet(req, res, next) {
     try {
       if (!req.params.token) return res.reply(messages.not_found("Token"));
 
@@ -483,7 +481,7 @@ class AuthController{
     }
   };
 
-  passwordResetPost(req, res, next){
+  passwordResetPost(req, res, next) {
     try {
       if (!req.params.token) return res.reply(messages.not_found("Token"));
       if (!req.body.password) return res.reply(messages.not_found("Password"));
@@ -523,14 +521,14 @@ class AuthController{
     }
   }
 
-  async superAdminRegister(req, res){
+  async superAdminRegister(req, res) {
     const user = new User({
-      fullname : "DA Super Admin",
-      email : "shivam.decrypt@gmail.com",
-      username : "superadmin",
-      walletAddress:"00000000000000000000000000000000000000",
-      password : "admin@123",
-      satus : 1,
+      fullname: "DA Super Admin",
+      email: "shivam.decrypt@gmail.com",
+      username: "superadmin",
+      walletAddress: "00000000000000000000000000000000000000",
+      password: "admin@123",
+      satus: 1,
       role: "superadmin"
     });
     user.save().then((result) => {
@@ -538,13 +536,13 @@ class AuthController{
       return res.reply(messages.created("User"), {
         auth: true,
         token,
-        userData : user
+        userData: user
       });
     })
-    .catch((error) => {
-      console.log("Error" + error)
-      return res.reply(messages.already_exists("User"));
-    });
+      .catch((error) => {
+        console.log("Error" + error)
+        return res.reply(messages.already_exists("User"));
+      });
   };
 
   async superAdminLogin(req, res, next) {
@@ -596,7 +594,7 @@ class AuthController{
     }
   };
 
-  async addAdmin(req, res){
+  async addAdmin(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
       allowedMimes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
@@ -620,13 +618,13 @@ class AuthController{
           ];
           let searchObj = Object.assign({}, searchArray);
           const checkUser = await User.countDocuments(searchObj).exec();
-          if(checkUser == 0){
+          if (checkUser == 0) {
             const user = new User({
               walletAddress: _.toChecksumAddress(req.body.walletAddress),
-              username : _.toChecksumAddress(req.body.walletAddress),
-              fullname : req.body.fullname,
-              profileIcon : req.files.profileIcon[0].location,
-              role : "admin",
+              username: _.toChecksumAddress(req.body.walletAddress),
+              fullname: req.body.fullname,
+              profileIcon: req.files.profileIcon[0].location,
+              role: "admin",
             });
             user.save().then((result) => {
               let token = signJWT(user);
@@ -640,7 +638,7 @@ class AuthController{
             }).catch((error) => {
               return res.reply(messages.already_exists("User"), error);
             });
-          }else{
+          } else {
             return res.reply(messages.already_exists("User"), error);
           }
         }
@@ -686,55 +684,103 @@ class AuthController{
     }
   };
 
-  async updateAdmin(req, res){
-    console.log("Data", req.body)
+  async updateAdmin(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
-      let profileDetails = {};
-      if (req.file !== undefined) {
-        if (!aAllowedMimes.includes(req.file.mimetype)) {
-          return res.reply(messages.invalid("File Type"));
-        }
-        await AdminProfileIcon(req, res, async (error) => {
-          if (error) {
-            return res.reply(messages.bad_request(error.message));
+      allowedMimes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
+      errAllowed = "JPG, JPEG, PNG,GIF";
+
+      uploadBanner.fields([{ name: 'profileIcon', maxCount: 1 }])(req, res, async function (error) {
+        if (error) {
+          return res.reply(messages.bad_request(error.message));
+        } else {
+          if (!req.body.fullname) {
+            return res.reply(messages.not_found("User Fullname"));
           }
+          let profileDetails = {};
           profileDetails = {
-            fullname: req.body.fullname,
-            profileIcon : req.file.location,
+            fullname: req.body.fullname
           };
+          console.log("File dfgdgh", req.files.profileIcon)
+          if (req.files.profileIcon !== undefined) {
+            if (!allowedMimes.includes(req.files.profileIcon[0].mimetype)) {
+              return res.reply(messages.invalid("File Type"));
+            }
+            console.log("File URL",req.files.profileIcon[0].location)
+            profileDetails["profileIcon"] = req.files.profileIcon[0].location;
+          }
           await User.findByIdAndUpdate(
             req.body.adminID,
             profileDetails,
             (err, user) => {
               if (err) return res.reply(messages.server_error());
               if (!user) return res.reply(messages.not_found("User"));
+              req.session["name"] = req.body.Firstname;
               return res.reply(messages.successfully("Admin Details Updated"));
             }
           ).catch((e) => {
             return res.reply(messages.error());
           });
-        });
-      }else{
-        profileDetails = {
-          fullname: req.body.fullname,
-        };
-        await User.findByIdAndUpdate(
-          req.body.adminID,
-          profileDetails,
-          (err, user) => {
-            if (err) return res.reply(messages.server_error());
-            if (!user) return res.reply(messages.not_found("User"));
-            req.session["name"] = req.body.Firstname;
-            return res.reply(messages.successfully("Admin Details Updated"));
-          }
-        ).catch((e) => {
-          return res.reply(messages.error());
-        });
-      }
+        }
+      });
+
     } catch (error) {
       return res.reply(messages.server_error());
     }
   };
+
+  // async updateAdmin(req, res){
+  //   try {
+  //     if (!req.userId) return res.reply(messages.unauthorized());
+  //     if (!req.body.fullname) {
+  //       return res.reply(messages.not_found("User Fullname"));
+  //     }
+  //     let profileDetails = {};
+  //     if (req.file !== undefined) {
+  //       if (!aAllowedMimes.includes(req.file.mimetype)) {
+  //         return res.reply(messages.invalid("File Type"));
+  //       }
+  //       await AdminProfileIcon(req, res, async (error) => {
+  //         if (error) {
+  //           return res.reply(messages.bad_request(error.message));
+  //         }
+  //         profileDetails = {
+  //           fullname: req.body.fullname,
+  //           profileIcon : req.file.location,
+  //         };
+  //         await User.findByIdAndUpdate(
+  //           req.body.adminID,
+  //           profileDetails,
+  //           (err, user) => {
+  //             if (err) return res.reply(messages.server_error());
+  //             if (!user) return res.reply(messages.not_found("User"));
+  //             return res.reply(messages.successfully("Admin Details Updated"));
+  //           }
+  //         ).catch((e) => {
+  //           return res.reply(messages.error());
+  //         });
+  //       });
+  //     }else{
+  //       profileDetails = {
+  //         fullname: req.body.fullname,
+  //       };
+  //       console.log(req.body.adminID);
+  //       await User.findByIdAndUpdate(
+  //         req.body.adminID,
+  //         profileDetails,
+  //         (err, user) => {
+  //           if (err) return res.reply(messages.server_error());
+  //           if (!user) return res.reply(messages.not_found("User"));
+  //           req.session["name"] = req.body.Firstname;
+  //           return res.reply(messages.successfully("Admin Details Updated"));
+  //         }
+  //       ).catch((e) => {
+  //         return res.reply(messages.error());
+  //       });
+  //     }
+  //   } catch (error) {
+  //     return res.reply(messages.server_error());
+  //   }
+  // };
 }
 module.exports = AuthController;
