@@ -102,6 +102,101 @@ class UtilsController {
     }
   }
 
+
+  async updateCategory(req, res) {
+    try {
+      if (!req.userId) return res.reply(messages.unauthorized());
+      allowedMimes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
+      errAllowed = "JPG, JPEG, PNG,GIF";
+      uploadCategory.fields([{ name: "image", maxCount: 1 }])(req, res, async function (error) {
+        if (error) {
+          log.red(error);
+          console.log("Error ");
+          return res.reply(messages.bad_request(error.message));
+        } else {
+          console.log("Here");
+          if (!req.body.name) {
+            return res.reply(messages.not_found("Category Name"));
+          }
+          let categoryDetails = {};
+          categoryDetails = { name: req.body.name, lastUpdatedBy: req.userId, lastUpdatedOn: new Date() };
+
+          if (req.files.image !== undefined) {
+            if (!allowedMimes.includes(req.files.image[0].mimetype)) {
+              return res.reply(messages.invalid("File Type"));
+            }
+            categoryDetails["image"] = req.files.image[0].location;
+          }
+          await Category.findByIdAndUpdate(
+            req.body.categoryID,
+            categoryDetails,
+            (err, category) => {
+              if (err) return res.reply(messages.server_error());
+              if (!category) return res.reply(messages.not_found("Category"));
+              return res.reply(messages.successfully("Category Details Updated"));
+            }
+          ).catch((e) => {
+            return res.reply(messages.error());
+          });
+        }
+      }
+      );
+    } catch (error) {
+      return res.reply(messages.server_error());
+    }
+  }
+
+  async updateBrand(req, res) {
+    try {
+      if (!req.userId) return res.reply(messages.unauthorized());
+      allowedMimes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
+      errAllowed = "JPG, JPEG, PNG,GIF";
+
+      uploadBrand.fields([{ name: "logoImage", maxCount: 1 }, { name: "coverImage", maxCount: 1 },])(req, res, async function (error) {
+        if (error) {
+          return res.reply(messages.bad_request(error.message));
+        } else {
+          if (!req.body.name) {
+            return res.reply(messages.not_found("Brand Name"));
+          }
+          if (!validators.isValidString(req.body.name)) {
+            return res.reply(messages.invalid("Brand Name"));
+          }
+          if (req.body.description.trim().length > 1000) {
+            return res.reply(messages.invalid("Description"));
+          }
+          let brandsDetails = {};
+          brandsDetails = { name: req.body.name, description: req.body.description, lastUpdatedBy: req.userId, lastUpdatedOn: new Date() };
+          if (req.files.logoImage !== undefined) {
+            if (!allowedMimes.includes(req.files.logoImage[0].mimetype)) {
+              return res.reply(messages.invalid("File Type"));
+            }
+            brandsDetails["logoImage"] = req.files.logoImage[0].location;
+          }
+          if (req.files.coverImage !== undefined) {
+            if (!allowedMimes.includes(req.files.coverImage[0].mimetype)) {
+              return res.reply(messages.invalid("File Type"));
+            }
+            brandsDetails["coverImage"] = req.files.coverImage[0].location;
+          }
+          await Brand.findByIdAndUpdate(
+            req.body.brandID,
+            brandsDetails,
+            (err, brand) => {
+              if (err) return res.reply(messages.server_error());
+              if (!brand) return res.reply(messages.not_found("Brand"));
+              return res.reply(messages.successfully("Brand Details Updated"));
+            }
+          ).catch((e) => {
+            return res.reply(messages.error());
+          });
+        }
+      });
+    } catch (error) {
+      return res.reply(messages.server_error());
+    }
+  }
+
   async addBrand(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
@@ -139,6 +234,7 @@ class UtilsController {
       return res.reply(messages.server_error());
     }
   }
+  
   async getCategory(req, res) {
     try {
       let categoryID = "";
@@ -182,11 +278,25 @@ class UtilsController {
   }
   async getBrandByID(req, res) {
     try {
+      if (!req.userId) return res.reply(messages.unauthorized());
       if (!req.params.brandID) return res.reply(messages.not_found("Brand ID"));
       Brand.findById(req.params.brandID, (err, brand) => {
         if (err) return res.reply(messages.server_error());
         if (!brand) return res.reply(messages.not_found("Brand"));
         return res.reply(messages.successfully("Brand Details Found"), brand);
+      });
+    } catch (e) {
+      return res.reply(message.error(e));
+    }
+  }
+  async getCategoryByID(req, res) {
+    try {
+      if (!req.userId) return res.reply(messages.unauthorized());
+      if (!req.params.categoryID) return res.reply(messages.not_found("Category ID"));
+      Category.findById(req.params.categoryID, (err, category) => {
+        if (err) return res.reply(messages.server_error());
+        if (!category) return res.reply(messages.not_found("Category"));
+        return res.reply(messages.successfully("Category Details Found"), category);
       });
     } catch (e) {
       return res.reply(message.error(e));
