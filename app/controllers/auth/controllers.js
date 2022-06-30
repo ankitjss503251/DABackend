@@ -68,6 +68,8 @@ let oMulterObj = {
   },
   fileFilter: fileFilter,
 };
+const AdminProfileIcon = multer(oMulterObj).single("profileImg");
+
 const uploadBanner = multer(oMulterObj);
 
 class AuthController{
@@ -594,30 +596,145 @@ class AuthController{
     }
   };
 
-//   async superAdminLogin(req, res, next){
-//     try {
-//       if (!req.body.username) return res.reply(messages.required_field("Username"));
-//       if (!req.body.password) return res.reply(messages.required_field("Password"));
+  async addAdmin(req, res){
+    try {
+      if (!req.userId) return res.reply(messages.unauthorized());
+      allowedMimes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
+      errAllowed = "JPG, JPEG, PNG,GIF";
 
-//       User.findOne({ password: req.body.password, username: req.body.username, role: "superadmin" }, (err, user) => {
-//         if (err) console.log(err);
-//         if (!user) return res.reply(messages.not_found("User"));
-//         var token = signJWT(user);
-//         req.session["_id"] = user._id;
-//         req.session["username"] = user.username;
-//         return res.reply(messages.successfully("Super Admin Logged In"), {
-//           auth: true,
-//           token,
-//           walletAddress: user.walletAddress,
-//           userId: user._id,
-//           userType: user.role,
-//           userData: user,
-//         });
-//       });
-//     } catch (error) {
-//       console.log(error);
-//       return res.reply(messages.server_error());
-//     }
-//   };
+      uploadBanner.fields([{ name: 'profileIcon', maxCount: 1 }])(req, res, async function (error) {
+        if (error) {
+          return res.reply(messages.bad_request(error.message));
+        } else {
+          log.green(req.files.profileIcon[0].location);
+          if (!req.body.fullname) {
+            return res.reply(messages.not_found("User Fullname"));
+          }
+          if (!req.body.walletAddress) {
+            return res.reply(messages.not_found("User Wallet Address"));
+          }
+          let searchArray = [];
+          searchArray["or"] = [
+            { 'walletAddress': { $regex: new RegExp(req.body.walletAddress), $options: "i" } },
+            { 'username': { $regex: new RegExp(req.body.walletAddress), $options: "i" } }
+          ];
+          let searchObj = Object.assign({}, searchArray);
+          const checkUser = await User.countDocuments(searchObj).exec();
+          if(checkUser == 0){
+            const user = new User({
+              walletAddress: _.toChecksumAddress(req.body.walletAddress),
+              username : _.toChecksumAddress(req.body.walletAddress),
+              fullname : req.body.fullname,
+              profileIcon : req.files.profileIcon[0].location,
+              role : "admin",
+            });
+            user.save().then((result) => {
+              let token = signJWT(user);
+              req.session["_id"] = user._id;
+              req.session["walletAddress"] = user.walletAddress;
+              return res.reply(messages.created("User"), {
+                auth: true,
+                token,
+                walletAddress: user.walletAddress,
+              });
+            }).catch((error) => {
+              return res.reply(messages.already_exists("User"), error);
+            });
+          }else{
+            return res.reply(messages.already_exists("User"), error);
+          }
+        }
+      });
+
+    } catch (error) {
+      return res.reply(messages.server_error());
+    }
+  };
+  async allAdmin(req, res) {
+    try {
+      console.log("Called", req.body);
+      const page = parseInt(req.body.page);
+      const limit = parseInt(req.body.limit);
+      const startIndex = (page - 1) * limit;
+      console.log("Called", startIndex);
+      let searchText = "";
+      if (req.body.searchText && req.body.searchText !== undefined) {
+        searchText = req.body.searchText;
+      }
+
+      let searchArray = [];
+      searchArray["role"] = "admin";
+      if (searchText !== "") {
+        searchArray["or"] = [
+          { 'walletAddress': { $regex: new RegExp(searchText), $options: "i" } },
+          { 'fullname': { $regex: new RegExp(searchText), $options: "i" } }
+        ];
+      }
+      let searchObj = Object.assign({}, searchArray);
+      let users = await User.aggregate([
+        { $match: searchObj },
+        { $skip: startIndex },
+        { $limit: limit },
+        { $sort: { createdOn: -1 } },
+      ]).exec(function (e, userData) {
+        console.log("Error ", e);
+        return res.reply(messages.success("Admin List"), userData);
+      });
+    } catch (error) {
+      console.log("Error " + error);
+      return res.reply(messages.server_error());
+    }
+  };
+
+  async updateAdmin(req, res){
+    console.log("Data", req.body)
+    try {
+      if (!req.userId) return res.reply(messages.unauthorized());
+      let profileDetails = {};
+      if (req.file !== undefined) {
+        if (!aAllowedMimes.includes(req.file.mimetype)) {
+          return res.reply(messages.invalid("File Type"));
+        }
+        await AdminProfileIcon(req, res, async (error) => {
+          if (error) {
+            return res.reply(messages.bad_request(error.message));
+          }
+          profileDetails = {
+            fullname: req.body.fullname,
+            profileIcon : req.file.location,
+          };
+          await User.findByIdAndUpdate(
+            req.body.adminID,
+            profileDetails,
+            (err, user) => {
+              if (err) return res.reply(messages.server_error());
+              if (!user) return res.reply(messages.not_found("User"));
+              return res.reply(messages.successfully("Admin Details Updated"));
+            }
+          ).catch((e) => {
+            return res.reply(messages.error());
+          });
+        });
+      }else{
+        profileDetails = {
+          fullname: req.body.fullname,
+        };
+        await User.findByIdAndUpdate(
+          req.body.adminID,
+          profileDetails,
+          (err, user) => {
+            if (err) return res.reply(messages.server_error());
+            if (!user) return res.reply(messages.not_found("User"));
+            req.session["name"] = req.body.Firstname;
+            return res.reply(messages.successfully("Admin Details Updated"));
+          }
+        ).catch((e) => {
+          return res.reply(messages.error());
+        });
+      }
+    } catch (error) {
+      return res.reply(messages.server_error());
+    }
+  };
 }
 module.exports = AuthController;
