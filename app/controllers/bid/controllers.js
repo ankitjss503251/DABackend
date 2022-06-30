@@ -71,9 +71,16 @@ class BidController {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
       console.log("Checking Old Offer");
+      
+      console.log("ownerr addres isss------>",req.body.owner.address)
+      
+      let user=await User.findOne({walletAddress:req.body.owner.address})
+      console.log("User is--->",user)
+      
+      
       let CheckBid = await Bid.findOne({
         bidderID: mongoose.Types.ObjectId(req.userId),
-        owner: mongoose.Types.ObjectId(req.body.owner._id),
+        owner: mongoose.Types.ObjectId(user._id),
         nftID: mongoose.Types.ObjectId(req.body.nftID),
         //orderID: mongoose.Types.ObjectId(req.body.orderID),
         bidStatus: "MakeOffer",
@@ -82,7 +89,7 @@ class BidController {
         await Bid.findOneAndDelete(
           {
             bidderID: mongoose.Types.ObjectId(req.userId),
-            owner: mongoose.Types.ObjectId(req.body.owner._id),
+            owner: mongoose.Types.ObjectId(user._id),
             nftID: mongoose.Types.ObjectId(req.body.nftID),
             //orderID: mongoose.Types.ObjectId(req.body.orderID),
             bidStatus: "MakeOffer",
@@ -99,7 +106,7 @@ class BidController {
       }
       const bidData = new Bid({
         bidderID: req.userId,
-        owner: req.body.owner,
+        owner: user._id,
         bidStatus: "MakeOffer",
         bidPrice: req.body.bidPrice,
         nftID: req.body.nftID,
@@ -108,6 +115,8 @@ class BidController {
         buyerSignature: req.body.buyerSignature,
         bidDeadline: req.body.bidDeadline,
         isOffer:true,
+        salt: req.body.salt,
+        tokenAddress:req.body.tokenAddress
       });
       console.log("bidDat is--->",bidData)
       bidData
@@ -171,6 +180,8 @@ class BidController {
       return res.reply(messages.error());
     }
   }
+  
+  
 
   async fetchBidNft(req, res) {
     console.log("req", req.body);
@@ -296,6 +307,53 @@ class BidController {
     }
   }
   
+   
+  //async updateOfferNft(req, res) {
+  //  console.log("req", req.body);
+  //  try {
+  //    if (!req.userId) return res.reply(messages.unauthorized());
+  //    console.log("Checking Old Offers");
+  //    let bidID = req.body.bidID;
+  //    let CheckBid = await Bid.findById(bidID);
+  //    if (CheckBid) {
+  //      if (req.body.action == "Delete" || req.body.action == "Cancelled") {
+  //        await Bid.findOneAndDelete(
+  //          { _id: mongoose.Types.ObjectId(bidID) },
+  //          function (err, delBid) {
+  //            if (err) {
+  //              console.log("Error in Deleting Bid" + err);
+  //              return res.reply(messages.error());
+  //            } else {
+  //              console.log("Offer Deleted : ", delBid);
+  //              return res.reply(messages.created("Offer Cancelled"), delBid);
+  //            }
+  //          }
+  //        );
+  //      } else {
+  //        await Bid.findOneAndUpdate(
+  //          { _id: mongoose.Types.ObjectId(bidID) },
+  //          { bidStatus: req.body.action },
+  //          function (err, rejBid) {
+  //            if (err) {
+  //              console.log("Error in Rejecting Offer" + err);
+  //              return res.reply(messages.error());
+  //            } else {
+  //              console.log("Offer Rejected : ", rejBid);
+  //              return res.reply(messages.created("Offer Rejected"), rejBid);
+  //            }
+  //          }
+  //        );
+  //      }
+  //    } else {
+  //      console.log("Offer Not found");
+  //      return res.reply("Offer Not found");
+  //    }
+  //  } catch (e) {
+  //    console.log("errr", e);
+  //    return res.reply(messages.error());
+  //  }
+  //}
+  
   async fetchOfferNft(req, res) {
     console.log("req in fetchOffer nft", req.body);
     try {
@@ -350,6 +408,8 @@ class BidController {
             buyerSignature: 1,
             bidDeadline: 1,
             isOffer:1,
+            tokenAddress:1,
+            salt:1
           },
         },
         {
@@ -360,21 +420,21 @@ class BidController {
             as: "bidderID",
           },
         },
-        //{
-        //  $lookup: {
-        //    from: "users",
-        //    localField: "owner",
-        //    foreignField: "_id",
-        //    as: "owner",
-        //  },
-        //},
+        {
+          $lookup: {
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            as: "owner",
+          },
+        },
         {
           $sort: {
             sCreated: -1,
           },
         },
         { $unwind: "$bidderID" },
-        //{ $unwind: "$owner" },
+        { $unwind: "$owner" },
         {
           $facet: {
             bids: [
