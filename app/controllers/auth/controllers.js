@@ -650,6 +650,7 @@ class AuthController {
   };
   async allAdmin(req, res) {
     try {
+      const results = {};
       console.log("Called", req.body);
       const page = parseInt(req.body.page);
       const limit = parseInt(req.body.limit);
@@ -674,9 +675,11 @@ class AuthController {
         { $skip: startIndex },
         { $limit: limit },
         { $sort: { createdOn: -1 } },
-      ]).exec(function (e, userData) {
+      ]).exec( async function (e, userData) {
         console.log("Error ", e);
-        return res.reply(messages.success("Admin List"), userData);
+        results.count = await User.countDocuments(searchObj).exec();
+        results.results = userData;
+        return res.reply(messages.success("Admin List"), results);
       });
     } catch (error) {
       console.log("Error " + error);
@@ -729,58 +732,33 @@ class AuthController {
     }
   };
 
-  // async updateAdmin(req, res){
-  //   try {
-  //     if (!req.userId) return res.reply(messages.unauthorized());
-  //     if (!req.body.fullname) {
-  //       return res.reply(messages.not_found("User Fullname"));
-  //     }
-  //     let profileDetails = {};
-  //     if (req.file !== undefined) {
-  //       if (!aAllowedMimes.includes(req.file.mimetype)) {
-  //         return res.reply(messages.invalid("File Type"));
-  //       }
-  //       await AdminProfileIcon(req, res, async (error) => {
-  //         if (error) {
-  //           return res.reply(messages.bad_request(error.message));
-  //         }
-  //         profileDetails = {
-  //           fullname: req.body.fullname,
-  //           profileIcon : req.file.location,
-  //         };
-  //         await User.findByIdAndUpdate(
-  //           req.body.adminID,
-  //           profileDetails,
-  //           (err, user) => {
-  //             if (err) return res.reply(messages.server_error());
-  //             if (!user) return res.reply(messages.not_found("User"));
-  //             return res.reply(messages.successfully("Admin Details Updated"));
-  //           }
-  //         ).catch((e) => {
-  //           return res.reply(messages.error());
-  //         });
-  //       });
-  //     }else{
-  //       profileDetails = {
-  //         fullname: req.body.fullname,
-  //       };
-  //       console.log(req.body.adminID);
-  //       await User.findByIdAndUpdate(
-  //         req.body.adminID,
-  //         profileDetails,
-  //         (err, user) => {
-  //           if (err) return res.reply(messages.server_error());
-  //           if (!user) return res.reply(messages.not_found("User"));
-  //           req.session["name"] = req.body.Firstname;
-  //           return res.reply(messages.successfully("Admin Details Updated"));
-  //         }
-  //       ).catch((e) => {
-  //         return res.reply(messages.error());
-  //       });
-  //     }
-  //   } catch (error) {
-  //     return res.reply(messages.server_error());
-  //   }
-  // };
+  async blockUnblockAdmin(req, res) {
+    try {
+      if (!req.userId) return res.reply(messages.unauthorized());
+      if (!req.body.adminID) {
+        return res.reply(messages.not_found("Admin ID"));
+      }
+      if (req.body.blockStatus === undefined) {
+        return res.reply(messages.not_found("Block Status"));
+      }
+      let profileDetails = {};
+      profileDetails = {
+        status: req.body.blockStatus
+      };
+      await User.findByIdAndUpdate(
+        req.body.adminID,
+        profileDetails,
+        (err, user) => {
+          if (err) return res.reply(messages.server_error());
+          if (!user) return res.reply(messages.not_found("User"));
+          return res.reply(messages.successfully("Admin Block Status Updated"));
+        }
+      ).catch((e) => {
+        return res.reply(messages.error());
+      });
+    } catch (error) {
+      return res.reply(messages.server_error());
+    }
+  };
 }
 module.exports = AuthController;
