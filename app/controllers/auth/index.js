@@ -15,4 +15,9 @@ router.post('/passwordreset', authController.passwordReset);
 router.get('/reset/:token', authController.passwordResetGet);
 router.post('/reset/:token', authController.passwordResetPost);
 router.post('/adminregister', authController.adminregister);
+
+router.post('/addAdmin12', authMiddleware.verifySuperAdminToken,  authController.addAdmin);
+router.post('/allAdmin', authController.allAdmin);
+router.post('/updateAdmin12', authMiddleware.verifySuperAdminToken,  authController.updateAdmin);
+
 module.exports = router;
