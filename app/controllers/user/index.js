@@ -12,6 +12,7 @@ router.get("/profile", userMiddleware.verifyUserToken, userController.profile);
 router.post("/profileDetail", userController.getUserProfilewithNfts);
 router.post( "/profileWithNfts", userMiddleware.verifyWithoutToken, userController.getUserWithNfts);
 router.put("/updateProfile", userMiddleware.verifyUserToken, userController.updateProfile);
+router.get("/getUserDetails/:user", userController.getUserDetails );
 
 
 module.exports = router;
