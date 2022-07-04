@@ -680,32 +680,30 @@ class NFTController {
     try {
       let data = [];
       let OrderSearchArray = [];
-      let sSellingType = req.body.sSellingType;
-      let sTextsearch = req.body.sTextsearch;
-      let itemType = req.body.itemType;
+      let salesType = req.body.salesType;
+      let searchText = req.body.searchText;
+      let nftType = req.body.nftType;
       const page = parseInt(req.body.page);
       const limit = parseInt(req.body.limit);
-
       const startIndex = (page - 1) * limit;
       const endIndex = page * limit;
-
-      OrderSearchArray["oStatus"] = 1;
-      if (sSellingType !== "") {
-        OrderSearchArray["oType"] = sSellingType;
+      // OrderSearchArray["status"] = 1;
+      if (salesType !== "") {
+        OrderSearchArray["salesType"] = salesType;
       }
       let OrderSearchObj = Object.assign({}, OrderSearchArray);
-      let OrderIdsss = await Order.distinct("oNftId", OrderSearchObj);
-
+      let OrderIdsss = await Order.distinct("nftID", OrderSearchObj);
       let NFTSearchArray = [];
+      console.log("NFT IDs",OrderIdsss);
       NFTSearchArray["_id"] = { $in: OrderIdsss.map(String) };
-      if (sTextsearch !== "") {
-        NFTSearchArray["nTitle"] = {
-          $regex: new RegExp(sTextsearch),
+      if (searchText !== "") {
+        NFTSearchArray["name"] = {
+          $regex: new RegExp(searchText),
           $options: "<options>",
         };
       }
-      if (itemType !== "") {
-        NFTSearchArray["nType"] = itemType;
+      if (nftType !== "") {
+        NFTSearchArray["type"] = nftType;
       }
       let NFTSearchObj = Object.assign({}, NFTSearchArray);
       const results = {};
@@ -734,7 +732,7 @@ class NFTController {
           nLazyMintingStatus: 1,
         })
         .populate({
-          path: "nCreater",
+          path: "CreatedBy",
           options: {
             limit: 1,
           },
@@ -745,7 +743,7 @@ class NFTController {
           },
         })
         .populate({
-          path: "nOrders",
+          path: "Orders",
           options: {
             limit: 1,
           },

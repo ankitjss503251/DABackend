@@ -78,6 +78,24 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
+
+  async getUserDetails(req, res){
+    console.log("Fun called");
+    try {
+      if (!req.params.user)
+        return res.reply(messages.not_found("Request"));
+
+      let searchKey = req.params.user;
+      
+      User.findOne({ $or:[ {'fullname':searchKey}, {'username':searchKey}, {'walletAddress':searchKey} ] }, (err, user) => {
+        if (err) return res.reply(messages.server_error());
+        if (!user) return res.reply(messages.not_found("User"));
+        return res.reply(messages.successfully("User Details Found"), user);
+      });
+    } catch (error) {
+      return res.reply(messages.server_error());
+    }
+  };
   
   async getUsers(req, res){
     try {

@@ -41,6 +41,7 @@ router.put(
   nftController.updateNftOrder
 );
 router.post("/getCombinedNfts", nftController.getCombinedNfts);
+router.post("/getOnSaleItems", nftController.getOnSaleItems );
 
 // router.post("/likeNFT", nftMiddleware.verifyUserToken, nftController.likeNFT);
 // router.post("/mynftlist", nftMiddleware.verifyUserToken, nftController.mynftlist);

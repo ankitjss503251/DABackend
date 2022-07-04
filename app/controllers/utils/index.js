@@ -7,6 +7,8 @@ router.post("/addCategory", utilsMiddleware.verifyAdminToken, utilsController.ad
 router.post("/addBrand", utilsMiddleware.verifyAdminToken, utilsController.addBrand);
 router.post("/getCategory", utilsController.getCategory);
 router.get("/getAllBrand", utilsController.getAllBrand);
+router.get("/showBrandByID/:brandID", utilsController.showBrandByID);
+router.get("/showCategoryByID/:categoryID", utilsController.showCategoryByID);
 
 
 router.post("/myCategoryList", utilsMiddleware.verifyAdminToken, utilsController.myCategoryList);
