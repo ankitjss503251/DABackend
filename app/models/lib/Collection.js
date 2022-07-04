@@ -106,6 +106,12 @@ const collectionSchema = mongoose.Schema({
   link: {
     type: String,
   },
+  status: {
+    //0 - Inactive & 1 - Active
+    type: Number,
+    enum: [0, 1],
+    default: 1,
+  },
   createdBy: {
     type: mongoose.Schema.ObjectId,
     ref: "User",

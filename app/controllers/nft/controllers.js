@@ -3602,6 +3602,63 @@ class NFTController {
       return res.reply(messages.error());
     }
   }
+
+  async blockUnblockCollection(req, res) {
+    try {
+      if (!req.userId) return res.reply(messages.unauthorized());
+      if (!req.body.collectionID) {
+        return res.reply(messages.not_found("Collection ID"));
+      }
+      if (req.body.blockStatus === undefined) {
+        return res.reply(messages.not_found("Block Status"));
+      }
+      let collectionDetails = {};
+      collectionDetails = {
+        status: req.body.blockStatus
+      };
+      await Collection.findByIdAndUpdate(
+        req.body.collectionID,
+        collectionDetails,
+        (err, collectionData) => {
+          if (err) return res.reply(messages.server_error());
+          if (!collectionData) return res.reply(messages.not_found("Collection"));
+          return res.reply(messages.successfully("Collection Block Status Updated"));
+        }
+      ).catch((e) => {
+        return res.reply(messages.error());
+      });
+    } catch (error) {
+      return res.reply(messages.server_error());
+    }
+  };
+  async blockUnblockNFT(req, res) {
+    try {
+      if (!req.userId) return res.reply(messages.unauthorized());
+      if (!req.body.nftID) {
+        return res.reply(messages.not_found("NFT ID"));
+      }
+      if (req.body.blockStatus === undefined) {
+        return res.reply(messages.not_found("Block Status"));
+      }
+      let nftDetails = {};
+      nftDetails = {
+        status: req.body.blockStatus
+      };
+      await NFT.findByIdAndUpdate(
+        req.body.nftID,
+        nftDetails,
+        (err, nftData) => {
+          if (err) return res.reply(messages.server_error());
+          if (!nftData) return res.reply(messages.not_found("NFT"));
+          return res.reply(messages.successfully("NFT Block Status Updated"));
+        }
+      ).catch((e) => {
+        return res.reply(messages.error());
+      });
+    } catch (error) {
+      return res.reply(messages.server_error());
+    }
+  };
 }
 
 module.exports = NFTController;
