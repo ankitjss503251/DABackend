@@ -213,6 +213,7 @@ class NFTController {
       }
 
       let searchArray = [];
+      searchArray["status"] = 1;
       if (collectionID !== "") {
         searchArray["_id"] = mongoose.Types.ObjectId(collectionID);
       }
@@ -458,6 +459,7 @@ class NFTController {
       }
 
       let searchArray = [];
+      searchArray["status"] = 1;
       if (nftID !== "") {
         searchArray["_id"] = mongoose.Types.ObjectId(nftID);
       }
@@ -495,6 +497,11 @@ class NFTController {
       if (isOnMarketplace === 1 || isOnMarketplace === 0) {
         isOnMarketplaceSearchArray["$match"] = {
           "CollectionData.isOnMarketplace": isOnMarketplace,
+          "CollectionData.status": 1,
+        };
+      }else{
+        isOnMarketplaceSearchArray["$match"] = {
+          "CollectionData.status": 1,
         };
       }
       let isOnMarketplaceSearchObj = Object.assign(
@@ -705,6 +712,7 @@ class NFTController {
       if (nftType !== "") {
         NFTSearchArray["type"] = nftType;
       }
+      NFTSearchArray["status"] = 1;
       let NFTSearchObj = Object.assign({}, NFTSearchArray);
       const results = {};
       if (endIndex < (await NFT.countDocuments(NFTSearchObj).exec())) {
@@ -798,6 +806,7 @@ class NFTController {
           $in: [mongoose.Types.ObjectId(req.body.userId)],
         };
       }
+      searchArray["status"] = 1;
       const results = {};
       let searchObj = Object.assign({}, searchArray);
       let nfts = await NFT.aggregate([
@@ -888,6 +897,7 @@ class NFTController {
       console.log("orderData ", orderData);
       let searchArray = [];
       searchArray["_id"] = { $in: orderData };
+      searchArray["status"] = 1;
 
       let searchObj = Object.assign({}, searchArray);
       console.log("searchArray", searchArray);
@@ -3589,6 +3599,7 @@ class NFTController {
       //     }
       //   }
       // }
+      searchArray["status"] = 1;
       let searchObj = Object.assign({}, searchArray);
       let result = [];
       const nfts = await NFT.find(searchObj);
