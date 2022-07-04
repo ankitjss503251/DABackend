@@ -213,6 +213,7 @@ class NFTController {
       }
 
       let searchArray = [];
+      searchArray["status"] = 1;
       if (collectionID !== "") {
         searchArray["_id"] = mongoose.Types.ObjectId(collectionID);
       }
@@ -458,6 +459,7 @@ class NFTController {
       }
 
       let searchArray = [];
+      searchArray["status"] = 1;
       if (nftID !== "") {
         searchArray["_id"] = mongoose.Types.ObjectId(nftID);
       }
@@ -495,6 +497,11 @@ class NFTController {
       if (isOnMarketplace === 1 || isOnMarketplace === 0) {
         isOnMarketplaceSearchArray["$match"] = {
           "CollectionData.isOnMarketplace": isOnMarketplace,
+          "CollectionData.status": 1,
+        };
+      }else{
+        isOnMarketplaceSearchArray["$match"] = {
+          "CollectionData.status": 1,
         };
       }
       let isOnMarketplaceSearchObj = Object.assign(
@@ -705,6 +712,7 @@ class NFTController {
       if (nftType !== "") {
         NFTSearchArray["type"] = nftType;
       }
+      NFTSearchArray["status"] = 1;
       let NFTSearchObj = Object.assign({}, NFTSearchArray);
       const results = {};
       if (endIndex < (await NFT.countDocuments(NFTSearchObj).exec())) {
@@ -798,6 +806,7 @@ class NFTController {
           $in: [mongoose.Types.ObjectId(req.body.userId)],
         };
       }
+      searchArray["status"] = 1;
       const results = {};
       let searchObj = Object.assign({}, searchArray);
       let nfts = await NFT.aggregate([
@@ -888,6 +897,7 @@ class NFTController {
       console.log("orderData ", orderData);
       let searchArray = [];
       searchArray["_id"] = { $in: orderData };
+      searchArray["status"] = 1;
 
       let searchObj = Object.assign({}, searchArray);
       console.log("searchArray", searchArray);
@@ -3589,6 +3599,7 @@ class NFTController {
       //     }
       //   }
       // }
+      searchArray["status"] = 1;
       let searchObj = Object.assign({}, searchArray);
       let result = [];
       const nfts = await NFT.find(searchObj);
@@ -3602,6 +3613,63 @@ class NFTController {
       return res.reply(messages.error());
     }
   }
+
+  async blockUnblockCollection(req, res) {
+    try {
+      if (!req.userId) return res.reply(messages.unauthorized());
+      if (!req.body.collectionID) {
+        return res.reply(messages.not_found("Collection ID"));
+      }
+      if (req.body.blockStatus === undefined) {
+        return res.reply(messages.not_found("Block Status"));
+      }
+      let collectionDetails = {};
+      collectionDetails = {
+        status: req.body.blockStatus
+      };
+      await Collection.findByIdAndUpdate(
+        req.body.collectionID,
+        collectionDetails,
+        (err, collectionData) => {
+          if (err) return res.reply(messages.server_error());
+          if (!collectionData) return res.reply(messages.not_found("Collection"));
+          return res.reply(messages.successfully("Collection Block Status Updated"));
+        }
+      ).catch((e) => {
+        return res.reply(messages.error());
+      });
+    } catch (error) {
+      return res.reply(messages.server_error());
+    }
+  };
+  async blockUnblockNFT(req, res) {
+    try {
+      if (!req.userId) return res.reply(messages.unauthorized());
+      if (!req.body.nftID) {
+        return res.reply(messages.not_found("NFT ID"));
+      }
+      if (req.body.blockStatus === undefined) {
+        return res.reply(messages.not_found("Block Status"));
+      }
+      let nftDetails = {};
+      nftDetails = {
+        status: req.body.blockStatus
+      };
+      await NFT.findByIdAndUpdate(
+        req.body.nftID,
+        nftDetails,
+        (err, nftData) => {
+          if (err) return res.reply(messages.server_error());
+          if (!nftData) return res.reply(messages.not_found("NFT"));
+          return res.reply(messages.successfully("NFT Block Status Updated"));
+        }
+      ).catch((e) => {
+        return res.reply(messages.error());
+      });
+    } catch (error) {
+      return res.reply(messages.server_error());
+    }
+  };
 }
 
 module.exports = NFTController;
