@@ -15,8 +15,8 @@ router.post("/getOwnedNFTList", nftController.getOwnedNFTlist);
 router.put( "/updateNftOrder", nftMiddleware.verifyUserToken, nftController.updateNftOrder);
 router.post("/getCombinedNfts", nftController.getCombinedNfts);
 router.post("/getOnSaleItems", nftController.getOnSaleItems );
-router.post('/blockUnblockCollection', authMiddleware.verifySuperAdminToken,  nftController.blockUnblockCollection);
-router.post('/blockUnblockNFT', authMiddleware.verifySuperAdminToken,  nftController.blockUnblockNFT);
+router.post('/blockUnblockCollection', nftMiddleware.verifySuperAdminToken, nftController.blockUnblockCollection);
+router.post('/blockUnblockNFT', nftMiddleware.verifySuperAdminToken, nftController.blockUnblockNFT);
 
 // router.post(
 //   "/getHotCollections",
