@@ -178,7 +178,7 @@ class AuthController {
 
         const user = new User({
           walletAddress: _.toChecksumAddress(req.body.walletAddress),
-          role: req.body.role
+          role: "admin"
         });
         console.log("Wallet " + req.body.walletAddress)
         user
