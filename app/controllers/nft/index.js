@@ -5,7 +5,7 @@ const nftMiddleware = require("./../helpers/middleware");
 
 router.post( "/createCollection", nftMiddleware.verifyUserToken, nftController.createCollection );
 router.post("/getCollections", nftController.getCollections);
-router.post("/myCollections", nftMiddleware.verifyUserToken, nftController.myCollections );
+router.post("/myCollections", nftMiddleware.verifyAdminToken, nftController.myCollections );
 router.post("/allCollections", nftMiddleware.verifySuperAdminToken, nftController.allCollections );
 router.post("/myNFTs", nftMiddleware.verifyUserToken, nftController.myNFTs);
 router.post( "/updateCollection", nftMiddleware.verifyUserToken, nftController.updateCollection);
@@ -19,31 +19,12 @@ router.post("/getOnSaleItems", nftController.getOnSaleItems );
 router.post('/blockUnblockCollection', nftMiddleware.verifySuperAdminToken, nftController.blockUnblockCollection);
 router.post('/blockUnblockNFT', nftMiddleware.verifySuperAdminToken, nftController.blockUnblockNFT);
 
-// router.post(
-//   "/getHotCollections",
-//   nftMiddleware.verifyWithoutToken,
-//   nftController.getHotCollections
-// );
-
-
+// router.post("/getHotCollections",nftMiddleware.verifyWithoutToken, nftController.getHotCollections);
 // router.post("/likeNFT", nftMiddleware.verifyUserToken, nftController.likeNFT);
 // router.post("/mynftlist", nftMiddleware.verifyUserToken, nftController.mynftlist);
-// router.post(
-//   "/getCollectionDetailsById",
-//   nftMiddleware.verifyWithoutToken,
-//   nftController.getCollectionDetails
-// );
-// router.post(
-//   "/getCollectionDetailsByAddress",
-//   nftMiddleware.verifyWithoutToken,
-//   nftController.getCollectionDetailsByAddress
-// );
-
-// router.post(
-//   "/collectionList",
-//   // nftMiddleware.verifyUserToken,
-//   nftController.collectionlist
-// );
+// router.post("/getCollectionDetailsById", nftMiddleware.verifyWithoutToken, nftController.getCollectionDetails );
+// router.post("/getCollectionDetailsByAddress", nftMiddleware.verifyWithoutToken, nftController.getCollectionDetailsByAddress );
+// router.post("/collectionList", nftMiddleware.verifyUserToken, nftController.collectionlist );
 // router.get(
 //   "/getcollections",
 //   nftMiddleware.proceedWithoutToken,
