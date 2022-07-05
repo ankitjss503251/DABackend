@@ -51,4 +51,5 @@ router.post("/getOnSaleItems", nftController.getOnSaleItems );
 // router.post("/getCollectionNFTOwned",nftMiddleware.verifyUserToken,nftController.getCollectionNFTOwned);
 // router.post("/getSearchedNft", nftController.getSearchedNft);
 // router.get("/updateCollectionToken/:collectionAddress",nftMiddleware.verifyUserToken,nftController.updateCollectionToken);
+
 module.exports = router;
