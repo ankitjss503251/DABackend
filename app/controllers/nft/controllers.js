@@ -359,6 +359,68 @@ class NFTController {
     }
   }
 
+  async allCollections(req, res) {
+    try {
+      if (!req.userId) return res.reply(messages.unauthorized());
+      let data = [];
+      const page = parseInt(req.body.page);
+      const limit = parseInt(req.body.limit);
+      const startIndex = (page - 1) * limit;
+      const endIndex = page * limit;
+      let searchText = "";
+      if (req.body.searchText && req.body.searchText !== undefined) {
+        searchText = req.body.searchText;
+      }
+
+      let searchArray = [];
+      if (searchText !== "") {
+        searchArray["$or"] = [
+          { name: { $regex: new RegExp(searchText), $options: "i" } },
+          {
+            contractAddress: { $regex: new RegExp(searchText), $options: "i" },
+          },
+        ];
+      }
+      let searchObj = Object.assign({}, searchArray);
+
+      const results = {};
+      if (endIndex < (await Collection.countDocuments(searchObj).exec())) {
+        results.next = {
+          page: page + 1,
+          limit: limit,
+        };
+      }
+      if (startIndex > 0) {
+        results.previous = {
+          page: page - 1,
+          limit: limit,
+        };
+      }
+
+      await Collection.find(searchObj)
+        .populate("categoryID")
+        .populate("brandID")
+        .sort({ createdOn: -1 })
+        .limit(limit)
+        .skip(startIndex)
+        .lean()
+        .exec()
+        .then((res) => {
+          data.push(res);
+        })
+        .catch((e) => {
+          console.log("Error", e);
+        });
+      results.count = await Collection.countDocuments(searchObj).exec();
+      results.results = data;
+      res.header("Access-Control-Max-Age", 600);
+      return res.reply(messages.success("Collection List"), results);
+    } catch (error) {
+      console.log("Error " + error);
+      return res.reply(messages.server_error());
+    }
+  }
+
   async createNFT(req, res) {
     try {
       console.log("create req", req.body);
