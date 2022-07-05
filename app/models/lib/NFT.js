@@ -13,6 +13,7 @@ const nftSchema = mongoose.Schema({
     enum: [1, 2],
   },
   image: { type: String, require: true },
+  fileType: { type: String },
   price: { type: mongoose.Types.Decimal128, require: true },
   description: { type: String },
   collectionID: {
@@ -120,6 +121,12 @@ const nftSchema = mongoose.Schema({
   //   type: mongoose.Schema.ObjectId,
   //   ref: "Category",
   // },
+  status: {
+    //0 - Inactive & 1 - Active
+    type: Number,
+    enum: [0, 1],
+    default: 1,
+  },
   createdBy: {
     type: mongoose.Schema.ObjectId,
     ref: "User",

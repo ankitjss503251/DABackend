@@ -436,5 +436,30 @@ class UtilsController {
     }
   };
 
+  async showBrandByID(req, res) {
+    try {
+      if (!req.params.brandID) return res.reply(messages.not_found("Brand ID"));
+      Brand.findById(req.params.brandID, (err, brand) => {
+        if (err) return res.reply(messages.server_error());
+        if (!brand) return res.reply(messages.not_found("Brand"));
+        return res.reply(messages.successfully("Brand Details Found"), brand);
+      });
+    } catch (e) {
+      return res.reply(message.error(e));
+    }
+  }
+  async showCategoryByID(req, res) {
+    try {
+      if (!req.params.categoryID) return res.reply(messages.not_found("Category ID"));
+      Category.findById(req.params.categoryID, (err, category) => {
+        if (err) return res.reply(messages.server_error());
+        if (!category) return res.reply(messages.not_found("Category"));
+        return res.reply(messages.successfully("Category Details Found"), category);
+      });
+    } catch (e) {
+      return res.reply(message.error(e));
+    }
+  }
+
 }
 module.exports = UtilsController;

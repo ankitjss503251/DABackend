@@ -32,8 +32,7 @@ oEnv.prod = {
 oEnv.test = {
   BASE_URL: "127.0.0.1",
   BASE_API_PATH: "",
-  DB_URL:
-    "mongodb+srv://neha:nshukl@23@cluster0.et2ex.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",
+  DB_URL: "mongodb+srv://neha:nshukl@23@cluster0.et2ex.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",
 };
 process.env.BASE_URL = oEnv[process.env.NODE_ENV].BASE_URL;
 process.env.BASE_API_PATH = oEnv[process.env.NODE_ENV].BASE_API_PATH;
@@ -56,4 +55,3 @@ process.env.SMTP_PASSWORD = process.env.SMTP_PASSWORD || "example@123"; // Your 
 
 process.env.PINATAAPIKEY = process.env.PINATAAPIKEY;
 process.env.PINATASECRETAPIKEY = process.env.PINATASECRETAPIKEY;
-
