@@ -38,16 +38,6 @@ const nftSchema = mongoose.Schema({
   ],
   attributes: [
     {
-      name: {
-        type: String,
-      },
-      value: {
-        type: String,
-      },
-    },
-  ],
-  attributesImported: [
-    {
       trait_type: {
         type: String,
       },
@@ -122,6 +112,14 @@ const nftSchema = mongoose.Schema({
     default: 0,
     enum: [0, 1], // 0-No 1-Yes
   },
+  // brandID: {
+  //   type: mongoose.Schema.ObjectId,
+  //   ref: "Brand",
+  // },
+  // categoryID: {
+  //   type: mongoose.Schema.ObjectId,
+  //   ref: "Category",
+  // },
   createdBy: {
     type: mongoose.Schema.ObjectId,
     ref: "User",

@@ -19,8 +19,8 @@ jobs:
         key: ${{ secrets.KEY }}
         port: ${{ secrets.PORT }}
         script: |
-          cd /var/www/html/project/DABackend
+          cd /var/www/html/DABackend
           pwd
           ls -la
-          sudo git pull origin main
-          sudo yarn
+          git pull origin main
+          yarn

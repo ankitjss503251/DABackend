@@ -47,5 +47,4 @@ Object.defineProperty(builder, 'prepare', {
         message: `${prefix ? `${prefix} ${message}` : message}`,
     }),
 });
-
 module.exports = builder;

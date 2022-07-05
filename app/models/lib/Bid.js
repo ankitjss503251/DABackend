@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
+const mongoose=require("mongoose");
 
-const bidSchema = new mongoose.Schema({
+const bidSchema=new mongoose.Schema({
   bidderID: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
@@ -19,21 +19,33 @@ const bidSchema = new mongoose.Schema({
   },
   bidStatus: {
     type: String,
-    enum: ["Bid", "Cancelled", "Accepted", "Sold", "Rejected", "MakeOffer", "AcceptOffer", "RejectOffer", "CancelledOffer"],
+    enum: [
+      "Bid",
+      "Cancelled",
+      "Accepted",
+      "Sold",
+      "Rejected",
+      "MakeOffer",
+      "AcceptOffer",
+      "RejectOffer",
+      "CancelledOffer",
+    ],
   },
   bidPrice: {
     type: mongoose.Types.Decimal128,
     required: true,
   },
   bidDeadline: {
-    type: Date
+    type: Number,
   },
   bidQuantity: Number,
   buyerSignature: Array,
+  tokenAddress: String,
   isOffer: {
     type: Boolean,
-    default: true,
+    default: false,
   },
+  salt: Number,
   createdBy: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
@@ -52,4 +64,4 @@ const bidSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Bid", bidSchema);
+module.exports=mongoose.model("Bid",bidSchema);
