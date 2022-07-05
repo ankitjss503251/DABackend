@@ -6,6 +6,7 @@ const nftMiddleware = require("./../helpers/middleware");
 router.post( "/createCollection", nftMiddleware.verifyUserToken, nftController.createCollection );
 router.post("/getCollections", nftController.getCollections);
 router.post("/myCollections", nftMiddleware.verifyUserToken, nftController.myCollections );
+router.post("/allCollections", nftMiddleware.verifySuperAdminToken, nftController.allCollections );
 router.post("/myNFTs", nftMiddleware.verifyUserToken, nftController.myNFTs);
 router.post( "/updateCollection", nftMiddleware.verifyUserToken, nftController.updateCollection);
 router.post("/createNFT", nftMiddleware.verifyUserToken, nftController.createNFT);
