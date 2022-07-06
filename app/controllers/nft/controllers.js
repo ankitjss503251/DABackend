@@ -86,7 +86,7 @@ class NFTController {
         "image/gif",
         "model/glTF+json",
         "model/gltf+json",
-        "model/glb+json",
+        "application/octet-stream",
         "audio/mp3",
         "audio/mpeg",
       ];
