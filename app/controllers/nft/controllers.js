@@ -764,49 +764,61 @@ class NFTController {
       if (req.body.searchText && req.body.searchText !== undefined) {
         searchText = req.body.searchText;
       }
+      User.findOne({ _id: mongoose.Types.ObjectId(req.userId) }, async function (err, userData) {
+        if (err){
+            return res.reply(messages.unauthorized());
+        }else{
+          let searchArray = [];
+          searchArray["ownedBy"] = {
+            $elemMatch: {
+              address: userData.walletAddress?.toLowerCase(),
+              quantity: { $gt: 0 },
+            },
+          };
+          searchArray["createdBy"] = mongoose.Types.ObjectId(req.userId);
+          if (searchText !== "") {
+            searchArray["$or"] = [
+              { name: { $regex: new RegExp(searchText), $options: "i" } },
+              {
+                contractAddress: { $regex: new RegExp(searchText), $options: "i" },
+              },
+            ];
+          }
+          let searchObj = Object.assign({}, searchArray);
 
-      let searchArray = [];
-      searchArray["createdBy"] = mongoose.Types.ObjectId(req.userId);
-      if (searchText !== "") {
-        searchArray["$or"] = [
-          { name: { $regex: new RegExp(searchText), $options: "i" } },
-          {
-            contractAddress: { $regex: new RegExp(searchText), $options: "i" },
-          },
-        ];
-      }
-      let searchObj = Object.assign({}, searchArray);
+          const results = {};
+          if (endIndex < (await NFT.countDocuments(searchObj).exec())) {
+            results.next = {
+              page: page + 1,
+              limit: limit,
+            };
+          }
+          if (startIndex > 0) {
+            results.previous = {
+              page: page - 1,
+              limit: limit,
+            };
+          }
 
-      const results = {};
-      if (endIndex < (await NFT.countDocuments(searchObj).exec())) {
-        results.next = {
-          page: page + 1,
-          limit: limit,
-        };
-      }
-      if (startIndex > 0) {
-        results.previous = {
-          page: page - 1,
-          limit: limit,
-        };
-      }
-
-      await NFT.find(searchObj)
-        .sort({ createdOn: -1 })
-        .limit(limit)
-        .skip(startIndex)
-        .lean()
-        .exec()
-        .then((res) => {
-          data.push(res);
-        })
-        .catch((e) => {
-          console.log("Error", e);
-        });
-      results.count = await NFT.countDocuments(searchObj).exec();
-      results.results = data;
-      res.header("Access-Control-Max-Age", 600);
-      return res.reply(messages.success("Collection List"), results);
+          await NFT.find(searchObj)
+            .sort({ createdOn: -1 })
+            .limit(limit)
+            .skip(startIndex)
+            .lean()
+            .exec()
+            .then((res) => {
+              data.push(res);
+            })
+            .catch((e) => {
+              console.log("Error", e);
+            });
+          results.count = await NFT.countDocuments(searchObj).exec();
+          results.results = data;
+          res.header("Access-Control-Max-Age", 600);
+          return res.reply(messages.success("Collection List"), results);
+          
+        }
+      });
     } catch (error) {
       console.log("Error " + error);
       return res.reply(messages.server_error());
@@ -3777,7 +3789,7 @@ class NFTController {
       if (tokenID !== "") {
         searchArray["tokenID"] = tokenID;
       }
-
+req.userId
       // if (ownedBy !== "") {
       //   searchArray["ownedBy"]= {
       //     $elemMatch: {
