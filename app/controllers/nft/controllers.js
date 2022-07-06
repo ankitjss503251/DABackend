@@ -570,8 +570,6 @@ class NFTController {
       nft.ownedBy.push({
         address: nftElement.owner,
         quantity: 1,
-        address: nftElement.creatorAddress,
-        quantity: nftElement.quantity,
       });
       nft.save().then(async (result) => {});
       return res.reply(messages.created("NFT"));
