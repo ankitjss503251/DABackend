@@ -72,7 +72,7 @@ const upload = multer(oMulterObj).single("nftFile");
 const uploadBanner = multer(oMulterObj);
 
 class NFTController {
-  constructor() { }
+  constructor() {}
 
   async createNFT(req, res, next) {
     try {
@@ -124,12 +124,12 @@ class NFTController {
           if (!req.file) {
             return res.reply(messages.not_found("File"));
           }
-          console.log("Files", req.file)
+          console.log("Files", req.file);
           let nftElement = req.body;
           let fileAttr = [];
-          fileAttr['size'] = nftElement.imageSize;
-          fileAttr['type'] = nftElement.imageType;
-          fileAttr['dimension'] = nftElement.imageDimension;
+          fileAttr["size"] = nftElement.imageSize;
+          fileAttr["type"] = nftElement.imageType;
+          fileAttr["dimension"] = nftElement.imageDimension;
           let fileObj = Object.assign({}, fileAttr);
           console.log("file Location", req.file);
           let nft = new NFT({
@@ -150,7 +150,7 @@ class NFTController {
           console.log("Attr1", req.body.attributes);
           console.log("Attr", nftElement.attributes);
           let NFTAttr = nftElement.attributes;
-          console.log("NFTARRAY ", NFTAttr.length)
+          console.log("NFTARRAY ", NFTAttr.length);
           if (NFTAttr.isArray) {
             if (NFTAttr.length > 0) {
               NFTAttr.forEach((obj) => {
@@ -171,12 +171,15 @@ class NFTController {
             address: nftElement.creatorAddress,
             quantity: nftElement.quantity,
           });
-          nft.save().then(async (result) => {
-            return res.reply(messages.created("NFT"));
-          }).catch((error) => {
-            console.log("Created NFT error", error);
-            return res.reply(messages.error());
-          });
+          nft
+            .save()
+            .then(async (result) => {
+              return res.reply(messages.created("NFT"));
+            })
+            .catch((error) => {
+              console.log("Created NFT error", error);
+              return res.reply(messages.error());
+            });
         }
       });
     } catch (error) {
@@ -246,7 +249,7 @@ class NFTController {
             createdBy: req.userId,
             isOnMarketplace: req.body.isOnMarketplace,
             isImported: req.body.isImported,
-            link: req.body.link
+            link: req.body.link,
           });
           collection
             .save()
@@ -531,7 +534,6 @@ class NFTController {
     }
   }
 
-
   async importNFT(req, res, next) {
     console.log("create req", req);
     try {
@@ -544,7 +546,6 @@ class NFTController {
         name: nftElement.name,
         description: nftElement.description,
         image: nftElement.image,
-        image: nftElement.nftFile,
         fileType: nftElement.fileType,
         tokenID: nftElement.tokenID,
         collectionID: nftElement.collectionID,
@@ -764,61 +765,66 @@ class NFTController {
       if (req.body.searchText && req.body.searchText !== undefined) {
         searchText = req.body.searchText;
       }
-      User.findOne({ _id: mongoose.Types.ObjectId(req.userId) }, async function (err, userData) {
-        if (err){
+      User.findOne(
+        { _id: mongoose.Types.ObjectId(req.userId) },
+        async function (err, userData) {
+          if (err) {
             return res.reply(messages.unauthorized());
-        }else{
-          let searchArray = [];
-          searchArray["ownedBy"] = {
-            $elemMatch: {
-              address: userData.walletAddress?.toLowerCase(),
-              quantity: { $gt: 0 },
-            },
-          };
-          // searchArray["createdBy"] = mongoose.Types.ObjectId(req.userId);
-          if (searchText !== "") {
-            searchArray["$or"] = [
-              { name: { $regex: new RegExp(searchText), $options: "i" } },
-              {
-                contractAddress: { $regex: new RegExp(searchText), $options: "i" },
+          } else {
+            let searchArray = [];
+            searchArray["ownedBy"] = {
+              $elemMatch: {
+                address: userData.walletAddress?.toLowerCase(),
+                quantity: { $gt: 0 },
               },
-            ];
-          }
-          let searchObj = Object.assign({}, searchArray);
-
-          const results = {};
-          if (endIndex < (await NFT.countDocuments(searchObj).exec())) {
-            results.next = {
-              page: page + 1,
-              limit: limit,
             };
-          }
-          if (startIndex > 0) {
-            results.previous = {
-              page: page - 1,
-              limit: limit,
-            };
-          }
+            // searchArray["createdBy"] = mongoose.Types.ObjectId(req.userId);
+            if (searchText !== "") {
+              searchArray["$or"] = [
+                { name: { $regex: new RegExp(searchText), $options: "i" } },
+                {
+                  contractAddress: {
+                    $regex: new RegExp(searchText),
+                    $options: "i",
+                  },
+                },
+              ];
+            }
+            let searchObj = Object.assign({}, searchArray);
 
-          await NFT.find(searchObj)
-            .sort({ createdOn: -1 })
-            .limit(limit)
-            .skip(startIndex)
-            .lean()
-            .exec()
-            .then((res) => {
-              data.push(res);
-            })
-            .catch((e) => {
-              console.log("Error", e);
-            });
-          results.count = await NFT.countDocuments(searchObj).exec();
-          results.results = data;
-          res.header("Access-Control-Max-Age", 600);
-          return res.reply(messages.success("Collection List"), results);
-          
+            const results = {};
+            if (endIndex < (await NFT.countDocuments(searchObj).exec())) {
+              results.next = {
+                page: page + 1,
+                limit: limit,
+              };
+            }
+            if (startIndex > 0) {
+              results.previous = {
+                page: page - 1,
+                limit: limit,
+              };
+            }
+
+            await NFT.find(searchObj)
+              .sort({ createdOn: -1 })
+              .limit(limit)
+              .skip(startIndex)
+              .lean()
+              .exec()
+              .then((res) => {
+                data.push(res);
+              })
+              .catch((e) => {
+                console.log("Error", e);
+              });
+            results.count = await NFT.countDocuments(searchObj).exec();
+            results.results = data;
+            res.header("Access-Control-Max-Age", 600);
+            return res.reply(messages.success("Collection List"), results);
+          }
         }
-      });
+      );
     } catch (error) {
       console.log("Error " + error);
       return res.reply(messages.server_error());
@@ -849,7 +855,7 @@ class NFTController {
         nftownerID,
         { $inc: { nQuantityLeft: -req.body.putOnSaleQty } },
         { new: true },
-        function (err, response) { }
+        function (err, response) {}
       );
       if (req.body.erc721) {
         await NFT.findByIdAndUpdate(sId, {
@@ -982,7 +988,6 @@ class NFTController {
       let searchArray = [];
       searchArray["status"] = 1;
 
-
       let ERCType = "";
       if (req.body.ERCType && req.body.ERCType !== undefined) {
         ERCType = req.body.ERCType;
@@ -1055,11 +1060,14 @@ class NFTController {
         { $skip: startIndex },
         { $limit: limit },
         { $sort: { createdOn: -1 } },
-      ]).exec().then((res) => {
-        data.push(res);
-      }).catch((e) => {
-        console.log("Error", e);
-      });
+      ])
+        .exec()
+        .then((res) => {
+          data.push(res);
+        })
+        .catch((e) => {
+          console.log("Error", e);
+        });
       results.results = data;
       results.count = await NFT.countDocuments(searchObj).exec();
       return res.reply(messages.success("NFT List"), results);
@@ -1508,8 +1516,6 @@ class NFTController {
   //     return res.reply(messages.server_error());
   //   }
   // }
-
-
 
   // async likeNFT(req, res) {
   //   try {
@@ -3789,7 +3795,7 @@ class NFTController {
       if (tokenID !== "") {
         searchArray["tokenID"] = tokenID;
       }
-req.userId
+      req.userId;
       // if (ownedBy !== "") {
       //   searchArray["ownedBy"]= {
       //     $elemMatch: {
@@ -3824,15 +3830,18 @@ req.userId
       }
       let collectionDetails = {};
       collectionDetails = {
-        status: req.body.blockStatus
+        status: req.body.blockStatus,
       };
       await Collection.findByIdAndUpdate(
         req.body.collectionID,
         collectionDetails,
         (err, collectionData) => {
           if (err) return res.reply(messages.server_error());
-          if (!collectionData) return res.reply(messages.not_found("Collection"));
-          return res.reply(messages.successfully("Collection Block Status Updated"));
+          if (!collectionData)
+            return res.reply(messages.not_found("Collection"));
+          return res.reply(
+            messages.successfully("Collection Block Status Updated")
+          );
         }
       ).catch((e) => {
         return res.reply(messages.error());
@@ -3840,7 +3849,7 @@ req.userId
     } catch (error) {
       return res.reply(messages.server_error());
     }
-  };
+  }
   async blockUnblockNFT(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
@@ -3852,7 +3861,7 @@ req.userId
       }
       let nftDetails = {};
       nftDetails = {
-        status: req.body.blockStatus
+        status: req.body.blockStatus,
       };
       await NFT.findByIdAndUpdate(
         req.body.nftID,
@@ -3868,7 +3877,7 @@ req.userId
     } catch (error) {
       return res.reply(messages.server_error());
     }
-  };
+  }
 }
 
 module.exports = NFTController;
