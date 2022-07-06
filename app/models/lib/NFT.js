@@ -4,6 +4,7 @@ const nftSchema = mongoose.Schema({
   name: {
     type: String,
     require: true,
+    unique: true,
   },
   type: {
     type: Number,
