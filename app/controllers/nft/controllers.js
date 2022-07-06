@@ -775,7 +775,7 @@ class NFTController {
               quantity: { $gt: 0 },
             },
           };
-          searchArray["createdBy"] = mongoose.Types.ObjectId(req.userId);
+          // searchArray["createdBy"] = mongoose.Types.ObjectId(req.userId);
           if (searchText !== "") {
             searchArray["$or"] = [
               { name: { $regex: new RegExp(searchText), $options: "i" } },
