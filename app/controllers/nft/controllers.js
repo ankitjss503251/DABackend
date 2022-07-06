@@ -63,7 +63,7 @@ let fileFilter = function (req, file, cb) {
 let oMulterObj = {
   storage: storage,
   limits: {
-    fileSize: 15 * 1024 * 1024, // 15mb
+    fileSize: 200 * 1024 * 1024, // 15mb
   },
   fileFilter: fileFilter,
 };
@@ -73,6 +73,133 @@ const uploadBanner = multer(oMulterObj);
 
 class NFTController {
   constructor() {}
+
+  async createNFT(req, res, next) {
+    try {
+      if (!req.userId) return res.reply(messages.unauthorized());
+      allowedMimes = [
+        "image/jpeg",
+        "video/mp4",
+        "image/jpg",
+        "image/webp",
+        "image/png",
+        "image/gif",
+        "audio/mp3",
+        "audio/mpeg",
+      ];
+      errAllowed = "JPG, JPEG, PNG, GIF, MP3, WEBP & MPEG";
+      upload(req, res, function (error) {
+        if (error) {
+          log.red(error);
+          return res.reply(messages.bad_request(error.message));
+        } else {
+          console.log("Create Address", "Checking");
+          if (!req.body.creatorAddress) {
+            return res.reply(messages.not_found("Creator Wallet Address"));
+          }
+          if (!req.body.name) {
+            return res.reply(messages.not_found("Title"));
+          }
+          if (!validators.isValidString(req.body.name)) {
+            return res.reply(messages.invalid("Title"));
+          }
+          if (!req.body.quantity) {
+            return res.reply(messages.not_found("Quantity"));
+          }
+          if (isNaN(req.body.quantity) || !req.body.quantity > 0) {
+            return res.reply(messages.invalid("Quantity"));
+          }
+          if (req.body.description.trim().length > 1000) {
+            return res.reply(messages.invalid("Description"));
+          }
+          if (!req.file) {
+            return res.reply(messages.not_found("File"));
+          }
+          const iOptions = {
+            pinataMetadata: { name: req.file.originalname },
+            pinataOptions: { cidVersion: 0 },
+          };
+          try {
+            const pathString = "/tmp/";
+            const file = fs.createWriteStream(pathString + req.file.originalname);
+            const request = http.get(`${req.file.location}`, function (response) {
+              var stream = response.pipe(file);
+              const readableStreamForFile = fs.createReadStream(
+                pathString + req.file.originalname
+              );
+              stream.on("finish", async function () {
+                pinata.pinFileToIPFS(readableStreamForFile, iOptions).then(async (file2) => {
+                    console.log("file2---", file2);
+
+                    let nftElement = req.body;
+                    let fileAttr = [];
+                    fileAttr['size'] = nftElement.imageSize;
+                    fileAttr['type'] = nftElement.imageType;
+                    fileAttr['dimension'] = nftElement.imageDimension;
+                    let fileObj = Object.assign({}, fileAttr);
+                    console.log("nftElement.owner", req.body.creatorAddress);
+                    let nft = new NFT({
+                      name: nftElement.name,
+                      description: nftElement.description,
+                      image: file2.IpfsHash,
+                      fileType: nftElement.fileType,
+                      tokenID: nftElement.tokenID,
+                      collectionID: nftElement.collectionID,
+                      collectionAddress: nftElement.collectionAddress,
+                      totalQuantity: nftElement.quantity,
+                      isImported: nftElement.isImported,
+                      type: nftElement.type,
+                      isMinted: nftElement.isMinted,
+                      assetsInfo: nftElement.fileObj,
+                      ownedBy: [],
+                    });
+                    console.log("Attr1",req.body.attributes);
+                    console.log("Attr",nftElement.attributes);
+                    let NFTAttr = nftElement.attributes;
+                    console.log("NFTARRAY ", NFTAttr.length)
+                    if(NFTAttr.isArray){
+                      if (NFTAttr.length > 0) {
+                        NFTAttr.forEach((obj) => {
+                          nft.attributes.push(obj);
+                        });
+                      }
+                    }
+                    
+                    let NFTlevels = nftElement.levels;
+                    if(NFTlevels.isArray){
+                      if (NFTlevels.length > 0) {
+                        NFTlevels.forEach((obj) => {
+                          nft.levels.push(obj);
+                        });
+                      }
+                    }
+                    nft.ownedBy.push({
+                      address: nftElement.creatorAddress,
+                      quantity: nftElement.quantity,
+                    });
+                    nft.save().then(async (result) => {
+                      return res.reply(messages.created("NFT"));
+                    }).catch((error) => {
+                      console.log("Created NFT error", error);
+                      return res.reply(messages.error());
+                    });
+                    
+                  }).catch((e) => {
+                    console.log("Error", e)
+                    return res.reply(messages.error());
+                  });
+              });
+            });
+          } catch (e) {
+            console.log("error in file upload..", e);
+          }
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      return res.reply(messages.server_error());
+    }
+  }
 
   async createCollection(req, res) {
     try {
@@ -421,20 +548,19 @@ class NFTController {
     }
   }
 
-  async createNFT(req, res) {
+
+  async importNFT(req, res, next) {
+    console.log("create req", req);
     try {
-      console.log("create req", req.body);
-      // if (!req.body.nftData) {
-      //   return res.reply(messages.not_found("NFT Data"));
-      // }
-      // let nftElement = req.body.nftData;
+      if (!req.userId) return res.reply(messages.unauthorized());
+      console.log("create req", req.body.name);
       let nftElement = req.body;
       let fileAttr = [];
       fileAttr['size'] = nftElement.imageSize;
       fileAttr['type'] = nftElement.imageType;
       fileAttr['dimension'] = nftElement.imageDimension;
       let fileObj = Object.assign({}, fileAttr);
-      console.log("nftElement.owner", nftElement.creatorAddress);
+      console.log("nftElement.owner", req.body.creatorAddress);
       let nft = new NFT({
         name: nftElement.name,
         description: nftElement.description,
@@ -450,8 +576,8 @@ class NFTController {
         assetsInfo: nftElement.fileObj,
         ownedBy: [],
       });
-      
-
+      console.log("Attr1",req.body.attributes);
+      console.log("Attr",nftElement.attributes);
       let NFTAttr = nftElement.attributes;
       if (NFTAttr.length > 0) {
         NFTAttr.forEach((obj) => {
