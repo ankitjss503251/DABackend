@@ -131,7 +131,14 @@ class NFTController {
           fileAttr["type"] = nftElement.imageType;
           fileAttr["dimension"] = nftElement.imageDimension;
           let fileObj = Object.assign({}, fileAttr);
+          let fileURL = req.file.location;
           console.log("file Location", req.file);
+          if (fileURL.indexOf("http://") == 0 || fileURL.indexOf("https://") == 0) {
+            
+          }else{
+            fileURL = "https://"+fileURL
+          }
+          console.log("fileURL", fileURL)
           let nft = new NFT({
             name: nftElement.name,
             description: nftElement.description,
