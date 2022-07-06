@@ -527,7 +527,7 @@ class AuthController {
       email: "shivam.decrypt@gmail.com",
       username: "superadmin",
       walletAddress: "00000000000000000000000000000000000000",
-      password: "admin@123",
+      password: "sadmin@2022",
       satus: 1,
       role: "superadmin"
     });

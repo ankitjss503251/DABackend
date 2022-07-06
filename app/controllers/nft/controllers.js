@@ -892,7 +892,6 @@ class NFTController {
       const limit = parseInt(req.body.limit);
       const startIndex = (page - 1) * limit;
       const endIndex = page * limit;
-      // OrderSearchArray["status"] = 1;
       if (salesType !== "") {
         OrderSearchArray["salesType"] = salesType;
       }
@@ -928,23 +927,23 @@ class NFTController {
       await NFT.find(NFTSearchObj)
         .sort({ nCreated: -1 })
         .select({
-          nTitle: 1,
-          nCollection: 1,
-          nHash: 1,
-          nType: 1,
-          nUser_likes: 1,
-          nNftImage: 1,
-          nLazyMintingStatus: 1,
+          name: 1,
+          collectionID: 1,
+          collectionAddress: 1,
+          type: 1,
+          user_likes: 1,
+          image: 1,
+          fileType: 1,
+          lazyMintingStatus: 1,
         })
         .populate({
-          path: "CreatedBy",
-          options: {
-            limit: 1,
-          },
+          path: "createdBy",
+          options: { limit: 1 },
           select: {
-            _id: 1,
-            sProfilePicUrl: 1,
-            sWalletAddress: 1,
+            _id: 0,
+            username: 1,
+            profileIcon: 1,
+            walletAddress: 1,
           },
         })
         .populate({
@@ -953,10 +952,10 @@ class NFTController {
             limit: 1,
           },
           select: {
-            oPrice: 1,
-            oType: 1,
-            oValidUpto: 1,
-            oStatus: 1,
+            price: 1,
+            salesType: 1,
+            deadlineDate: 1,
+            status: 1,
             _id: 0,
           },
         })
