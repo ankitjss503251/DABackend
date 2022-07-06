@@ -536,22 +536,21 @@ class NFTController {
     console.log("create req", req);
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
-      console.log("create req", req.body.name);
+      if (!req.body.nftData) {
+        return res.reply(messages.not_found("NFT Data"));
+      }
       let nftElement = req.body.nftData;
-      let fileAttr = [];
-      fileAttr['size'] = nftElement.imageSize;
-      fileAttr['type'] = nftElement.imageType;
-      fileAttr['dimension'] = nftElement.imageDimension;
-      let fileObj = Object.assign({}, fileAttr);
-      console.log("nftElement.owner", req.body.creatorAddress);
       let nft = new NFT({
         name: nftElement.name,
         description: nftElement.description,
+        image: nftElement.image,
         image: nftElement.nftFile,
         fileType: nftElement.fileType,
         tokenID: nftElement.tokenID,
         collectionID: nftElement.collectionID,
         collectionAddress: nftElement.collectionAddress,
+        isOnMarketplace: nftElement.isOnMarketplace,
+        totalQuantity: nftElement.totalQuantity,
         totalQuantity: nftElement.quantity,
         isImported: nftElement.isImported,
         type: nftElement.type,
@@ -560,22 +559,20 @@ class NFTController {
         ownedBy: [],
       });
       let NFTAttr = nftElement.attributes;
-      if (NFTAttr.length > 0) {
-        NFTAttr.forEach((obj) => {
-          nft.attributes.push(obj);
-        });
-      }
-      let NFTlevels = nftElement.levels;
-      if (NFTlevels.length > 0) {
-        NFTlevels.forEach((obj) => {
-          nft.levels.push(obj);
-        });
+      if (NFTAttr.isArray) {
+        if (NFTAttr.length > 0) {
+          NFTAttr.forEach((obj) => {
+            nft.attributes.push(obj);
+          });
+        }
       }
       nft.ownedBy.push({
+        address: nftElement.owner,
+        quantity: 1,
         address: nftElement.creatorAddress,
         quantity: nftElement.quantity,
       });
-      nft.save().then(async (result) => { });
+      nft.save().then(async (result) => {});
       return res.reply(messages.created("NFT"));
     } catch (error) {
       console.log(error);
