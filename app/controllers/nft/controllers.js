@@ -84,6 +84,9 @@ class NFTController {
         "image/webp",
         "image/png",
         "image/gif",
+        "image/glTF",
+        "image/glb",
+        "image/gif",
         "audio/mp3",
         "audio/mpeg",
       ];
