@@ -142,7 +142,7 @@ class NFTController {
           let nft = new NFT({
             name: nftElement.name,
             description: nftElement.description,
-            image: req.file ? req.file.location : "",
+            image: fileURL,
             fileType: nftElement.fileType,
             tokenID: nftElement.tokenID,
             collectionID: nftElement.collectionID,
