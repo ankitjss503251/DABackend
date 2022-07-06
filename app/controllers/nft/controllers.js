@@ -537,7 +537,7 @@ class NFTController {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
       console.log("create req", req.body.name);
-      let nftElement = req.body;
+      let nftElement = req.body.nftData;
       let fileAttr = [];
       fileAttr['size'] = nftElement.imageSize;
       fileAttr['type'] = nftElement.imageType;
@@ -559,8 +559,6 @@ class NFTController {
         assetsInfo: nftElement.fileObj,
         ownedBy: [],
       });
-      console.log("Attr1", req.body.attributes);
-      console.log("Attr", nftElement.attributes);
       let NFTAttr = nftElement.attributes;
       if (NFTAttr.length > 0) {
         NFTAttr.forEach((obj) => {
