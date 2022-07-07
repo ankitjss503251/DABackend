@@ -1,4 +1,4 @@
-const { User } = require("../../models");
+const { User,Whitelist } = require("../../models");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const saltRounds = 10;
@@ -527,7 +527,7 @@ class AuthController {
       email: "shivam.decrypt@gmail.com",
       username: "superadmin",
       walletAddress: "00000000000000000000000000000000000000",
-      password: "admin@123",
+      password: "sadmin@2022",
       satus: 1,
       role: "superadmin"
     });
@@ -544,6 +544,8 @@ class AuthController {
         return res.reply(messages.already_exists("User"));
       });
   };
+  
+
 
   async superAdminLogin(req, res, next) {
     try {

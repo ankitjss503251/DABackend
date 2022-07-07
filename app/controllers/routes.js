@@ -9,6 +9,7 @@ const orderRoute = require('./order');
 const historyRoute = require('./history');
 const utilsRoute=require('./utils');
 const importRoute = require('./imports');
+const whitelistRoute = require('./whitelist');
 
 router.use('/auth', authRoute);
 router.use('/user', userRoute);
@@ -19,5 +20,6 @@ router.use('/order', orderRoute);
 router.use('/history', historyRoute);
 router.use('/utils',utilsRoute);
 router.use('/import',importRoute);
+router.use('/whitelist',whitelistRoute);
 
 module.exports = router;
