@@ -1,6 +1,6 @@
-const mongoose=require("mongoose");
+const mongoose = require("mongoose");
 
-const bidSchema=new mongoose.Schema({
+const bidSchema = new mongoose.Schema({
   bidderID: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
@@ -46,6 +46,7 @@ const bidSchema=new mongoose.Schema({
     default: false,
   },
   salt: Number,
+  paymentToken: String,
   createdBy: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
@@ -64,4 +65,4 @@ const bidSchema=new mongoose.Schema({
   },
 });
 
-module.exports=mongoose.model("Bid",bidSchema);
+module.exports = mongoose.model("Bid", bidSchema);

@@ -64,20 +64,18 @@ class BidController {
   }
 
   //Create Offer API
-  
-  
+
   async createOffer(req, res) {
     console.log("req in create offer", req.body);
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
       console.log("Checking Old Offer");
-      
-      console.log("ownerr addres isss------>",req.body.owner.address)
-      
-      let user=await User.findOne({walletAddress:req.body.owner.address})
-      console.log("User is--->",user)
-      
-      
+
+      console.log("ownerr addres isss------>", req.body.owner.address);
+
+      let user = await User.findOne({ walletAddress: req.body.owner.address });
+      console.log("User is--->", user);
+
       let CheckBid = await Bid.findOne({
         bidderID: mongoose.Types.ObjectId(req.userId),
         owner: mongoose.Types.ObjectId(user._id),
@@ -112,13 +110,14 @@ class BidController {
         nftID: req.body.nftID,
         //orderID: req.body.orderID,
         bidQuantity: req.body.bidQuantity,
+        paymentToken: req.body.paymentToken,
         buyerSignature: req.body.buyerSignature,
         bidDeadline: req.body.bidDeadline,
-        isOffer:true,
+        isOffer: true,
         salt: req.body.salt,
-        tokenAddress:req.body.tokenAddress
+        tokenAddress: req.body.tokenAddress,
       });
-      console.log("bidDat is--->",bidData)
+      console.log("bidDat is--->", bidData);
       bidData
         .save()
         .then(async (result) => {
@@ -133,8 +132,7 @@ class BidController {
       return res.reply(messages.error("Offer Failed"));
     }
   }
-  
-  
+
   async updateBidNft(req, res) {
     console.log("req", req.body);
     try {
@@ -180,8 +178,6 @@ class BidController {
       return res.reply(messages.error());
     }
   }
-  
-  
 
   async fetchBidNft(req, res) {
     console.log("req", req.body);
@@ -283,8 +279,7 @@ class BidController {
           },
         },
       ]);
-      
-      
+
       console.log("Datat" + data[0].bids.length);
       let iFiltered = data[0].bids.length;
       if (data[0].totalCount[0] == undefined) {
@@ -306,8 +301,7 @@ class BidController {
       return res.reply(messages.server_error());
     }
   }
-  
-   
+
   //async updateOfferNft(req, res) {
   //  console.log("req", req.body);
   //  try {
@@ -353,21 +347,19 @@ class BidController {
   //    return res.reply(messages.error());
   //  }
   //}
-  
+
   async fetchOfferNft(req, res) {
     console.log("req in fetchOffer nft", req.body);
     try {
       //if (!req.userId) return res.reply(messages.unauthorized());
       let nftID = req.body.nftID;
-  
+
       let buyerID = req.body.buyerID;
       let bidStatus = req.body.bidStatus;
       let oTypeQuery = {};
       let nftIDQuery = {};
-    
+
       let buyerIDQuery = {};
-     
-      
 
       let filters = [];
       if (bidStatus != "All") {
@@ -382,14 +374,14 @@ class BidController {
       if (buyerID != "All") {
         buyerIDQuery = { bidderID: mongoose.Types.ObjectId(buyerID) };
       }
-      console.log("filters",oTypeQuery,nftIDQuery);
+      console.log("filters", oTypeQuery, nftIDQuery);
       let data = await Bid.aggregate([
         {
           $match: {
             $and: [
               { bidQuantity: { $gte: 1 } },
               { isOffer: true },
-             
+
               oTypeQuery,
               nftIDQuery,
               buyerIDQuery,
@@ -407,9 +399,9 @@ class BidController {
             bidQuantity: 1,
             buyerSignature: 1,
             bidDeadline: 1,
-            isOffer:1,
-            tokenAddress:1,
-            salt:1
+            isOffer: 1,
+            tokenAddress: 1,
+            salt: 1,
           },
         },
         {
@@ -450,8 +442,7 @@ class BidController {
           },
         },
       ]);
-      
-      
+
       console.log("Data" + data[0].bids.length);
       let iFiltered = data[0].bids.length;
       if (data[0].totalCount[0] == undefined) {
@@ -470,7 +461,7 @@ class BidController {
         });
       }
     } catch (error) {
-      console.log("error is",error)
+      console.log("error is", error);
       return res.reply(messages.server_error());
     }
   }
