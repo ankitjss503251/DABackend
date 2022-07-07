@@ -47,6 +47,7 @@ var allowedMimes;
 var errAllowed;
 
 let fileFilter = function (req, file, cb) {
+  console.log("Type ", file.mimetype)
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -86,6 +87,7 @@ class NFTController {
         "image/gif",
         "model/glTF+json",
         "model/gltf+json",
+        "model/gltf-binary",
         "application/octet-stream",
         "audio/mp3",
         "audio/mpeg",
@@ -750,6 +752,7 @@ class NFTController {
         { $sort: { createdOn: -1 } },
       ]).exec(function (e, nftData) {
         console.log("Error ", e);
+        // let count = nftData.length;
         return res.reply(messages.success("NFT List"), nftData);
       });
     } catch (error) {
