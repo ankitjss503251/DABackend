@@ -12,6 +12,7 @@ router.post("/createCollection", nftMiddleware.verifyAdminToken, nftController.c
 router.post("/myNFTs", nftMiddleware.verifyAdminToken, nftController.myNFTs);
 router.post("/updateCollection", nftMiddleware.verifyAdminToken, nftController.updateCollection);
 router.post("/createNFT", nftMiddleware.verifyAdminToken, nftController.createNFT);
+router.post("/importNFT", nftMiddleware.verifyAdminToken, nftController.importNFT);
 router.put( "/updateNftOrder", nftMiddleware.verifyAdminToken, nftController.updateNftOrder);
 
 router.post("/getCollections", nftController.getCollections);
