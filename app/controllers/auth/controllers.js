@@ -1,4 +1,4 @@
-const { User } = require("../../models");
+const { User,Whitelist } = require("../../models");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const saltRounds = 10;
@@ -544,6 +544,8 @@ class AuthController {
         return res.reply(messages.already_exists("User"));
       });
   };
+  
+
 
   async superAdminLogin(req, res, next) {
     try {
