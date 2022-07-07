@@ -1,4 +1,4 @@
-const { User } = require("../../models");
+const { User,Whitelist } = require("../../models");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const saltRounds = 10;
@@ -544,36 +544,8 @@ class AuthController {
         return res.reply(messages.already_exists("User"));
       });
   };
-  async fetchWhitelistedAddress(req, res, next) {
-    try {
-      if (!req.body.address) return res.reply(messages.required_field("Address"));
-      let address = req.body.address;
-      whitelist.findOne(
-        {
-          uadddress:address
-        }, (err, whitelistData) => {
-          if (err) console.log(err);
-          if (!whitelistData) {
-            return res.reply(messages.wrong_credentials("not found"));
-          } else {
-            console.log(whitelistData);
-           
-                    return res.reply(messages.successfully("whitelistData Found"), {
-                    auth: true,
-                    walletAddress: whitelistData.uaddress,
-                    signature:whitelistData.usignature,
-          
-                  });
-                
-              } 
-            });
-          
-        
-    } catch (error) {
-      console.log(error);
-      return res.reply(messages.server_error());
-    }
-  };
+  
+
 
   async superAdminLogin(req, res, next) {
     try {
