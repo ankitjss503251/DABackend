@@ -133,12 +133,14 @@ class NFTController {
           let fileObj = Object.assign({}, fileAttr);
           let fileURL = req.file.location;
           console.log("file Location", req.file);
-          if (fileURL.indexOf("http://") == 0 || fileURL.indexOf("https://") == 0) {
-            
-          }else{
-            fileURL = "https://"+fileURL
+          if (
+            fileURL.indexOf("http://") == 0 ||
+            fileURL.indexOf("https://") == 0
+          ) {
+          } else {
+            fileURL = "https://" + fileURL;
           }
-          console.log("fileURL", fileURL)
+          console.log("fileURL", fileURL);
           let nft = new NFT({
             name: nftElement.name,
             description: nftElement.description,
@@ -181,7 +183,7 @@ class NFTController {
           nft
             .save()
             .then(async (result) => {
-              return res.reply(messages.created("NFT"));
+              return res.reply(messages.created("NFT"), result);
             })
             .catch((error) => {
               console.log("Created NFT error", error);
@@ -579,7 +581,7 @@ class NFTController {
         quantity: 1,
       });
       nft.save().then(async (result) => {});
-      return res.reply(messages.created("NFT"));
+      return res.reply(messages.created("NFT"), result);
     } catch (error) {
       console.log(error);
       return res.reply(messages.server_error());
@@ -770,9 +772,12 @@ class NFTController {
       if (req.body.searchText && req.body.searchText !== undefined) {
         searchText = req.body.searchText;
       }
+      console.log("req.userId", req.userId);
       User.findOne(
         { _id: mongoose.Types.ObjectId(req.userId) },
         async function (err, userData) {
+          console.log("err", err);
+          console.log("userData", userData);
           if (err) {
             return res.reply(messages.unauthorized());
           } else {
@@ -1400,6 +1405,25 @@ class NFTController {
     }
   }
 
+  async updateCollectionToken(req, res) {
+    try {
+      if (!req.params.collectionAddress)
+        return res.reply(messages.not_found("Contract Address Not Found"));
+      const contractAddress = req.params.collectionAddress;
+
+      const collection = await Collection.findOne({
+        contractAddress: contractAddress,
+      });
+      let nextID = collection.getNextID();
+
+      collection.nextID = nextID + 1;
+      collection.save();
+      return res.reply(messages.success("Token Updated", nextID + 1));
+    } catch (error) {
+      return res.reply(messages.server_error());
+    }
+  }
+
   // async viewCollection(req, res) {
   //   try {
   //     if (!req.params.collectionID)
@@ -3820,8 +3844,6 @@ class NFTController {
   //   }
   // }
 
- 
-
   // async likeNFT(req, res) {
   //   try {
   //     if (!req.userId) return res.reply(messages.unauthorized());
@@ -5999,25 +6021,6 @@ class NFTController {
   //     return res.reply(messages.server_error());
   //   }
   // }
-
-  // async updateCollectionToken(req, res){
-  //   try {
-  //     if (!req.params.collectionAddress)
-  //       return res.reply(messages.not_found("Contract Address Not Found"));
-  //     const contractAddress = req.params.collectionAddress;
-
-  //     const collection = await Collection.findOne({
-  //       sContractAddress: contractAddress,
-  //     });
-  //     let nextId = collection.getNextId();
-
-  //     collection.nextId = nextId + 1;
-  //     collection.save();
-  //     return res.reply(messages.success("Token Updated", nextId + 1));
-  //   } catch (error) {
-  //     return res.reply(messages.server_error());
-  //   }
-  // };
 
   // async getAllNfts(req, res) {
   //   try {
