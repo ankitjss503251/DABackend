@@ -489,7 +489,13 @@ class BidController {
       let qty_sold = req.body.qty_sold;
       let BidData = await Bid.findById(bidID);
       if (BidData) {
-        let nftID = BidData.nftID;
+        let isblocked = validators.isBlockedNFT(req.body.nftID);
+        if(isblocked === -1 ){
+          return res.reply(messages.server_error("Query "));
+        }else if(isblocked === 0 ){
+          return res.reply(messages.blocked("NFT"));
+        }else if(isblocked === 1 ){
+          let nftID = BidData.nftID;
         let orderId = BidData.orderID;
         let boughtQty = parseInt(BidData.bidQuantity);
         let bidderID = BidData.bidderID;
@@ -662,8 +668,8 @@ class BidController {
               console.log(error);
             });
         }
-
         return res.reply(messages.updated("order"));
+        }
       } else {
         console.log("Bid Not found");
         return res.reply("Bid Not found");
