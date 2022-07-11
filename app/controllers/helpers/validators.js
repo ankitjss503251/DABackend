@@ -2,6 +2,9 @@ const EthJSUtil = require('ethereumjs-util');
 const Web3 = require('web3');
 let _web3 = new Web3();
 
+const { NFT , Collection } = require("../../models");
+const mongoose = require("mongoose");
+
 const validators = {};
 
 validators.isValidObjectID = function (sObjectID) {
@@ -52,6 +55,30 @@ validators.isValidString = function (sString) {
 validators.isValidSellingType = (sSellingType) => {
     const aSellingTypes = ['Auction', 'Fixed Sale', 'Unlockable'];
     return aSellingTypes.includes(sSellingType);
+}
+
+validators.isBlockedNFT = function (nftID) {
+    NFT.findOne({ _id: mongoose.Types.ObjectId(nftID) }, function (err, nftData) {
+        if (err){
+            return -1;
+        }else{
+            if(nftData.status == 0){
+                return 0;
+            }else{
+                Collection.findOne({ _id: mongoose.Types.ObjectId(nftData.collectionID) }, function (err, collectionData) {
+                    if (err){
+                        return -1;
+                    }else{
+                        if(collectionData.status == 0){
+                            return 0;
+                        }else{
+                            return 1;
+                        }
+                    }
+                });
+            }
+        }
+    });
 }
 
 module.exports = validators;

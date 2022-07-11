@@ -1,4 +1,6 @@
 var jwt = require("jsonwebtoken");
+const { User } = require("../../models");
+const mongoose = require("mongoose");
 const middleware = {};
 
 middleware.verifyToken = (req, res, next) => {
@@ -35,11 +37,21 @@ middleware.verifyUserToken = (req, res, next) => {
         return res.reply(messages.unauthorized());
       }
       if (decoded.role === "user" || decoded.role === "admin") {
-        req.userId = decoded.id ? decoded.id : "";
-        req.role = decoded.role ? decoded.role : "";
-        req.name = decoded.name ? decoded.name : "";
-        req.email = decoded.email ? decoded.email : "";
-        next();
+        User.findOne({ _id: mongoose.Types.ObjectId(decoded.id) }, function (err, userData) {
+          if (err){
+              return res.reply(messages.unauthorized());
+          }else{
+              if(userData.status == 0){
+                  return res.reply(messages.blocked("User"));
+              }else{
+                  req.userId = decoded.id ? decoded.id : '';
+                  req.role = decoded.role ? decoded.role : '';
+                  req.name = decoded.name ? decoded.name : '';
+                  req.email = decoded.email ? decoded.email : '';
+                  next();
+              }
+          }
+        });
       } else {
         return res.reply(messages.unauthorized());
       }
@@ -58,11 +70,21 @@ middleware.verifyAdminToken = (req, res, next) => {
     jwt.verify(token, process.env.JWT_SECRET, function (err, decoded) {
       if (err) return res.reply(messages.unauthorized());
       if (decoded.role === "admin" || decoded.role === "superadmin") {
-        req.userId = decoded.id ? decoded.id : "";
-        req.role = decoded.role ? decoded.role : "";
-        req.name = decoded.name ? decoded.name : "";
-        req.email = decoded.email ? decoded.email : "";
-        next();
+        User.findOne({ _id: mongoose.Types.ObjectId(decoded.id) }, function (err, userData) {
+          if (err){
+              return res.reply(messages.unauthorized());
+          }else{
+              if(userData.status == 0){
+                  return res.reply(messages.blocked("User"));
+              }else{
+                  req.userId = decoded.id ? decoded.id : '';
+                  req.role = decoded.role ? decoded.role : '';
+                  req.name = decoded.name ? decoded.name : '';
+                  req.email = decoded.email ? decoded.email : '';
+                  next();
+              }
+          }
+        });
       } else return res.reply(messages.unauthorized());
     });
   } catch (error) {
@@ -79,11 +101,21 @@ middleware.verifySuperAdminToken = (req, res, next) => {
     jwt.verify(token, process.env.JWT_SECRET, function (err, decoded) {
       if (err) return res.reply(messages.unauthorized());
       if (decoded.role === "superadmin") {
-        req.userId = decoded.id ? decoded.id : "";
-        req.role = decoded.role ? decoded.role : "";
-        req.name = decoded.name ? decoded.name : "";
-        req.email = decoded.email ? decoded.email : "";
-        next();
+        User.findOne({ _id: mongoose.Types.ObjectId(decoded.id) }, function (err, userData) {
+          if (err){
+              return res.reply(messages.unauthorized());
+          }else{
+              if(userData.status == 0){
+                  return res.reply(messages.blocked("User"));
+              }else{
+                  req.userId = decoded.id ? decoded.id : '';
+                  req.role = decoded.role ? decoded.role : '';
+                  req.name = decoded.name ? decoded.name : '';
+                  req.email = decoded.email ? decoded.email : '';
+                  next();
+              }
+          }
+        });
       } else return res.reply(messages.unauthorized());
     });
   } catch (error) {
