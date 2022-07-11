@@ -57,6 +57,7 @@ middleware.verifyAdminToken = (req, res, next) => {
     token = token.replace("Bearer ", "");
     jwt.verify(token, process.env.JWT_SECRET, function (err, decoded) {
       if (err) return res.reply(messages.unauthorized());
+      console.log("Role ", decoded.role);
       if (decoded.role === "admin" || decoded.role === "superadmin") {
         req.userId = decoded.id ? decoded.id : "";
         req.role = decoded.role ? decoded.role : "";
