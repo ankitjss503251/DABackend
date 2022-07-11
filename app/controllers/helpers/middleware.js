@@ -37,19 +37,21 @@ middleware.verifyUserToken = (req, res, next) => {
         return res.reply(messages.unauthorized());
       }
       if (decoded.role === "user" || decoded.role === "admin") {
+        console.log("User ID", decoded.id)
         User.findOne({ _id: mongoose.Types.ObjectId(decoded.id) }, function (err, userData) {
-          if (err){
-              return res.reply(messages.unauthorized());
-          }else{
-              if(userData.status == 0){
-                  return res.reply(messages.blocked("User"));
-              }else{
-                  req.userId = decoded.id ? decoded.id : '';
-                  req.role = decoded.role ? decoded.role : '';
-                  req.name = decoded.name ? decoded.name : '';
-                  req.email = decoded.email ? decoded.email : '';
-                  next();
-              }
+          if (err) {
+            return res.reply(messages.unauthorized());
+          } else {
+            if (!userData) return res.reply(messages.not_found("User Account"));
+            if (userData.status == 0) {
+              return res.reply(messages.blocked("User"));
+            } else {
+              req.userId = decoded.id ? decoded.id : '';
+              req.role = decoded.role ? decoded.role : '';
+              req.name = decoded.name ? decoded.name : '';
+              req.email = decoded.email ? decoded.email : '';
+              next();
+            }
           }
         });
       } else {
@@ -71,18 +73,19 @@ middleware.verifyAdminToken = (req, res, next) => {
       if (err) return res.reply(messages.unauthorized());
       if (decoded.role === "admin" || decoded.role === "superadmin") {
         User.findOne({ _id: mongoose.Types.ObjectId(decoded.id) }, function (err, userData) {
-          if (err){
-              return res.reply(messages.unauthorized());
-          }else{
-              if(userData.status == 0){
-                  return res.reply(messages.blocked("User"));
-              }else{
-                  req.userId = decoded.id ? decoded.id : '';
-                  req.role = decoded.role ? decoded.role : '';
-                  req.name = decoded.name ? decoded.name : '';
-                  req.email = decoded.email ? decoded.email : '';
-                  next();
-              }
+          if (err) {
+            return res.reply(messages.unauthorized());
+          } else {
+            if (!userData) return res.reply(messages.not_found("User Account"));
+            if (userData.status == 0) {
+              return res.reply(messages.blocked("User"));
+            } else {
+              req.userId = decoded.id ? decoded.id : '';
+              req.role = decoded.role ? decoded.role : '';
+              req.name = decoded.name ? decoded.name : '';
+              req.email = decoded.email ? decoded.email : '';
+              next();
+            }
           }
         });
       } else return res.reply(messages.unauthorized());
@@ -102,18 +105,19 @@ middleware.verifySuperAdminToken = (req, res, next) => {
       if (err) return res.reply(messages.unauthorized());
       if (decoded.role === "superadmin") {
         User.findOne({ _id: mongoose.Types.ObjectId(decoded.id) }, function (err, userData) {
-          if (err){
-              return res.reply(messages.unauthorized());
-          }else{
-              if(userData.status == 0){
-                  return res.reply(messages.blocked("User"));
-              }else{
-                  req.userId = decoded.id ? decoded.id : '';
-                  req.role = decoded.role ? decoded.role : '';
-                  req.name = decoded.name ? decoded.name : '';
-                  req.email = decoded.email ? decoded.email : '';
-                  next();
-              }
+          if (err) {
+            return res.reply(messages.unauthorized());
+          } else {
+            if (!userData) return res.reply(messages.not_found("User Account"));
+            if (userData.status == 0) {
+              return res.reply(messages.blocked("User"));
+            } else {
+              req.userId = decoded.id ? decoded.id : '';
+              req.role = decoded.role ? decoded.role : '';
+              req.name = decoded.name ? decoded.name : '';
+              req.email = decoded.email ? decoded.email : '';
+              next();
+            }
           }
         });
       } else return res.reply(messages.unauthorized());

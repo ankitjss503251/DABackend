@@ -57,6 +57,7 @@ Router.prototype.setupMiddleware = function () {
   );
   
   this.app.use(compression());
+  // this.app.set('view engine', 'ejs');
   this.app.engine("html", require("ejs").renderFile);
   this.app.use(bodyParser.json({ limit: "16mb" }));
   this.app.use(
