@@ -1505,6 +1505,22 @@ class NFTController {
     }
   }
 
+  async getCollectionDetails(req, res){
+    try {
+      if (!req.params.collection){
+        return res.reply(messages.not_found("Request"));
+      }
+      let searchKey = req.params.collection;
+      Collection.findOne({ $or:[ {'name':searchKey}, {'contractAddress':searchKey} ] }, (err, collection) => {
+        if (err) return res.reply(messages.server_error());
+        if (!collection) return res.reply(messages.not_found("Collection"));
+        return res.reply(messages.successfully("Collection Details Found"), collection);
+      });
+    } catch (error) {
+      return res.reply(messages.server_error());
+    }
+  };
+
   // async viewCollection(req, res) {
   //   try {
   //     if (!req.params.collectionID)
