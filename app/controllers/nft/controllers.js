@@ -954,7 +954,8 @@ class NFTController {
       let OrderIdsss = await Order.distinct("nftID", OrderSearchObj);
       let NFTSearchArray = [];
       console.log("NFT IDs", OrderIdsss);
-      NFTSearchArray["_id"] = { $in: OrderIdsss.map(String) };
+
+      NFTSearchArray["_id"] = { $in: OrderIdsss };
       if (searchText !== "") {
         NFTSearchArray["name"] = {
           $regex: new RegExp(searchText),
@@ -982,7 +983,7 @@ class NFTController {
           limit: limit,
         };
       }
-      
+      console.log("search", NFTSearchObj);
       let nfts = await NFT.aggregate([
         { $match: NFTSearchObj },
         {
@@ -996,7 +997,7 @@ class NFTController {
         isOnMarketplaceSearchObj,
         {
           $lookup: {
-            from: "Orders",
+            from: "orders",
             localField: "_id",
             foreignField: "nftID",
             as: "OrderData",

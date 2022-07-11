@@ -99,7 +99,6 @@ class OrderController {
               if (err) throw error;
             }
           );
-
           let NFTData = await NFT.find({
             _id: mongoose.Types.ObjectId(req.body.nftID),
             "ownedBy.address": req.body.seller.toLowerCase(),
