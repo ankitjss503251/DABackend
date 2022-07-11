@@ -948,10 +948,11 @@ class NFTController {
       const limit = parseInt(req.body.limit);
       const startIndex = (page - 1) * limit;
       const endIndex = page * limit;
-      if (salesType !== "") {
+      if (salesType !== "" && salesType !== undefined ) {
         OrderSearchArray["salesType"] = salesType;
       }
       let OrderSearchObj = Object.assign({}, OrderSearchArray);
+      console.log("Order Search", OrderSearchObj);
       let OrderIdsss = await Order.distinct("nftID", OrderSearchObj);
       let NFTSearchArray = [];
       console.log("NFT IDs", OrderIdsss);
@@ -963,7 +964,7 @@ class NFTController {
           $options: "<options>",
         };
       }
-      if (nftType !== "") {
+      if (nftType !== "" && nftType !== undefined) {
         NFTSearchArray["type"] = nftType;
       }
       NFTSearchArray["status"] = 1;
@@ -979,6 +980,7 @@ class NFTController {
       isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1, };
       let isOnMarketplaceSearchObj = Object.assign( {}, isOnMarketplaceSearchArray );
       let NFTSearchObj = Object.assign({}, NFTSearchArray);
+      console.log("NFT Search", NFTSearchObj);
       const results = {};
       if (endIndex < (await NFT.countDocuments(NFTSearchObj).exec())) {
         results.next = {
