@@ -6,6 +6,6 @@
 
 .env
 
-/**.env
+**/.env
 /yarn.lock
 
