@@ -3,17 +3,57 @@ const NFTController = require("./controllers");
 const nftController = new NFTController();
 const nftMiddleware = require("./../helpers/middleware");
 
-router.post("/allCollections", nftMiddleware.verifySuperAdminToken, nftController.allCollections );
-router.post('/blockUnblockCollection', nftMiddleware.verifySuperAdminToken, nftController.blockUnblockCollection);
-router.post('/blockUnblockNFT', nftMiddleware.verifySuperAdminToken, nftController.blockUnblockNFT);
+router.post(
+  "/allCollections",
+  nftMiddleware.verifySuperAdminToken,
+  nftController.allCollections
+);
+router.post(
+  "/blockUnblockCollection",
+  nftMiddleware.verifySuperAdminToken,
+  nftController.blockUnblockCollection
+);
+router.post(
+  "/blockUnblockNFT",
+  nftMiddleware.verifySuperAdminToken,
+  nftController.blockUnblockNFT
+);
 
-router.post("/myCollections", nftMiddleware.verifyAdminToken, nftController.myCollections );
-router.post("/createCollection", nftMiddleware.verifyAdminToken, nftController.createCollection );
+router.post(
+  "/myCollections",
+  nftMiddleware.verifyAdminToken,
+  nftController.myCollections
+);
+router.post(
+  "/createCollection",
+  nftMiddleware.verifyAdminToken,
+  nftController.createCollection
+);
 router.post("/myNFTs", nftMiddleware.verifyAdminToken, nftController.myNFTs);
-router.post("/updateCollection", nftMiddleware.verifyAdminToken, nftController.updateCollection);
-router.post("/createNFT", nftMiddleware.verifyAdminToken, nftController.createNFT);
-router.post("/importNFT", nftMiddleware.verifyAdminToken, nftController.importNFT);
-router.put( "/updateNftOrder", nftMiddleware.verifyAdminToken, nftController.updateNftOrder);
+router.post(
+  "/updateCollection",
+  nftMiddleware.verifyAdminToken,
+  nftController.updateCollection
+);
+router.post(
+  "/createNFT",
+  nftMiddleware.verifyAdminToken,
+  nftController.createNFT
+);
+router.post(
+  "/importNFT",
+  nftMiddleware.verifyAdminToken,
+  nftController.importNFT
+);
+router.put(
+  "/updateNftOrder",
+  nftMiddleware.verifyAdminToken,
+  nftController.updateNftOrder
+);
+router.get(
+  "/updateCollectionToken/:collectionAddress",
+  nftController.updateCollectionToken
+);
 
 router.post("/getCollections", nftController.getCollections);
 router.post("/viewNFTs", nftController.viewNFTs);
@@ -52,6 +92,5 @@ router.get("/getCollectionDetails/:collection", nftController.getCollectionDetai
 // router.post("/getCollectionNFT", nftController.getCollectionNFT);
 // router.post("/getCollectionNFTOwned",nftMiddleware.verifyUserToken,nftController.getCollectionNFTOwned);
 // router.post("/getSearchedNft", nftController.getSearchedNft);
-// router.get("/updateCollectionToken/:collectionAddress",nftMiddleware.verifyUserToken,nftController.updateCollectionToken);
 
 module.exports = router;
