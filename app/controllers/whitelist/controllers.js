@@ -11,10 +11,12 @@ class WhitelistController {
   constructor() { }
   async fetchWhitelistedAddress(req, res, next) {
     try {
-      if (!req.body.address) return res.reply(messages.required_field("Address"));
-      let address = req.body.address;
-      console.log("Address" , address)
-      whitelist.findOne(({ uAddress: { $regex: new RegExp(address), $options: "i" } }), (err, whitelistData) => {
+      if (!req.body.uAddress) return res.reply(messages.required_field("user Address"));
+      if (!req.body.cAddress) return res.reply(messages.required_field("Contract Address"));
+      let uAddress = req.body.uAddress;
+      let cAddress = req.body.cAddress;
+   
+      whitelist.findOne({ uAddress: { $regex: new RegExp(uAddress), $options: "i" },cAddress:{ $regex: new RegExp(cAddress), $options: "i" } }, (err, whitelistData) => {
         if (err) console.log(err);
         if (!whitelistData) {
           console.log(whitelistData);
@@ -24,7 +26,7 @@ class WhitelistController {
           return res.reply(messages.successfully("whitelistData Found"), {
             auth: true,
             address: whitelistData.uAddress,
-            signature: whitelistData.uSignature
+            contract: whitelistData.cAddress
           });
         }
       });
@@ -36,11 +38,12 @@ class WhitelistController {
 
   async insertAddress(req, res, next) {
     try {
-      let uAddress = req.body.address;
-      let uSignature = req.body.signature;
+      let uAddress = req.body.uAddress;
+      let cAddress = req.body.cAddress;
+      console.log("data:",req.body);
       const insertData = new whitelist({
         uAddress: uAddress,
-        uSignature: uSignature
+        cAddress: cAddress
       });
       console.log("Insert Data is " + insertData);
       insertData.save().then(async (result) => {

@@ -60,7 +60,8 @@ router.post("/viewNFTs", nftController.viewNFTs);
 router.post("/viewNFTByOrder", nftController.viewNFTByOrder);
 router.post("/getOwnedNFTList", nftController.getOwnedNFTlist);
 router.post("/getCombinedNfts", nftController.getCombinedNfts);
-router.post("/getOnSaleItems", nftController.getOnSaleItems);
+router.post("/getOnSaleItems", nftController.getOnSaleItems );
+router.get("/getCollectionDetails/:collection", nftController.getCollectionDetails);
 
 // router.post("/getHotCollections",nftMiddleware.verifyWithoutToken, nftController.getHotCollections);
 // router.post("/likeNFT", nftMiddleware.verifyUserToken, nftController.likeNFT);
