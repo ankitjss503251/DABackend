@@ -79,6 +79,7 @@ validators.isBlockedNFT = function (nftID) {
             }
         }
     });
+    return 1;
 }
 
 module.exports = validators;

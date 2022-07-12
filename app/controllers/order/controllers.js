@@ -26,6 +26,7 @@ class OrderController {
       let validity = Math.floor(orderDate / 1000);
       console.log("nft req", req.body);
       let isblocked = validators.isBlockedNFT(req.body.nftID);
+   
       if(isblocked === -1 ){
         return res.reply(messages.server_error("Query "));
       }else if(isblocked === 0 ){
