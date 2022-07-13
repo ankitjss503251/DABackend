@@ -68,11 +68,8 @@ class OrderController {
   async deleteOrder(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
-      await Order.find({ _id: req.body.orderID }).remove().exec();
-      await Bid.find({ orderID: req.body.orderID, bidStatus: "Bid" })
-        .remove()
-        .exec();
-
+      await Order.find({ _id: mongoose.Types.ObjectId(req.body.orderID) }).remove().exec();
+      await Bid.find({ orderID: mongoose.Types.ObjectId(req.body.orderID), bidStatus: "Bid" }).remove().exec();
       return res.reply(messages.deleted("order"));
     } catch (err) {
       return res.reply(messages.error(), err.message);
@@ -112,6 +109,7 @@ class OrderController {
                   if (err) throw error;
                 }
               );
+              console.log("Quantity Sold Updated");
               let NFTData = await NFT.find({
                 _id: mongoose.Types.ObjectId(req.body.nftID),
                 "ownedBy.address": req.body.seller.toLowerCase(),
@@ -125,6 +123,7 @@ class OrderController {
               }
               let boughtQty = parseInt(req.body.qtyBought);
               let leftQty = currentQty - boughtQty;
+              console.log("leftQty", leftQty);
               if (leftQty < 1) {
                 await NFT.findOneAndUpdate(
                   { _id: mongoose.Types.ObjectId(req.body.nftID) },
@@ -182,6 +181,8 @@ class OrderController {
                 boughtQty = req.body.qtyBought;
                 let ownedQty = currentQty + boughtQty;
                 console.log("777");
+                console.log("ownedQty", ownedQty);
+                console.log("buyer", req.body.buyer);
                 await NFT.findOneAndUpdate(
                   {
                     _id: mongoose.Types.ObjectId(req.body.nftID),
