@@ -144,7 +144,7 @@ class NFTController {
             isImported: nftElement.isImported,
             type: nftElement.type,
             isMinted: nftElement.isMinted,
-            assetsInfo: nftElement.fileObj,
+            assetsInfo: fileObj,
             ownedBy: [],
           });
           console.log("Attr1", req.body.attributes);
@@ -561,7 +561,6 @@ class NFTController {
               isImported: nftElement.isImported,
               type: nftElement.type,
               isMinted: nftElement.isMinted,
-              assetsInfo: nftElement.fileObj,
               ownedBy: [],
             });
             let NFTAttr = JSON.parse(nftElement.attributes);
