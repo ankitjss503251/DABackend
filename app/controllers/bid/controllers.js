@@ -16,6 +16,8 @@ class BidController {
         return res.reply(messages.server_error("Query "));
       } else if (isblocked === 0) {
         return res.reply(messages.blocked("NFT"));
+      } else if (isblocked === -2) {
+        return res.reply(messages.not_found("NFT/Collection"));
       } else if (isblocked === 1) {
         let CheckBid = await Bid.findOne({
           bidderID: mongoose.Types.ObjectId(req.userId),
@@ -493,6 +495,8 @@ class BidController {
           return res.reply(messages.server_error("Query "));
         } else if (isblocked === 0) {
           return res.reply(messages.blocked("NFT"));
+        } else if (isblocked === -2) {
+          return res.reply(messages.not_found("NFT/Collection"));
         } else if (isblocked === 1) {
           let nftID = BidData.nftID;
           let orderId = BidData.orderID;

@@ -65,6 +65,10 @@ validators.isBlockedNFT = async function (nftID, callback) {
                 rej(-1);
                 return;
             }else{
+                if (!nftData){
+                    rej(-2);
+                    return;
+                }
                 if(nftData.status == 0){
                     rej(0);
                 }else{
@@ -73,6 +77,10 @@ validators.isBlockedNFT = async function (nftID, callback) {
                             rej(-1);
                             return;
                         }else{
+                            if (!resColl){
+                                rej(-2);
+                                return;
+                            }
                             if(resColl.status == 0){
                                 rej(0);
                             }else{
@@ -82,7 +90,8 @@ validators.isBlockedNFT = async function (nftID, callback) {
                     });
                 }
             }
-        })
-    })
+        });
+    });
+    return 1;
 }
 module.exports = validators;

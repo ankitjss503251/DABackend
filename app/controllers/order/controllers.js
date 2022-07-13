@@ -30,6 +30,8 @@ class OrderController {
         return res.reply(messages.server_error("Query "));
       } else if (isblocked === 0) {
         return res.reply(messages.blocked("NFT"));
+      } else if (isblocked === -2) {
+        return res.reply(messages.not_found("NFT/Collection"));
       } else if (isblocked === 1) {
         const order = new Order({
           nftID: req.body.nftID,
@@ -91,6 +93,8 @@ class OrderController {
           return res.reply(messages.server_error("Query "));
         } else if (isblocked === 0) {
           return res.reply(messages.blocked("NFT"));
+        } else if (isblocked === -2) {
+          return res.reply(messages.not_found("NFT/Collection"));
         } else if (isblocked === 1) {
 
           Order.findById(req.body.orderId, async (err, orderData) => {
