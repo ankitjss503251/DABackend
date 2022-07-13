@@ -149,24 +149,22 @@ class NFTController {
           });
           console.log("Attr1", req.body.attributes);
           console.log("Attr", nftElement.attributes);
-          let NFTAttr = nftElement.attributes;
+          let NFTAttr = JSON.parse(nftElement.attributes);
           console.log("NFTARRAY ", NFTAttr.length);
-          if (NFTAttr.isArray) {
-            if (NFTAttr.length > 0) {
-              NFTAttr.forEach((obj) => {
-                nft.attributes.push(obj);
-              });
-            }
+          if (NFTAttr.length > 0) {
+            NFTAttr.forEach((obj) => {
+              console.log("OBJ", obj);
+              nft.attributes.push(obj);
+            });
           }
 
-          let NFTlevels = nftElement.levels;
-          if (NFTlevels.isArray) {
-            if (NFTlevels.length > 0) {
-              NFTlevels.forEach((obj) => {
-                nft.levels.push(obj);
-              });
-            }
+          let NFTlevels = JSON.parse(nftElement.levels);
+          if (NFTlevels.length > 0) {
+            NFTlevels.forEach((obj) => {
+              nft.levels.push(obj);
+            });
           }
+          
           nft.ownedBy.push({
             address: nftElement.creatorAddress,
             quantity: nftElement.quantity,
