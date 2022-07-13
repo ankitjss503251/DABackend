@@ -57,29 +57,41 @@ validators.isValidSellingType = (sSellingType) => {
     return aSellingTypes.includes(sSellingType);
 }
 
-validators.isBlockedNFT = function (nftID) {
-    NFT.findOne({ _id: mongoose.Types.ObjectId(nftID) }, function (err, nftData) {
-        if (err){
-            return -1;
-        }else{
-            if(nftData.status == 0){
-                return 0;
+validators.isBlockedNFT = async function (nftID, callback) {
+
+    return new Promise((resv, rej) => {
+        NFT.findOne({ _id: mongoose.Types.ObjectId(nftID) }, (err, nftData) => {
+            if(err) {
+                rej(-1);
+                return;
             }else{
-                Collection.findOne({ _id: mongoose.Types.ObjectId(nftData.collectionID) }, function (err, collectionData) {
-                    if (err){
-                        return -1;
-                    }else{
-                        if(collectionData.status == 0){
-                            return 0;
+                if (!nftData){
+                    rej(-2);
+                    return;
+                }
+                if(nftData.status == 0){
+                    rej(0);
+                }else{
+                    Collection.findOne({ _id: mongoose.Types.ObjectId(nftData.collectionID) }, (errColl, resColl) => {
+                        if(errColl) {
+                            rej(-1);
+                            return;
                         }else{
-                            return 1;
+                            if (!resColl){
+                                rej(-2);
+                                return;
+                            }
+                            if(resColl.status == 0){
+                                rej(0);
+                            }else{
+                                resv(1);
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
-        }
+        });
     });
     return 1;
 }
-
 module.exports = validators;

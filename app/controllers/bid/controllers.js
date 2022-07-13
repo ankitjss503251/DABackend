@@ -11,11 +11,13 @@ class BidController {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
       console.log("Checking Old Bids");
-      let isblocked = validators.isBlockedNFT(req.body.nftID);
+      let isblocked = await validators.isBlockedNFT(req.body.nftID);
       if (isblocked === -1) {
         return res.reply(messages.server_error("Query "));
       } else if (isblocked === 0) {
         return res.reply(messages.blocked("NFT"));
+      } else if (isblocked === -2) {
+        return res.reply(messages.not_found("NFT/Collection"));
       } else if (isblocked === 1) {
         let CheckBid = await Bid.findOne({
           bidderID: mongoose.Types.ObjectId(req.userId),
@@ -488,11 +490,13 @@ class BidController {
       let qty_sold = req.body.qty_sold;
       let BidData = await Bid.findById(bidID);
       if (BidData) {
-        let isblocked = validators.isBlockedNFT(req.body.nftID);
+        let isblocked = await validators.isBlockedNFT(req.body.nftID);
         if (isblocked === -1) {
           return res.reply(messages.server_error("Query "));
         } else if (isblocked === 0) {
           return res.reply(messages.blocked("NFT"));
+        } else if (isblocked === -2) {
+          return res.reply(messages.not_found("NFT/Collection"));
         } else if (isblocked === 1) {
           let nftID = BidData.nftID;
           let orderId = BidData.orderID;
