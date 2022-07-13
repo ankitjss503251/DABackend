@@ -164,7 +164,7 @@ class NFTController {
               nft.levels.push(obj);
             });
           }
-          
+
           nft.ownedBy.push({
             address: nftElement.creatorAddress,
             quantity: nftElement.quantity,
@@ -564,13 +564,11 @@ class NFTController {
               assetsInfo: nftElement.fileObj,
               ownedBy: [],
             });
-            let NFTAttr = nftElement.attributes;
-            if (NFTAttr.isArray) {
-              if (NFTAttr.length > 0) {
-                NFTAttr.forEach((obj) => {
-                  nft.attributes.push(obj);
-                });
-              }
+            let NFTAttr = JSON.parse(nftElement.attributes);
+            if (NFTAttr.length > 0) {
+              NFTAttr.forEach((obj) => {
+                nft.attributes.push(obj);
+              });
             }
             nft.ownedBy.push({
               address: nftElement.owner,
