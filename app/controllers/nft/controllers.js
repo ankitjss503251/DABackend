@@ -243,6 +243,7 @@ class NFTController {
             createdBy: req.userId,
             isOnMarketplace: req.body.isOnMarketplace,
             isImported: req.body.isImported,
+            isMinted: req.body.isMinted,
             link: req.body.link,
           });
           collection
