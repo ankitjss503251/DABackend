@@ -537,6 +537,28 @@ class NFTController {
         return res.reply(messages.not_found("NFT Data"));
       }
       let nftElement = req.body.nftData;
+      if (!nftElement.owner) {
+        return res.reply(messages.required_field("Wallet Address"));
+      }
+      let importeduser = await User.findOne({
+        walletAddress: _.toChecksumAddress(nftElement.owner),
+      },(err, user) => {
+        if (err) return res.reply(messages.error());
+        if (!user){
+          const user = new User({
+            walletAddress: _.toChecksumAddress(nftElement.owner?.toLowerCase())
+          });
+          user.save().then((result) => { 
+            importeduser = result;
+            console.log("User Created", result);
+          }).catch((error) => {
+            console.log("Error in creating User", error);
+          });
+        }else{
+          importeduser = user;
+        }
+      });
+      console.log("User Data ", importeduser)
 
       Collection.findOne(
         { _id: mongoose.Types.ObjectId(nftElement.collectionID) },
@@ -563,11 +585,13 @@ class NFTController {
               isMinted: nftElement.isMinted,
               ownedBy: [],
             });
-            let NFTAttr = JSON.parse(nftElement.attributes);
-            if (NFTAttr.length > 0) {
-              NFTAttr.forEach((obj) => {
-                nft.attributes.push(obj);
-              });
+            let NFTAttr = nftElement.attributes;
+            if (NFTAttr.isArray) {
+              if (NFTAttr.length > 0) {
+                NFTAttr.forEach((obj) => {
+                  nft.attributes.push(obj);
+                });
+              }
             }
             nft.ownedBy.push({
               address: nftElement.owner,
