@@ -411,6 +411,7 @@ class BidController {
             bidDeadline: 1,
             isOffer: 1,
             tokenAddress: 1,
+            paymentToken: 1,
             salt: 1,
           },
         },
