@@ -1636,7 +1636,7 @@ class NFTController {
             updateData["brandID"] = req.body.brandID;
             nftupdateData["brandID"] = req.body.brandID;
           }
-          if (req.body.totalSupply) {
+          if (req.body.totalSupply && req.body.totalSupply !== undefined && req.body.totalSupply !== null && req.body.totalSupply !== "null") {
             updateData["totalSupply"] = req.body.totalSupply;
           }
           if (req.body.royalty) {
@@ -1645,13 +1645,10 @@ class NFTController {
           if (req.body.isImported) {
             updateData["isImported"] = req.body.isImported;
           }
-          if (
-            req.body.preSaleStartTime !== "null" &&
-            req.body.preSaleStartTime
-          ) {
+          if (req.body.preSaleStartTime && req.body.preSaleStartTime !== null && req.body.preSaleStartTime !== "null" && req.body.preSaleStartTime !== undefined) {
             updateData["preSaleStartTime"] = req.body.preSaleStartTime;
           }
-          if (req.body.preSaleEndTime && req.body.preSaleEndTime !== "null") {
+          if (req.body.preSaleEndTime && req.body.preSaleEndTime !== null && req.body.preSaleEndTime !== "null" && req.body.preSaleEndTime !== undefined) {
             updateData["preSaleEndTime"] = req.body.preSaleEndTime;
           }
           if (req.body.isDeployed !== "" && req.body.isDeployed !== undefined) {
