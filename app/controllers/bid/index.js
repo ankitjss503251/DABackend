@@ -9,7 +9,7 @@ router.post("/createBidNft",bidMiddleware.verifyUserToken,bidController.createBi
 router.post("/createOffer",bidMiddleware.verifyUserToken,bidController.createOffer);
 router.post("/updateBidNft",bidMiddleware.verifyUserToken,bidController.updateBidNft);
 
-router.post("/fetchBidNft",bidMiddleware.verifyUserToken,bidController.fetchBidNft);
+router.post("/fetchBidNft",bidController.fetchBidNft);
 router.post("/fetchOfferNft",bidController.fetchOfferNft);
 router.post("/acceptBidNft",bidMiddleware.verifyUserToken,bidController.acceptBidNft);
 
