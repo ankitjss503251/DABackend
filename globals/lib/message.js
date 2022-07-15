@@ -1,5 +1,5 @@
 const customMessages = {
-    custom_message: { code: 200, message: 'custom message' },
+    custom_message: { code: 200, message: 'custom message', statusCode:200 },
 };
 /**
  * Push notification messages
@@ -43,6 +43,7 @@ Object.defineProperty(builder, 'prepare', {
     configurable: false,
     writable: false,
     value: (code, prefix, message) => ({
+        statusCode: code,
         code,
         message: `${prefix ? `${prefix} ${message}` : message}`,
     }),

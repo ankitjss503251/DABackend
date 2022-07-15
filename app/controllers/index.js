@@ -89,8 +89,8 @@ Router.prototype.routeConfig = function (req, res, next) {
   req.sRemoteAddress =
     req.headers["x-forwarded-for"] || req.connection.remoteAddress;
   if (req.path === "/ping") return res.status(200).send({});
-  res.reply = ({ code, message }, data = {}, header = undefined) => {
-    res.status(code).header(header).json({ message, data });
+  res.reply = ({ statusCode, code, message }, data = {}, header = undefined) => {
+    res.status(code).header(header).json({ statusCode, message, data });
   };
   next();
 };
