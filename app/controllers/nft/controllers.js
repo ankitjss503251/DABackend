@@ -1,6 +1,17 @@
 const fs = require("fs");
 const http = require("https");
-const { NFT, Collection, User, Bid, NFTowners, Order, Brand, Category, importedNFT, importedCollection } = require("../../models");
+const {
+  NFT,
+  Collection,
+  User,
+  Bid,
+  NFTowners,
+  Order,
+  Brand,
+  Category,
+  importedNFT,
+  importedCollection,
+} = require("../../models");
 const pinataSDK = require("@pinata/sdk");
 const aws = require("aws-sdk");
 const multer = require("multer");
@@ -36,7 +47,7 @@ var allowedMimes;
 var errAllowed;
 
 let fileFilter = function (req, file, cb) {
-  console.log("Type ", file.mimetype)
+  console.log("Type ", file.mimetype);
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -62,7 +73,7 @@ const upload = multer(oMulterObj).single("nftFile");
 const uploadBanner = multer(oMulterObj);
 
 class NFTController {
-  constructor() { }
+  constructor() {}
 
   async createNFT(req, res, next) {
     try {
@@ -275,8 +286,12 @@ class NFTController {
             type: req.body.type,
             royaltyPercentage: req.body.royalty,
             contractAddress: req.body.contractAddress,
-            logoImage: req.files.logoImage ? req.files.logoImage[0].location : "",
-            coverImage: req.files.coverImage ? req.files.coverImage[0].location : "",
+            logoImage: req.files.logoImage
+              ? req.files.logoImage[0].location
+              : "",
+            coverImage: req.files.coverImage
+              ? req.files.coverImage[0].location
+              : "",
             categoryID: req.body.categoryID,
             brandID: req.body.brandID,
             chainID: req.body.chainID,
@@ -665,7 +680,7 @@ class NFTController {
                 await Category.findOneAndUpdate(
                   { _id: mongoose.Types.ObjectId(collectionData.categoryID) },
                   { $inc: { nftCount: 1 } },
-                  function () { }
+                  function () {}
                 );
               }
               return res.reply(messages.created("NFT"), result);
@@ -1069,7 +1084,7 @@ class NFTController {
         nftownerID,
         { $inc: { nQuantityLeft: -req.body.putOnSaleQty } },
         { new: true },
-        function (err, response) { }
+        function (err, response) {}
       );
       if (req.body.erc721) {
         await NFT.findByIdAndUpdate(sId, {
@@ -1621,7 +1636,7 @@ class NFTController {
             updateData["brandID"] = req.body.brandID;
             nftupdateData["brandID"] = req.body.brandID;
           }
-          if (req.body.totalSupply) {
+          if (req.body.totalSupply && req.body.totalSupply !== undefined && req.body.totalSupply !== null && req.body.totalSupply !== "null") {
             updateData["totalSupply"] = req.body.totalSupply;
           }
           if (req.body.royalty) {
@@ -1630,10 +1645,10 @@ class NFTController {
           if (req.body.isImported) {
             updateData["isImported"] = req.body.isImported;
           }
-          if (req.body.preSaleStartTime) {
+          if (req.body.preSaleStartTime && req.body.preSaleStartTime !== null && req.body.preSaleStartTime !== "null" && req.body.preSaleStartTime !== undefined) {
             updateData["preSaleStartTime"] = req.body.preSaleStartTime;
           }
-          if (req.body.preSaleEndTime) {
+          if (req.body.preSaleEndTime && req.body.preSaleEndTime !== null && req.body.preSaleEndTime !== "null" && req.body.preSaleEndTime !== undefined) {
             updateData["preSaleEndTime"] = req.body.preSaleEndTime;
           }
           if (req.body.isDeployed !== "" && req.body.isDeployed !== undefined) {
@@ -1692,7 +1707,7 @@ class NFTController {
     } catch (error) {
       return res.reply(messages.server_error());
     }
-  };
+  }
   async updateCollectionToken(req, res) {
     try {
       if (!req.params.collectionAddress)
