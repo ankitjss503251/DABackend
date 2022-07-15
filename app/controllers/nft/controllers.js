@@ -150,7 +150,6 @@ class NFTController {
               if (err) {
                 return res.reply(messages.not_found("Collection"));
               } else {
-
                 let nft = new NFT({
                   name: nftElement.name,
                   description: nftElement.description,
@@ -166,10 +165,16 @@ class NFTController {
                   assetsInfo: fileObj,
                   ownedBy: [],
                 });
-                if (collectionData.brandID !== undefined && collectionData.brandID !== "") {
+                if (
+                  collectionData.brandID !== undefined &&
+                  collectionData.brandID !== ""
+                ) {
                   nft.brandID = collectionData.brandID;
                 }
-                if (collectionData.categoryID !== undefined && collectionData.categoryID !== "") {
+                if (
+                  collectionData.categoryID !== undefined &&
+                  collectionData.categoryID !== ""
+                ) {
                   nft.categoryID = collectionData.categoryID;
                 }
                 console.log("Attr1", req.body.attributes);
@@ -206,24 +211,34 @@ class NFTController {
                     await Collection.findOneAndUpdate(
                       { _id: mongoose.Types.ObjectId(nftElement.collectionID) },
                       { $inc: { nftCount: 1 } },
-                      function () { }
+                      function () {}
                     );
-                    if (collectionData.categoryID === "" || collectionData.categoryID === undefined) {
-
+                    if (
+                      collectionData.categoryID === "" ||
+                      collectionData.categoryID === undefined
+                    ) {
                     } else {
                       await Category.findOneAndUpdate(
-                        { _id: mongoose.Types.ObjectId(collectionData.categoryID) },
+                        {
+                          _id: mongoose.Types.ObjectId(
+                            collectionData.categoryID
+                          ),
+                        },
                         { $inc: { nftCount: 1 } },
-                        function () { }
+                        function () {}
                       );
                     }
-                    if (collectionData.brandID === "" || collectionData.brandID === undefined) {
-
+                    if (
+                      collectionData.brandID === "" ||
+                      collectionData.brandID === undefined
+                    ) {
                     } else {
                       await Brand.findOneAndUpdate(
-                        { _id: mongoose.Types.ObjectId(collectionData.brandID) },
+                        {
+                          _id: mongoose.Types.ObjectId(collectionData.brandID),
+                        },
                         { $inc: { nftCount: 1 } },
-                        function () { }
+                        function () {}
                       );
                     }
                     return res.reply(messages.created("NFT"), result);
@@ -603,21 +618,29 @@ class NFTController {
       if (!nftElement.owner) {
         return res.reply(messages.required_field("Wallet Address"));
       }
-      await User.findOne({
-        walletAddress: _.toChecksumAddress(nftElement.owner),
-      }, (err, user) => {
-        if (err) return res.reply(messages.error());
-        if (!user) {
-          const user = new User({
-            walletAddress: _.toChecksumAddress(nftElement.owner?.toLowerCase())
-          });
-          user.save().then((result) => {
-            console.log("User Created", result);
-          }).catch((error) => {
-            console.log("Error in creating User", error);
-          });
+      await User.findOne(
+        {
+          walletAddress: _.toChecksumAddress(nftElement.owner),
+        },
+        (err, user) => {
+          if (err) return res.reply(messages.error());
+          if (!user) {
+            const user = new User({
+              walletAddress: _.toChecksumAddress(
+                nftElement.owner?.toLowerCase()
+              ),
+            });
+            user
+              .save()
+              .then((result) => {
+                console.log("User Created", result);
+              })
+              .catch((error) => {
+                console.log("Error in creating User", error);
+              });
+          }
         }
-      });
+      );
 
       Collection.findOne(
         { _id: mongoose.Types.ObjectId(nftElement.collectionID) },
@@ -642,10 +665,16 @@ class NFTController {
               createdBy: creatorID,
               ownedBy: [],
             });
-            if (collectionData.brandID !== undefined && collectionData.brandID !== "") {
+            if (
+              collectionData.brandID !== undefined &&
+              collectionData.brandID !== ""
+            ) {
               nft.brandID = collectionData.brandID;
             }
-            if (collectionData.categoryID !== undefined && collectionData.categoryID !== "") {
+            if (
+              collectionData.categoryID !== undefined &&
+              collectionData.categoryID !== ""
+            ) {
               nft.categoryID = collectionData.categoryID;
             }
             let NFTAttr = nftElement.attributes;
@@ -661,34 +690,38 @@ class NFTController {
               quantity: 1,
             });
             console.log("nftInsertData", nft);
-            nft.save().then(async (result) => {
-              console.log("NFT result", result)
-              const collection = await Collection.findOne({
-                _id: mongoose.Types.ObjectId(nftElement.collectionID),
-              });
-              let nextID = collection.getNextID();
-              collection.nextID = nextID;
-              collection.save();
-              await Collection.findOneAndUpdate(
-                { _id: mongoose.Types.ObjectId(nftElement.collectionID) },
-                { $inc: { nftCount: 1 } },
-                function () { }
-              );
-              if (collectionData.categoryID === "" || collectionData.categoryID === undefined) {
-
-              } else {
-                await Category.findOneAndUpdate(
-                  { _id: mongoose.Types.ObjectId(collectionData.categoryID) },
+            nft
+              .save()
+              .then(async (result) => {
+                console.log("NFT result", result);
+                const collection = await Collection.findOne({
+                  _id: mongoose.Types.ObjectId(nftElement.collectionID),
+                });
+                let nextID = collection.getNextID();
+                collection.nextID = nextID;
+                collection.save();
+                await Collection.findOneAndUpdate(
+                  { _id: mongoose.Types.ObjectId(nftElement.collectionID) },
                   { $inc: { nftCount: 1 } },
                   function () {}
                 );
-              }
-              return res.reply(messages.created("NFT"), result);
-
-            }).catch((error) => {
-              console.log("Created NFT error", error);
-              return res.reply(messages.error());
-            });
+                if (
+                  collectionData.categoryID === "" ||
+                  collectionData.categoryID === undefined
+                ) {
+                } else {
+                  await Category.findOneAndUpdate(
+                    { _id: mongoose.Types.ObjectId(collectionData.categoryID) },
+                    { $inc: { nftCount: 1 } },
+                    function () {}
+                  );
+                }
+                return res.reply(messages.created("NFT"), result);
+              })
+              .catch((error) => {
+                console.log("Created NFT error", error);
+                return res.reply(messages.error());
+              });
           }
         }
       );
@@ -859,23 +892,23 @@ class NFTController {
         },
         {
           $project: {
-            "_id": 1,
-            "name": 1,
-            "type": 1,
-            "image": 1,
-            "description": 1,
-            "collectionAddress": 1,
-            "ownedBy": 1,
-            "user_likes": 1,
-            "totalQuantity": 1,
-            "collectionID": 1,
-            "assetsInfo": 1,
-            "categoryID": 1,
-            "tokenID": 1,
-            "fileType": 1,
-            "createdBy": 1,
-            "attributes": 1,
-            "totalQuantity": 1,
+            _id: 1,
+            name: 1,
+            type: 1,
+            image: 1,
+            description: 1,
+            collectionAddress: 1,
+            ownedBy: 1,
+            user_likes: 1,
+            totalQuantity: 1,
+            collectionID: 1,
+            assetsInfo: 1,
+            categoryID: 1,
+            tokenID: 1,
+            fileType: 1,
+            createdBy: 1,
+            attributes: 1,
+            totalQuantity: 1,
             "CollectionData._id": 1,
             "CollectionData.name": 1,
             "CollectionData.contractAddress": 1,
@@ -884,10 +917,11 @@ class NFTController {
             "OrderData._id": 1,
             "OrderData.price": 1,
             "OrderData.salesType": 1,
+            "OrderData.paymentToken": 1,
             "BrandData._id": 1,
             "BrandData.name": 1,
             "BrandData.logoImage": 1,
-            "BrandData.coverImage": 1
+            "BrandData.coverImage": 1,
           },
         },
         { $skip: startIndex },
@@ -968,7 +1002,7 @@ class NFTController {
             foreignField: "_id",
             as: "UserData",
           },
-        }
+        },
       ]).exec(function (e, nftData) {
         console.log("Error ", e);
         return res.reply(messages.success("NFT List"), nftData);
@@ -1146,8 +1180,11 @@ class NFTController {
         };
       }
       let isOnMarketplaceSearchArray = [];
-      isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1, };
-      let isOnMarketplaceSearchObj = Object.assign({}, isOnMarketplaceSearchArray);
+      isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1 };
+      let isOnMarketplaceSearchObj = Object.assign(
+        {},
+        isOnMarketplaceSearchArray
+      );
       let NFTSearchObj = Object.assign({}, NFTSearchArray);
       // console.log("NFT Search", NFTSearchObj);
       const results = {};
@@ -1307,8 +1344,11 @@ class NFTController {
       }
       searchArray["status"] = 1;
       let isOnMarketplaceSearchArray = [];
-      isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1, };
-      let isOnMarketplaceSearchObj = Object.assign({}, isOnMarketplaceSearchArray);
+      isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1 };
+      let isOnMarketplaceSearchObj = Object.assign(
+        {},
+        isOnMarketplaceSearchArray
+      );
       const results = {};
       let searchObj = Object.assign({}, searchArray);
       let nfts = await NFT.aggregate([
@@ -1636,7 +1676,12 @@ class NFTController {
             updateData["brandID"] = req.body.brandID;
             nftupdateData["brandID"] = req.body.brandID;
           }
-          if (req.body.totalSupply && req.body.totalSupply !== undefined && req.body.totalSupply !== null && req.body.totalSupply !== "null") {
+          if (
+            req.body.totalSupply &&
+            req.body.totalSupply !== undefined &&
+            req.body.totalSupply !== null &&
+            req.body.totalSupply !== "null"
+          ) {
             updateData["totalSupply"] = req.body.totalSupply;
           }
           if (req.body.royalty) {
@@ -1645,10 +1690,20 @@ class NFTController {
           if (req.body.isImported) {
             updateData["isImported"] = req.body.isImported;
           }
-          if (req.body.preSaleStartTime && req.body.preSaleStartTime !== null && req.body.preSaleStartTime !== "null" && req.body.preSaleStartTime !== undefined) {
+          if (
+            req.body.preSaleStartTime &&
+            req.body.preSaleStartTime !== null &&
+            req.body.preSaleStartTime !== "null" &&
+            req.body.preSaleStartTime !== undefined
+          ) {
             updateData["preSaleStartTime"] = req.body.preSaleStartTime;
           }
-          if (req.body.preSaleEndTime && req.body.preSaleEndTime !== null && req.body.preSaleEndTime !== "null" && req.body.preSaleEndTime !== undefined) {
+          if (
+            req.body.preSaleEndTime &&
+            req.body.preSaleEndTime !== null &&
+            req.body.preSaleEndTime !== "null" &&
+            req.body.preSaleEndTime !== undefined
+          ) {
             updateData["preSaleEndTime"] = req.body.preSaleEndTime;
           }
           if (req.body.isDeployed !== "" && req.body.isDeployed !== undefined) {
@@ -1678,14 +1733,21 @@ class NFTController {
           { _id: mongoose.Types.ObjectId(collectionID) },
           { $set: updateObj }
         ).then((collection) => {
-          NFT.updateMany({ _id: mongoose.Types.ObjectId(collectionID) }, nftupdateObj, function (err, docs) {
-            if (err) {
-              console.log(err)
-            } else {
-              console.log("NFT updated");
+          NFT.updateMany(
+            { _id: mongoose.Types.ObjectId(collectionID) },
+            nftupdateObj,
+            function (err, docs) {
+              if (err) {
+                console.log(err);
+              } else {
+                console.log("NFT updated");
+              }
             }
-          });
-          return res.reply(messages.updated("Collection Updated successfully."), collection);
+          );
+          return res.reply(
+            messages.updated("Collection Updated successfully."),
+            collection
+          );
         });
       });
     } catch (error) {
@@ -1699,11 +1761,17 @@ class NFTController {
         return res.reply(messages.not_found("Request"));
       }
       let searchKey = req.params.collection;
-      Collection.findOne({ $or: [{ 'name': searchKey }, { 'contractAddress': searchKey }] }, (err, collection) => {
-        if (err) return res.reply(messages.server_error());
-        if (!collection) return res.reply(messages.not_found("Collection"));
-        return res.reply(messages.successfully("Collection Details Found"), collection);
-      });
+      Collection.findOne(
+        { $or: [{ name: searchKey }, { contractAddress: searchKey }] },
+        (err, collection) => {
+          if (err) return res.reply(messages.server_error());
+          if (!collection) return res.reply(messages.not_found("Collection"));
+          return res.reply(
+            messages.successfully("Collection Details Found"),
+            collection
+          );
+        }
+      );
     } catch (error) {
       return res.reply(messages.server_error());
     }
