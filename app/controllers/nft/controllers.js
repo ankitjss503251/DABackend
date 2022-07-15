@@ -155,7 +155,7 @@ class NFTController {
             isImported: nftElement.isImported,
             type: nftElement.type,
             isMinted: nftElement.isMinted,
-            assetsInfo: nftElement.fileObj,
+            assetsInfo: fileObj,
             ownedBy: [],
           });
           console.log("Attr1", req.body.attributes);
@@ -552,7 +552,29 @@ class NFTController {
         return res.reply(messages.not_found("NFT Data"));
       }
       let nftElement = req.body.nftData;
-      console.log("nftElement", nftElement);
+      if (!nftElement.owner) {
+        return res.reply(messages.required_field("Wallet Address"));
+      }
+      let importeduser = await User.findOne({
+        walletAddress: _.toChecksumAddress(nftElement.owner),
+      },(err, user) => {
+        if (err) return res.reply(messages.error());
+        if (!user){
+          const user = new User({
+            walletAddress: _.toChecksumAddress(nftElement.owner?.toLowerCase())
+          });
+          user.save().then((result) => { 
+            importeduser = result;
+            console.log("User Created", result);
+          }).catch((error) => {
+            console.log("Error in creating User", error);
+          });
+        }else{
+          importeduser = user;
+        }
+      });
+      console.log("User Data ", importeduser)
+
       Collection.findOne(
         { _id: mongoose.Types.ObjectId(nftElement.collectionID) },
         async function (err, collectionData) {
@@ -577,14 +599,15 @@ class NFTController {
               isImported: nftElement.isImported,
               type: nftElement.type,
               isMinted: nftElement.isMinted,
-              assetsInfo: nftElement.fileObj,
               ownedBy: [],
             });
             let NFTAttr = nftElement.attributes;
-            if (NFTAttr.length > 0) {
-              NFTAttr.forEach((obj) => {
-                nft.attributes.push(obj);
-              });
+            if (NFTAttr.isArray) {
+              if (NFTAttr.length > 0) {
+                NFTAttr.forEach((obj) => {
+                  nft.attributes.push(obj);
+                });
+              }
             }
             nft.ownedBy.push({
               address: nftElement.owner,
@@ -1472,10 +1495,13 @@ class NFTController {
           if (req.body.isImported) {
             updateData["isImported"] = req.body.isImported;
           }
-          if (req.body.preSaleStartTime) {
+          if (
+            req.body.preSaleStartTime !== "null" &&
+            req.body.preSaleStartTime
+          ) {
             updateData["preSaleStartTime"] = req.body.preSaleStartTime;
           }
-          if (req.body.preSaleEndTime) {
+          if (req.body.preSaleEndTime && req.body.preSaleEndTime !== "null") {
             updateData["preSaleEndTime"] = req.body.preSaleEndTime;
           }
           if (req.body.isDeployed !== "" && req.body.isDeployed !== undefined) {
