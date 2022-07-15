@@ -113,14 +113,14 @@ const nftSchema = mongoose.Schema({
     default: 0,
     enum: [0, 1], // 0-No 1-Yes
   },
-  // brandID: {
-  //   type: mongoose.Schema.ObjectId,
-  //   ref: "Brand",
-  // },
-  // categoryID: {
-  //   type: mongoose.Schema.ObjectId,
-  //   ref: "Category",
-  // },
+  brandID: {
+    type: mongoose.Schema.ObjectId,
+    ref: "Brand",
+  },
+  categoryID: {
+    type: mongoose.Schema.ObjectId,
+    ref: "Category",
+  },
   status: {
     //0 - Inactive & 1 - Active
     type: Number,
