@@ -533,6 +533,8 @@ class NFTController {
     console.log("create req", req);
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
+      let creatorID = req.userId;
+      console.log("creatorID", creatorID);
       if (!req.body.nftData) {
         return res.reply(messages.not_found("NFT Data"));
       }
@@ -540,7 +542,7 @@ class NFTController {
       if (!nftElement.owner) {
         return res.reply(messages.required_field("Wallet Address"));
       }
-      let importeduser = await User.findOne({
+      await User.findOne({
         walletAddress: _.toChecksumAddress(nftElement.owner),
       },(err, user) => {
         if (err) return res.reply(messages.error());
@@ -549,16 +551,12 @@ class NFTController {
             walletAddress: _.toChecksumAddress(nftElement.owner?.toLowerCase())
           });
           user.save().then((result) => { 
-            importeduser = result;
             console.log("User Created", result);
           }).catch((error) => {
             console.log("Error in creating User", error);
           });
-        }else{
-          importeduser = user;
         }
       });
-      console.log("User Data ", importeduser)
 
       Collection.findOne(
         { _id: mongoose.Types.ObjectId(nftElement.collectionID) },
@@ -566,7 +564,6 @@ class NFTController {
           if (err) {
             return res.reply(messages.not_found("Collection"));
           } else {
-
             let nft = new NFT({
               name: nftElement.name,
               description: nftElement.description,
@@ -575,16 +572,21 @@ class NFTController {
               tokenID: nftElement.tokenID,
               collectionID: nftElement.collectionID,
               collectionAddress: nftElement.collectionAddress,
-              categoryID: collectionData.categoryID ? collectionData.categoryID : "",
-              brandID: collectionData.brandID ? collectionData.brandID : "",
               isOnMarketplace: nftElement.isOnMarketplace,
               totalQuantity: nftElement.totalQuantity,
               totalQuantity: nftElement.quantity,
               isImported: nftElement.isImported,
               type: nftElement.type,
               isMinted: nftElement.isMinted,
+              createdBy: creatorID,
               ownedBy: [],
             });
+            if(collectionData.brandID !== undefined && collectionData.brandID !=="" ){
+              nft.brandID = collectionData.brandID;
+            }
+            if(collectionData.categoryID !== undefined && collectionData.categoryID !=="" ){
+              nft.categoryID = collectionData.categoryID;
+            }
             let NFTAttr = nftElement.attributes;
             if (NFTAttr.isArray) {
               if (NFTAttr.length > 0) {
@@ -597,7 +599,9 @@ class NFTController {
               address: nftElement.owner,
               quantity: 1,
             });
+            console.log("nftInsertData", nft);
             nft.save().then(async (result) => {
+              console.log("NFT result", result)
               const collection = await Collection.findOne({
                 _id: mongoose.Types.ObjectId(nftElement.collectionID),
               });
@@ -618,7 +622,7 @@ class NFTController {
                   function () { }
                 );
               }
-              return res.reply(messages.created("NFT"));
+              return res.reply(messages.created("NFT"), result);
 
             }).catch((error) => {
               console.log("Created NFT error", error);
@@ -792,12 +796,120 @@ class NFTController {
             as: "UserData",
           },
         },
+        {
+          $project: {
+            "_id" : 1,
+            "name" : 1,
+            "type" : 1,
+            "image" : 1,
+            "description" : 1,
+            "collectionAddress" : 1,
+            "ownedBy" : 1,
+            "user_likes" : 1,
+            "totalQuantity" : 1,
+            "collectionID" : 1,
+            "assetsInfo" : 1,
+            "categoryID" : 1,
+            "tokenID" : 1,
+            "fileType" : 1,
+            "createdBy" : 1,
+            "attributes" : 1,
+            "totalQuantity" : 1,
+            "CollectionData._id" : 1,
+            "CollectionData.name" : 1,
+            "CollectionData.contractAddress" : 1,
+            "CollectionData.isOnMarketplace" : 1,
+            "CollectionData.status" : 1,
+            "OrderData._id" : 1,
+            "OrderData.price" : 1,
+            "OrderData.salesType" : 1,
+            "BrandData._id" : 1,
+            "BrandData.name" : 1,
+            "BrandData.logoImage" : 1,
+            "BrandData.coverImage" : 1 
+          },
+        },
         { $skip: startIndex },
         { $limit: limit },
         { $sort: { createdOn: -1 } },
       ]).exec(function (e, nftData) {
         console.log("Error ", e);
         // let count = nftData.length;
+        return res.reply(messages.success("NFT List"), nftData);
+      });
+    } catch (error) {
+      console.log("Error " + error);
+      return res.reply(messages.server_error());
+    }
+  }
+
+  async viewNFTDetails(req, res) {
+    try {
+      let nftID = "";
+      if (req.body.nftID && req.body.nftID !== undefined) {
+        nftID = req.body.nftID;
+      }
+      let searchArray = [];
+      searchArray["status"] = 1;
+      if (nftID !== "") {
+        searchArray["_id"] = mongoose.Types.ObjectId(nftID);
+      }
+      let searchObj = Object.assign({}, searchArray);
+
+      let isOnMarketplaceSearchArray = [];
+      isOnMarketplaceSearchArray["$match"] = {
+        "CollectionData.status": 1,
+      };
+      let isOnMarketplaceSearchObj = Object.assign(
+        {},
+        isOnMarketplaceSearchArray
+      );
+      console.log("isOnMarketplaceSearchObj", isOnMarketplaceSearchObj);
+      let nfts = await NFT.aggregate([
+        { $match: searchObj },
+        {
+          $lookup: {
+            from: "collections",
+            localField: "collectionID",
+            foreignField: "_id",
+            as: "CollectionData",
+          },
+        },
+        isOnMarketplaceSearchObj,
+        {
+          $lookup: {
+            from: "orders",
+            localField: "_id",
+            foreignField: "nftID",
+            as: "OrderData",
+          },
+        },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categoryID",
+            foreignField: "_id",
+            as: "CategoryData",
+          },
+        },
+        {
+          $lookup: {
+            from: "brands",
+            localField: "brandID",
+            foreignField: "_id",
+            as: "BrandData",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "createdBy",
+            foreignField: "_id",
+            as: "UserData",
+          },
+        }
+      ]).exec(function (e, nftData) {
+        console.log("Error ", e);
         return res.reply(messages.success("NFT List"), nftData);
       });
     } catch (error) {
@@ -1415,6 +1527,7 @@ class NFTController {
         { name: "coverImage", maxCount: 1 },
       ])(req, res, function (error) {
         let updateData = [];
+        let nftupdateData = [];
         let collectionID = req.body.id;
         if (
           req.files &&
@@ -1456,9 +1569,11 @@ class NFTController {
           }
           if (req.body.categoryID) {
             updateData["categoryID"] = req.body.categoryID;
+            nftupdateData["categoryID"] = req.body.categoryID;
           }
           if (req.body.brandID) {
             updateData["brandID"] = req.body.brandID;
+            nftupdateData["brandID"] = req.body.brandID;
           }
           if (req.body.totalSupply) {
             updateData["totalSupply"] = req.body.totalSupply;
@@ -1497,14 +1612,19 @@ class NFTController {
           updateData["lastUpdatedOn"] = Date.now();
         }
         let updateObj = Object.assign({}, updateData);
+        let nftupdateObj = Object.assign({}, nftupdateData);
         Collection.findByIdAndUpdate(
           { _id: mongoose.Types.ObjectId(collectionID) },
           { $set: updateObj }
         ).then((collection) => {
-          return res.reply(
-            messages.updated("Collection Updated successfully."),
-            collection
-          );
+          NFT.updateMany({ _id: mongoose.Types.ObjectId(collectionID) }, nftupdateObj , function (err, docs) {
+            if (err){
+              console.log(err)
+            }else{
+              console.log("NFT updated");
+            }
+          });
+          return res.reply(messages.updated("Collection Updated successfully."),collection);
         });
       });
     } catch (error) {
