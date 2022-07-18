@@ -11,6 +11,7 @@ const {
   Category,
   importedNFT,
   importedCollection,
+  MintCollection,
 } = require("../../models");
 const pinataSDK = require("@pinata/sdk");
 const aws = require("aws-sdk");
@@ -6557,6 +6558,51 @@ class NFTController {
       return res.reply(messages.server_error());
     }
   }
+
+  async insertMintAddress(req, res, next) {
+    try {
+      if (!req.body.address) {
+        return res.reply(messages.not_found("Address"));
+      }
+      if (!req.body.type) {
+        return res.reply(messages.not_found("Collection Type"));
+      }
+      let mintCollection = new MintCollection({
+        address: req.body.address,
+        type: req.body.type
+      });
+      mintCollection.save().then(async (result) => {
+        console.log("Result", result);
+        return res.reply(messages.created("Mint Collection"), result);
+      }).catch((error) => {
+        console.log("Created Mint Collection error", error);
+        return res.reply(messages.error());
+      });
+    } catch (error) {
+      console.log(error);
+      return res.reply(messages.server_error());
+    }
+  }
+
+  async fetchMintAddress(req, res) {
+    try {
+      let data = [];
+      let results = {};
+      await MintCollection.find().lean().exec().then((res) => {
+        data.push(res);
+      }).catch((e) => {
+        console.log("Error", e);
+      });
+      results.count = await MintCollection.countDocuments().exec();
+      results.results = data;
+      res.header("Access-Control-Max-Age", 600);
+      return res.reply(messages.success("Mint Collection List"), results);
+    } catch (error) {
+      console.log("Error " + error);
+      return res.reply(messages.server_error());
+    }
+  }
+
 }
 
 module.exports = NFTController;
