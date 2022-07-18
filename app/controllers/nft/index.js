@@ -3,32 +3,12 @@ const NFTController = require("./controllers");
 const nftController = new NFTController();
 const nftMiddleware = require("./../helpers/middleware");
 
-router.post(
-  "/allCollections",
-  nftMiddleware.verifySuperAdminToken,
-  nftController.allCollections
-);
-router.post(
-  "/blockUnblockCollection",
-  nftMiddleware.verifySuperAdminToken,
-  nftController.blockUnblockCollection
-);
-router.post(
-  "/blockUnblockNFT",
-  nftMiddleware.verifySuperAdminToken,
-  nftController.blockUnblockNFT
-);
+router.post("/allCollections", nftMiddleware.verifySuperAdminToken, nftController.allCollections);
+router.post("/blockUnblockCollection", nftMiddleware.verifySuperAdminToken, nftController.blockUnblockCollection);
+router.post("/blockUnblockNFT", nftMiddleware.verifySuperAdminToken, nftController.blockUnblockNFT);
+router.post("/myCollections", nftMiddleware.verifyAdminToken, nftController.myCollections);
+router.post("/createCollection", nftMiddleware.verifyAdminToken, nftController.createCollection);
 
-router.post(
-  "/myCollections",
-  nftMiddleware.verifyAdminToken,
-  nftController.myCollections
-);
-router.post(
-  "/createCollection",
-  nftMiddleware.verifyAdminToken,
-  nftController.createCollection
-);
 router.post("/myNFTs", nftMiddleware.verifyAdminToken, nftController.myNFTs);
 router.post("/updateCollection", nftMiddleware.verifyAdminToken,  nftController.updateCollection);
 router.post("/createNFT", nftMiddleware.verifyAdminToken, nftController.createNFT);
@@ -44,6 +24,9 @@ router.post("/getOwnedNFTList", nftController.getOwnedNFTlist);
 router.post("/getCombinedNfts", nftController.getCombinedNfts);
 router.post("/getOnSaleItems", nftController.getOnSaleItems );
 router.get("/getCollectionDetails/:collection", nftController.getCollectionDetails);
+
+router.post("/insertMintAddress", nftController.insertMintAddress);
+router.get("/fetchMintAddress", nftController.fetchMintAddress);
 
 // router.post("/getHotCollections",nftMiddleware.verifyWithoutToken, nftController.getHotCollections);
 // router.post("/likeNFT", nftMiddleware.verifyUserToken, nftController.likeNFT);

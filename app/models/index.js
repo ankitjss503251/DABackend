@@ -9,6 +9,7 @@ const User = require('./lib/User');
 const importedCollection = require('./lib/importedCollection');
 const importedNFT = require('./lib/importedNFT');
 const whitelist = require('./lib/Whitelist')
+const MintCollection = require('./lib/MintCollection');
 module.exports = {
     Bid,
     Brand,
@@ -20,5 +21,6 @@ module.exports = {
     User,
     importedNFT,
     importedCollection,
-    whitelist
+    whitelist,
+    MintCollection
 };

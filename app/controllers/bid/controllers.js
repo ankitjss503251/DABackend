@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const nodemailer = require("../../utils/lib/nodemailer");
 
 class BidController {
-  constructor() { }
+  constructor() {}
 
   async createBidNft(req, res) {
     console.log("req", req.body);
@@ -65,7 +65,6 @@ class BidController {
             console.log("Created Bid error", error);
             return res.reply(messages.error());
           });
-
       }
     } catch (e) {
       console.log("errr", e);
@@ -192,7 +191,6 @@ class BidController {
   async fetchBidNft(req, res) {
     console.log("req", req.body);
     try {
-      if (!req.userId) return res.reply(messages.unauthorized());
       let nftID = req.body.nftID;
       let orderID = req.body.orderID;
       let buyerID = req.body.buyerID;
@@ -589,10 +587,10 @@ class BidController {
               (o) => o.address === buyer.toLowerCase()
             ).quantity
               ? parseInt(
-                NFTNewData.ownedBy.find(
-                  (o) => o.address === buyer.toLowerCase()
-                ).quantity
-              )
+                  NFTNewData.ownedBy.find(
+                    (o) => o.address === buyer.toLowerCase()
+                  ).quantity
+                )
               : 0;
 
             let ownedQty = currentQty + boughtQty;

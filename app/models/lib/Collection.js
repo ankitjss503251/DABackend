@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const collectionSchema = mongoose.Schema({
   name: {
     type: String,
+    require: true,
+    unique: true,
   },
   type: {
     type: Number,
