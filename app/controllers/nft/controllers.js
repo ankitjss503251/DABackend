@@ -145,17 +145,19 @@ class NFTController {
           }
           console.log("fileURL", fileURL);
 
-          Collection.findOne(
+          Collection.find(
             { _id: mongoose.Types.ObjectId(nftElement.collectionID) },
             async function (err, collectionData) {
               if (err) {
                 return res.reply(messages.server_error("Collection"));
               } else {
                 if (collectionData.length > 0) {
-                  NFT.findOne(
+                  NFT.find(
                     {
                       name: nftElement.name,
-                      collectionID: nftElement.collectionID,
+                      collectionID: mongoose.Types.ObjectId(
+                        nftElement.collectionID
+                      ),
                       collectionAddress: nftElement.collectionAddress,
                     },
                     async function (err, nftData) {
@@ -672,24 +674,24 @@ class NFTController {
         }
       );
 
-      Collection.findOne(
+      Collection.find(
         { _id: mongoose.Types.ObjectId(nftElement.collectionID) },
         async function (err, collectionData) {
           if (err) {
             return res.reply(messages.server_error("Collection"));
           } else {
             if (collectionData.length > 0) {
-              NFT.findOne(
+              NFT.find(
                 {
                   name: nftElement.name,
-                  collectionID: nftElement.collectionID,
+                  collectionID: mongoose.Types.ObjectId(nftElement.collectionID),
                   collectionAddress: nftElement.collectionAddress,
                 },
                 async function (err, nftData) {
                   if (err) {
                     return res.reply(messages.server_error("NFT"));
                   } else {
-                    if (nftData.length > 0) {
+                    if (nftData?.length > 0) {
                       return res.reply(messages.already_exist("NFT Name"));
                     } else {
                       let nft = new NFT({
