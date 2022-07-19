@@ -27,7 +27,8 @@ class BidController {
           bidStatus: "Bid",
         });
         if (CheckBid) {
-          await Bid.findOneAndDelete(
+          console.log("Bid Found");
+          await Bid.deleteMany(
             {
               bidderID: mongoose.Types.ObjectId(req.userId),
               owner: mongoose.Types.ObjectId(req.body.owner),
@@ -44,6 +45,7 @@ class BidController {
             }
           );
         }
+        console.log("Bid Not Found");
         const bidData = new Bid({
           bidderID: req.userId,
           owner: req.body.owner,
@@ -94,7 +96,7 @@ class BidController {
         bidStatus: "MakeOffer",
       });
       if (CheckBid) {
-        await Bid.findOneAndDelete(
+        await Bid.deleteMany(
           {
             bidderID: mongoose.Types.ObjectId(req.userId),
             owner: mongoose.Types.ObjectId(user._id),
