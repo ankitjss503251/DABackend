@@ -202,7 +202,7 @@ class BidController {
       let buyerIDQuery = {};
 
       let filters = [];
-      
+
       if (nftID != "All") {
         nftIDQuery = { nftID: mongoose.Types.ObjectId(nftID) };
       }
@@ -267,6 +267,7 @@ class BidController {
         },
         {
           $sort: {
+            bidPrice: -1,
             createdOn: -1,
             lastUpdatedOn: -1,
           },
@@ -430,8 +431,9 @@ class BidController {
         },
         {
           $sort: {
+            bidPrice: -1,
             createdOn: -1,
-            lastUpdatedOn: -1
+            lastUpdatedOn: -1,
           },
         },
         { $unwind: "$bidderID" },
@@ -832,19 +834,23 @@ class BidController {
               owner: mongoose.Types.ObjectId(owner),
               nftID: mongoose.Types.ObjectId(nftID),
               bidStatus: "Bid",
-            }).then(function () {
-              console.log("Data deleted");
-            }).catch(function (error) {
-              console.log(error);
-            });
-            
+            })
+              .then(function () {
+                console.log("Data deleted");
+              })
+              .catch(function (error) {
+                console.log(error);
+              });
+
             await Order.deleteMany({
-              nftID: mongoose.Types.ObjectId(nftID)
-            }).then(function () {
-              console.log("Data deleted");
-            }).catch(function (error) {
-              console.log(error);
-            });
+              nftID: mongoose.Types.ObjectId(nftID),
+            })
+              .then(function () {
+                console.log("Data deleted");
+              })
+              .catch(function (error) {
+                console.log(error);
+              });
           }
           return res.reply(messages.updated("order"));
         }
