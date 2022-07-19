@@ -33,6 +33,7 @@ class BidController {
               owner: mongoose.Types.ObjectId(req.body.owner),
               nftID: mongoose.Types.ObjectId(req.body.nftID),
               orderID: mongoose.Types.ObjectId(req.body.orderID),
+              lastUpdatedOn: Date.now(),
               bidStatus: "Bid",
             },
             function (err, bidDel) {
@@ -55,6 +56,7 @@ class BidController {
           buyerSignature: req.body.buyerSignature,
           bidDeadline: req.body.bidDeadline,
           isOffer: req.body.isOffer,
+          lastUpdatedOn: Date.now(),
         });
         bidData
           .save()
@@ -100,6 +102,7 @@ class BidController {
             nftID: mongoose.Types.ObjectId(req.body.nftID),
             //orderID: mongoose.Types.ObjectId(req.body.orderID),
             bidStatus: "MakeOffer",
+            lastUpdatedOn: Date.now(),
           },
           function (err, bidDel) {
             if (err) {
@@ -125,6 +128,7 @@ class BidController {
         isOffer: true,
         salt: req.body.salt,
         tokenAddress: req.body.tokenAddress,
+        lastUpdatedOn: Date.now(),
       });
       console.log("bidDat is--->", bidData);
       bidData
@@ -201,9 +205,7 @@ class BidController {
       let buyerIDQuery = {};
 
       let filters = [];
-      if (bidStatus != "All") {
-        oTypeQuery = { bidStatus: mongoose.Types.ObjectId(bidStatus) };
-      }
+      
       if (nftID != "All") {
         nftIDQuery = { nftID: mongoose.Types.ObjectId(nftID) };
       }
@@ -220,7 +222,6 @@ class BidController {
             $and: [
               { bidQuantity: { $gte: 1 } },
               { bidStatus: "Bid" },
-              oTypeQuery,
               nftIDQuery,
               orderIDQuery,
               buyerIDQuery,
@@ -239,6 +240,8 @@ class BidController {
             bidQuantity: 1,
             buyerSignature: 1,
             bidDeadline: 1,
+            createdOn: 1,
+            lastUpdatedOn: 1,
           },
         },
         {
@@ -267,7 +270,8 @@ class BidController {
         },
         {
           $sort: {
-            sCreated: -1,
+            createdOn: -1,
+            lastUpdatedOn: -1,
           },
         },
         { $unwind: "$bidderID" },
@@ -370,15 +374,12 @@ class BidController {
       let buyerIDQuery = {};
 
       let filters = [];
-      if (bidStatus != "All") {
-        oTypeQuery = { bidStatus: mongoose.Types.ObjectId(bidStatus) };
-      }
+      // if (bidStatus != "All") {
+      //   oTypeQuery = { bidStatus: bidStatus };
+      // }
       if (nftID != "All") {
         nftIDQuery = { nftID: mongoose.Types.ObjectId(nftID) };
       }
-      //if (orderID != "All") {
-      //  orderIDQuery = { orderID: mongoose.Types.ObjectId(orderID) };
-      //}
       if (buyerID != "All") {
         buyerIDQuery = { bidderID: mongoose.Types.ObjectId(buyerID) };
       }
@@ -389,8 +390,7 @@ class BidController {
             $and: [
               { bidQuantity: { $gte: 1 } },
               { isOffer: true },
-
-              oTypeQuery,
+              // oTypeQuery,
               nftIDQuery,
               buyerIDQuery,
             ],
@@ -411,6 +411,8 @@ class BidController {
             tokenAddress: 1,
             paymentToken: 1,
             salt: 1,
+            createdOn: 1,
+            lastUpdatedOn: 1,
           },
         },
         {
@@ -431,7 +433,8 @@ class BidController {
         },
         {
           $sort: {
-            sCreated: -1,
+            createdOn: -1,
+            lastUpdatedOn: -1
           },
         },
         { $unwind: "$bidderID" },
