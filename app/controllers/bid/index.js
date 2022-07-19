@@ -12,5 +12,7 @@ router.post("/updateBidNft",bidMiddleware.verifyUserToken,bidController.updateBi
 router.post("/fetchBidNft",bidController.fetchBidNft);
 router.post("/fetchOfferNft",bidController.fetchOfferNft);
 router.post("/acceptBidNft",bidMiddleware.verifyUserToken,bidController.acceptBidNft);
+router.post("/acceptOfferNft",bidMiddleware.verifyUserToken,bidController.acceptOfferNft);
+
 
 module.exports = router;

@@ -16,7 +16,7 @@ const validators = require("../helpers/validators");
 var jwt = require("jsonwebtoken");
 
 class OrderController {
-  constructor() { }
+  constructor() {}
 
   async createOrder(req, res) {
     try {
@@ -68,8 +68,15 @@ class OrderController {
   async deleteOrder(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
-      await Order.find({ _id: mongoose.Types.ObjectId(req.body.orderID) }).remove().exec();
-      await Bid.find({ orderID: mongoose.Types.ObjectId(req.body.orderID), bidStatus: "Bid" }).remove().exec();
+      await Order.find({ _id: mongoose.Types.ObjectId(req.body.orderID) })
+        .remove()
+        .exec();
+      await Bid.find({
+        orderID: mongoose.Types.ObjectId(req.body.orderID),
+        bidStatus: "Bid",
+      })
+        .remove()
+        .exec();
       return res.reply(messages.deleted("order"));
     } catch (err) {
       return res.reply(messages.error(), err.message);
@@ -93,8 +100,7 @@ class OrderController {
         } else if (isblocked === -2) {
           return res.reply(messages.not_found("NFT/Collection"));
         } else if (isblocked === 1) {
-
-          Order.findById(req.body.orderId, async (err, orderData) => {
+          Order.findById(req.body.orderID, async (err, orderData) => {
             if (err) {
               console.log("Order Query error", error);
               return res.reply(messages.error());
@@ -104,7 +110,7 @@ class OrderController {
             } else {
               await Order.updateOne(
                 { _id: req.body.orderId },
-                { $set: { quantity_sold: req.body.qty_sold, }, },
+                { $set: { quantity_sold: req.body.qty_sold } },
                 (err) => {
                   if (err) throw error;
                 }
@@ -173,10 +179,10 @@ class OrderController {
                   (o) => o.address === req.body.buyer.toLowerCase()
                 ).quantity
                   ? parseInt(
-                    NFTData_Buyer.ownedBy.find(
-                      (o) => o.address === req.body.buyer.toLowerCase()
-                    ).quantity
-                  )
+                      NFTData_Buyer.ownedBy.find(
+                        (o) => o.address === req.body.buyer.toLowerCase()
+                      ).quantity
+                    )
                   : 0;
                 boughtQty = req.body.qtyBought;
                 let ownedQty = currentQty + boughtQty;
@@ -227,220 +233,220 @@ class OrderController {
           });
         }
       }
-      } catch (error) {
-        return res.reply(messages.error(), error.message);
-      }
+    } catch (error) {
+      return res.reply(messages.error(), error.message);
     }
+  }
 
   async getOrder(req, res) {
-      try {
-        Order.findOne({ _id: req.body.orderId }, (err, order) => {
-          if (err) return res.reply(messages.server_error());
-          if (!order) return res.reply(messages.not_found("Order"));
-          return res.reply(messages.no_prefix("Order Details"), order);
-        })
-          .populate("sellerID")
-          .populate("nftID");
-      } catch (error) {
-        return res.reply(messages.server_error());
-      }
+    try {
+      Order.findOne({ _id: req.body.orderId }, (err, order) => {
+        if (err) return res.reply(messages.server_error());
+        if (!order) return res.reply(messages.not_found("Order"));
+        return res.reply(messages.no_prefix("Order Details"), order);
+      })
+        .populate("sellerID")
+        .populate("nftID");
+    } catch (error) {
+      return res.reply(messages.server_error());
     }
+  }
 
   async getOrdersByNftId(req, res) {
-      try {
-        const sortKey = req.body.sortKey ? req.body.sortKey : "price";
-        const sortType = req.body.sortType ? req.body.sortType : -1;
-        var sortObject = {};
-        var stype = sortKey;
-        var sdir = sortType;
-        sortObject[stype] = sdir;
-        const page = parseInt(req.body.page);
-        const limit = parseInt(req.body.limit);
-        const startIndex = (page - 1) * limit;
-        const endIndex = page * limit;
-        const results = {};
-        let searchArray = [];
-        if (req.body.nftID != undefined && req.body.nftID != "") {
-          searchArray["nftID"] = req.body.nftID;
-        }
-        if (req.body.tokenID != undefined && req.body.tokenID != "") {
-          searchArray["tokenID"] = req.body.tokenID;
-          searchArray["collectionAddress"] = req.body.collectionAddress;
-        }
-        let searchObj = Object.assign({}, searchArray);
-        if (endIndex < (await Order.count(searchObj).exec())) {
-          results.next = {
-            page: page + 1,
-            limit: limit,
-          };
-        }
-
-        if (startIndex > 0) {
-          results.previous = {
-            page: page - 1,
-            limit: limit,
-          };
-        }
-
-        let AllOrders = await Order.find(searchObj)
-          .populate("sellerID")
-          .populate("orderID")
-          .sort(sortObject)
-          .limit(limit)
-          .skip(startIndex)
-          .exec();
-
-        results.results = AllOrders;
-        return res.reply(messages.success("NFT Orders List"), results);
-      } catch (error) {
-        return res.reply(messages.server_error(), error.message);
+    try {
+      const sortKey = req.body.sortKey ? req.body.sortKey : "price";
+      const sortType = req.body.sortType ? req.body.sortType : -1;
+      var sortObject = {};
+      var stype = sortKey;
+      var sdir = sortType;
+      sortObject[stype] = sdir;
+      const page = parseInt(req.body.page);
+      const limit = parseInt(req.body.limit);
+      const startIndex = (page - 1) * limit;
+      const endIndex = page * limit;
+      const results = {};
+      let searchArray = [];
+      if (req.body.nftID != undefined && req.body.nftID != "") {
+        searchArray["nftID"] = req.body.nftID;
       }
+      if (req.body.tokenID != undefined && req.body.tokenID != "") {
+        searchArray["tokenID"] = req.body.tokenID;
+        searchArray["collectionAddress"] = req.body.collectionAddress;
+      }
+      let searchObj = Object.assign({}, searchArray);
+      if (endIndex < (await Order.count(searchObj).exec())) {
+        results.next = {
+          page: page + 1,
+          limit: limit,
+        };
+      }
+
+      if (startIndex > 0) {
+        results.previous = {
+          page: page - 1,
+          limit: limit,
+        };
+      }
+
+      let AllOrders = await Order.find(searchObj)
+        .populate("sellerID")
+        .populate("orderID")
+        .sort(sortObject)
+        .limit(limit)
+        .skip(startIndex)
+        .exec();
+
+      results.results = AllOrders;
+      return res.reply(messages.success("NFT Orders List"), results);
+    } catch (error) {
+      return res.reply(messages.server_error(), error.message);
     }
+  }
 
   async createOrderImport(req, res) {
-      try {
-        console.log(req.body);
-        if (!req.userId) return res.reply(messages.unauthorized());
-        let collectionID = "";
-        let nftID = "";
-        console.log("collectionID " + collectionID);
-        console.log("nftID " + nftID);
-        let importedNFTID = req.body.nftID;
-        let importedCollection = req.body.collectionAddress.toLowerCase();
-        // let creatorAddress = req.body.creatorAddress;
-        console.log("importedCollection " + importedCollection);
+    try {
+      console.log(req.body);
+      if (!req.userId) return res.reply(messages.unauthorized());
+      let collectionID = "";
+      let nftID = "";
+      console.log("collectionID " + collectionID);
+      console.log("nftID " + nftID);
+      let importedNFTID = req.body.nftID;
+      let importedCollection = req.body.collectionAddress.toLowerCase();
+      // let creatorAddress = req.body.creatorAddress;
+      console.log("importedCollection " + importedCollection);
 
-        let createCollection = await new Promise((resolve) => {
-          Collection.find(
-            { contractAddress: importedCollection },
-            (err, colData) => {
-              if (err) {
-                console.log("Collection Query error", error);
-                return res.reply(messages.error());
-              }
-              if (colData.length == 0) {
-                const collection = new Collection({
-                  contractAddress: importedCollection,
-                  createdBy: req.userId,
-                  isImported: 1,
-                  link: colData.link,
-                });
-                collection
-                  .save()
-                  .then((saveCol) => {
-                    console.log("Saved Collection", saveCol);
-                    collectionID = saveCol._id;
-                    resolve(collectionID);
-                  })
-                  .catch((error) => {
-                    console.log("Created Collection error", error);
-                    return res.reply(error);
-                  });
-              } else {
-                console.log("Updated Collection", colData);
-                collectionID = colData._id;
-                resolve(collectionID);
-              }
-            }
-          );
-        });
-
-        let createNFT = await new Promise((resolve) => {
-          importedNFT
-            .findById(importedNFTID, (err, nftData) => {
-              if (err) {
-                console.log("NFT Query error", error);
-                return res.reply(messages.error());
-              }
-              if (!nftData) {
-                return res.reply(messages.not_found("Imported NFT"));
-              } else {
-                const nft = new NFT({
-                  name: nftData.name,
-                  collectionID: collectionID,
-                  collectionAddress: importedCollection,
-                  description: nftData.description,
-                  createdBy: req.userId,
-                  tokenID: nftData.tokenID,
-                  attributesImported: nftData.attributes,
-                  isMinted: 1,
-                  lazyMintingStatus: 0,
-                  isImported: 1,
-                  ownedBy: [],
-                  image: nftData.image,
-                });
-                nft.ownedBy.push(nftData.ownedBy);
-                nft
-                  .save()
-                  .then(async (result) => {
-                    console.log("nft res", result);
-                    nftID = result._id;
-                    const collection = await Collection.findOne({
-                      _id: mongoose.Types.ObjectId(collectionID),
-                    });
-
-                    console.log("_id", collectionID, collection);
-                    let nextID = collection.getNextID();
-                    collection.nextID = nextID;
-                    collection.save();
-                    await Collection.findOneAndUpdate(
-                      { _id: mongoose.Types.ObjectId(collectionID) },
-                      { $inc: { nftCount: 1 } },
-                      function () { }
-                    );
-                    importedNFT.deleteOne({
-                      _id: mongoose.Types.ObjectId(importedNFTID),
-                    });
-                    console.log("Delete Imported NFT"), importedNFTID;
-                    resolve(result._id);
-                  })
-                  .catch((error) => {
-                    console.log("Created NFT error", error);
-                    return res.reply(messages.error());
-                  });
-              }
-            })
-            .catch((e) => {
-              console.log("Error 1" + e);
+      let createCollection = await new Promise((resolve) => {
+        Collection.find(
+          { contractAddress: importedCollection },
+          (err, colData) => {
+            if (err) {
+              console.log("Collection Query error", error);
               return res.reply(messages.error());
-            });
-        });
-        console.log("collectionID " + collectionID);
-        console.log("nftID " + nftID);
-        let orderDate = new Date().setFullYear(new Date().getFullYear() + 10);
-        let validity = Math.floor(orderDate / 1000);
+            }
+            if (colData.length == 0) {
+              const collection = new Collection({
+                contractAddress: importedCollection,
+                createdBy: req.userId,
+                isImported: 1,
+                link: colData.link,
+              });
+              collection
+                .save()
+                .then((saveCol) => {
+                  console.log("Saved Collection", saveCol);
+                  collectionID = saveCol._id;
+                  resolve(collectionID);
+                })
+                .catch((error) => {
+                  console.log("Created Collection error", error);
+                  return res.reply(error);
+                });
+            } else {
+              console.log("Updated Collection", colData);
+              collectionID = colData._id;
+              resolve(collectionID);
+            }
+          }
+        );
+      });
 
-        const order = new Order({
-          nftID: nftID,
-          tokenID: req.body.tokenID,
-          collectionAddress: req.body.collectionAddress,
-          total_quantity: req.body.quantity,
-          deadline: req.body.deadline,
-          deadlineDate: req.body.deadlineDate,
-          salesType: req.body.saleType,
-          paymentToken: req.body.tokenAddress,
-          price: req.body.price,
-          salt: req.body.salt,
-          signature: req.body.signature,
-          bundleTokens: [],
-          bundleTokensQuantities: [],
-          sellerID: req.userId,
-        });
-        order
-          .save()
-          .then((result) => {
-            return res.reply(messages.created("Order"), result);
+      let createNFT = await new Promise((resolve) => {
+        importedNFT
+          .findById(importedNFTID, (err, nftData) => {
+            if (err) {
+              console.log("NFT Query error", error);
+              return res.reply(messages.error());
+            }
+            if (!nftData) {
+              return res.reply(messages.not_found("Imported NFT"));
+            } else {
+              const nft = new NFT({
+                name: nftData.name,
+                collectionID: collectionID,
+                collectionAddress: importedCollection,
+                description: nftData.description,
+                createdBy: req.userId,
+                tokenID: nftData.tokenID,
+                attributesImported: nftData.attributes,
+                isMinted: 1,
+                lazyMintingStatus: 0,
+                isImported: 1,
+                ownedBy: [],
+                image: nftData.image,
+              });
+              nft.ownedBy.push(nftData.ownedBy);
+              nft
+                .save()
+                .then(async (result) => {
+                  console.log("nft res", result);
+                  nftID = result._id;
+                  const collection = await Collection.findOne({
+                    _id: mongoose.Types.ObjectId(collectionID),
+                  });
+
+                  console.log("_id", collectionID, collection);
+                  let nextID = collection.getNextID();
+                  collection.nextID = nextID;
+                  collection.save();
+                  await Collection.findOneAndUpdate(
+                    { _id: mongoose.Types.ObjectId(collectionID) },
+                    { $inc: { nftCount: 1 } },
+                    function () {}
+                  );
+                  importedNFT.deleteOne({
+                    _id: mongoose.Types.ObjectId(importedNFTID),
+                  });
+                  console.log("Delete Imported NFT"), importedNFTID;
+                  resolve(result._id);
+                })
+                .catch((error) => {
+                  console.log("Created NFT error", error);
+                  return res.reply(messages.error());
+                });
+            }
           })
-          .catch((error) => {
-            return res.reply(messages.already_exists("Failed:" + error));
+          .catch((e) => {
+            console.log("Error 1" + e);
+            return res.reply(messages.error());
           });
-      } catch (error) {
-        console.log("Error 2", error);
-        return res.reply(messages.server_error());
-      }
-    }
+      });
+      console.log("collectionID " + collectionID);
+      console.log("nftID " + nftID);
+      let orderDate = new Date().setFullYear(new Date().getFullYear() + 10);
+      let validity = Math.floor(orderDate / 1000);
 
-    /*
+      const order = new Order({
+        nftID: nftID,
+        tokenID: req.body.tokenID,
+        collectionAddress: req.body.collectionAddress,
+        total_quantity: req.body.quantity,
+        deadline: req.body.deadline,
+        deadlineDate: req.body.deadlineDate,
+        salesType: req.body.saleType,
+        paymentToken: req.body.tokenAddress,
+        price: req.body.price,
+        salt: req.body.salt,
+        signature: req.body.signature,
+        bundleTokens: [],
+        bundleTokensQuantities: [],
+        sellerID: req.userId,
+      });
+      order
+        .save()
+        .then((result) => {
+          return res.reply(messages.created("Order"), result);
+        })
+        .catch((error) => {
+          return res.reply(messages.already_exists("Failed:" + error));
+        });
+    } catch (error) {
+      console.log("Error 2", error);
+      return res.reply(messages.server_error());
+    }
+  }
+
+  /*
     async createOrderImport(req, res) {
       try {
         console.log(req.body);
@@ -557,6 +563,6 @@ class OrderController {
       }
     };
     */
-  }
+}
 
 module.exports = OrderController;
