@@ -370,6 +370,10 @@ class BidController {
       let buyerIDQuery = {};
 
       let filters = [];
+
+      if (bidStatus != "All") {
+        oTypeQuery = { bidStatus: bidStatus };
+      }
       if (nftID != "All") {
         nftIDQuery = { nftID: mongoose.Types.ObjectId(nftID) };
       }
@@ -383,6 +387,7 @@ class BidController {
             $and: [
               { bidQuantity: { $gte: 1 } },
               { isOffer: true },
+              oTypeQuery,
               nftIDQuery,
               buyerIDQuery,
             ],
