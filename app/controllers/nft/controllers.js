@@ -970,6 +970,7 @@ class NFTController {
             tokenID: 1,
             fileType: 1,
             createdBy: 1,
+            createdOn: 1,
             attributes: 1,
             totalQuantity: 1,
             "CollectionData._id": 1,
