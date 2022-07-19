@@ -970,6 +970,7 @@ class NFTController {
             tokenID: 1,
             fileType: 1,
             createdBy: 1,
+            createdOn: 1,
             attributes: 1,
             totalQuantity: 1,
             "CollectionData._id": 1,
@@ -993,7 +994,7 @@ class NFTController {
       ]).exec(function (e, nftData) {
         console.log("Error ", e);
         let results = {};
-        results.count = nftData.length;
+        results.count = nftData?.length ? nftData.length : 0;
         results.results = nftData;
         // let count = nftData.length;
         // return res.reply(messages.success("NFT List"), nftData);
