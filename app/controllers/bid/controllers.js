@@ -33,7 +33,6 @@ class BidController {
               owner: mongoose.Types.ObjectId(req.body.owner),
               nftID: mongoose.Types.ObjectId(req.body.nftID),
               orderID: mongoose.Types.ObjectId(req.body.orderID),
-              lastUpdatedOn: Date.now(),
               bidStatus: "Bid",
             },
             function (err, bidDel) {
@@ -102,7 +101,6 @@ class BidController {
             nftID: mongoose.Types.ObjectId(req.body.nftID),
             //orderID: mongoose.Types.ObjectId(req.body.orderID),
             bidStatus: "MakeOffer",
-            lastUpdatedOn: Date.now(),
           },
           function (err, bidDel) {
             if (err) {
