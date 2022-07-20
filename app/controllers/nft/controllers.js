@@ -1466,7 +1466,8 @@ class NFTController {
           console.log("Error", e);
         });
       results.results = data;
-      results.count = await NFT.countDocuments(searchObj).exec();
+      results.count = data?.length ? data.length : 0;
+      // results.count = await NFT.countDocuments(searchObj).exec();
       return res.reply(messages.success("NFT List"), results);
     } catch (error) {
       console.log("Error " + error);
@@ -6672,4 +6673,4 @@ class NFTController {
   }
 }
 
-module.exports = NFTController;
+module.exports = NFTController; 
