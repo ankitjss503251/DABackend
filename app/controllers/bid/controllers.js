@@ -505,7 +505,6 @@ class BidController {
           let bidderID = BidData.bidderID;
           let BuyerData = await User.findById(bidderID);
           let buyer = BuyerData.walletAddress;
-          let buyerID = BuyerData._id;
           let owner = BidData.owner;
           console.log("owner", owner);
           let OwnerData = await User.findById(owner);
@@ -655,7 +654,6 @@ class BidController {
               await Bid.deleteMany({
                 owner: mongoose.Types.ObjectId(owner),
                 nftID: mongoose.Types.ObjectId(nftID),
-                createdBy: mongoose.Types.ObjectId(buyerID),
                 bidStatus: "MakeOffer",
               })
                 .then(function () {
@@ -687,7 +685,6 @@ class BidController {
             await Bid.deleteMany({
               owner: mongoose.Types.ObjectId(owner),
               nftID: mongoose.Types.ObjectId(nftID),
-              createdBy: mongoose.Types.ObjectId(buyerID),
               bidStatus: "MakeOffer",
             }).then(function () {
               console.log("Data deleted");
@@ -734,7 +731,6 @@ class BidController {
           let bidderID = BidData.bidderID;
           let BuyerData = await User.findById(bidderID);
           let buyer = BuyerData.walletAddress;
-          let buyerID = BuyerData._id;
           let owner = BidData.owner;
           console.log("owner", owner);
           let OwnerData = await User.findById(owner);
@@ -867,7 +863,6 @@ class BidController {
             await Bid.deleteMany({
               owner: mongoose.Types.ObjectId(owner),
               nftID: mongoose.Types.ObjectId(nftID),
-              createdBy: mongoose.Types.ObjectId(buyerID),
               bidStatus: "MakeOffer",
             }).then(function () {
               console.log("Data deleted");
