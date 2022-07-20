@@ -1460,7 +1460,10 @@ class NFTController {
       ])
         .exec()
         .then((res) => {
-          data.push(res);
+          if(res?.length){
+            data.push(res);
+          }
+          // data.push(res);
         })
         .catch((e) => {
           console.log("Error", e);
