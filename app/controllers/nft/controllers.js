@@ -684,7 +684,9 @@ class NFTController {
               NFT.find(
                 {
                   name: nftElement.name,
-                  collectionID: mongoose.Types.ObjectId(nftElement.collectionID),
+                  collectionID: mongoose.Types.ObjectId(
+                    nftElement.collectionID
+                  ),
                   collectionAddress: nftElement.collectionAddress,
                 },
                 async function (err, nftData) {
@@ -1460,17 +1462,16 @@ class NFTController {
       ])
         .exec()
         .then((res) => {
-          if(res?.length){
+          if (res?.length) {
             data.push(res);
           }
-          // data.push(res);
         })
         .catch((e) => {
           console.log("Error", e);
         });
       results.results = data;
-      results.count = data?.length ? data.length : 0;
       // results.count = await NFT.countDocuments(searchObj).exec();
+      results.count = data?.length ? data.length : 0;
       return res.reply(messages.success("NFT List"), results);
     } catch (error) {
       console.log("Error " + error);
@@ -6676,4 +6677,4 @@ class NFTController {
   }
 }
 
-module.exports = NFTController; 
+module.exports = NFTController;

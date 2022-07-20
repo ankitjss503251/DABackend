@@ -505,6 +505,7 @@ class BidController {
           let bidderID = BidData.bidderID;
           let BuyerData = await User.findById(bidderID);
           let buyer = BuyerData.walletAddress;
+          let buyerID = BuyerData._id;
           let owner = BidData.owner;
           console.log("owner", owner);
           let OwnerData = await User.findById(owner);
@@ -650,6 +651,19 @@ class BidController {
               .catch(function (error) {
                 console.log(error);
               });
+
+              await Bid.deleteMany({
+                owner: mongoose.Types.ObjectId(owner),
+                nftID: mongoose.Types.ObjectId(nftID),
+                createdBy: mongoose.Types.ObjectId(buyerID),
+                bidStatus: "MakeOffer",
+              })
+                .then(function () {
+                  console.log("Data deleted");
+                })
+                .catch(function (error) {
+                  console.log(error);
+                });
           } else {
             let _order = await Order.findOne({
               _id: mongoose.Types.ObjectId(orderId),
@@ -664,13 +678,22 @@ class BidController {
               nftID: mongoose.Types.ObjectId(nftID),
               bidStatus: "Bid",
               bidQuantity: { $gt: leftQty },
-            })
-              .then(function () {
-                console.log("Data deleted from 1155");
-              })
-              .catch(function (error) {
-                console.log(error);
-              });
+            }).then(function () {
+              console.log("Data deleted from 1155");
+            }).catch(function (error) {
+              console.log(error);
+            });
+            
+            await Bid.deleteMany({
+              owner: mongoose.Types.ObjectId(owner),
+              nftID: mongoose.Types.ObjectId(nftID),
+              createdBy: mongoose.Types.ObjectId(buyerID),
+              bidStatus: "MakeOffer",
+            }).then(function () {
+              console.log("Data deleted");
+            }).catch(function (error) {
+              console.log(error);
+            });
           }
           return res.reply(messages.updated("order"));
         }
@@ -711,6 +734,7 @@ class BidController {
           let bidderID = BidData.bidderID;
           let BuyerData = await User.findById(bidderID);
           let buyer = BuyerData.walletAddress;
+          let buyerID = BuyerData._id;
           let owner = BidData.owner;
           console.log("owner", owner);
           let OwnerData = await User.findById(owner);
@@ -834,23 +858,30 @@ class BidController {
               owner: mongoose.Types.ObjectId(owner),
               nftID: mongoose.Types.ObjectId(nftID),
               bidStatus: "Bid",
-            })
-              .then(function () {
-                console.log("Data deleted");
-              })
-              .catch(function (error) {
-                console.log(error);
-              });
+            }).then(function () {
+              console.log("Data deleted");
+            }).catch(function (error) {
+              console.log(error);
+            });
+
+            await Bid.deleteMany({
+              owner: mongoose.Types.ObjectId(owner),
+              nftID: mongoose.Types.ObjectId(nftID),
+              createdBy: mongoose.Types.ObjectId(buyerID),
+              bidStatus: "MakeOffer",
+            }).then(function () {
+              console.log("Data deleted");
+            }).catch(function (error) {
+              console.log(error);
+            });
 
             await Order.deleteMany({
               nftID: mongoose.Types.ObjectId(nftID),
-            })
-              .then(function () {
-                console.log("Data deleted");
-              })
-              .catch(function (error) {
-                console.log(error);
-              });
+            }).then(function () {
+              console.log("Data deleted");
+            }).catch(function (error) {
+              console.log(error);
+            });
           }
           return res.reply(messages.updated("order"));
         }
