@@ -897,6 +897,7 @@ class NFTController {
         if (isLazyMinted == true) searchArray["lazyMintingStatus"] = 1;
         else searchArray["lazyMintingStatus"] = 0;
       }
+      // searchArray["OrderData.0"] = { $exists:true }
 
       let searchObj = Object.assign({}, searchArray);
 
@@ -929,7 +930,7 @@ class NFTController {
       console.log("salesTypeSearchObj", salesTypeSearchObj);
 
       let nfts = await NFT.aggregate([
-        { $match: searchObj },
+        
         {
           $lookup: {
             from: "collections",
@@ -972,9 +973,13 @@ class NFTController {
             as: "UserData",
           },
         },
+        { $match: searchObj },
         {
           $project: {
             _id: 1,
+            hasOrder: {
+              $cond: { if: { $isArray: "$OrderData" }, then: { $size: "$OrderData" }, else: "NA"} 
+            },
             name: 1,
             type: 1,
             image: 1,
@@ -1005,9 +1010,10 @@ class NFTController {
             "BrandData.name": 1,
             "BrandData.logoImage": 1,
             "BrandData.coverImage": 1,
+            
           },
         },
-        { $sort: sortObj },
+        { $sort: { hasOrder: -1, "OrderData.price" : priceSort } },
         { $skip: startIndex },
         { $limit: limit },
         
