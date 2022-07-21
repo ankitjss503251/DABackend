@@ -726,14 +726,15 @@ class NFTController {
                       ) {
                         nft.categoryID = collectionData[0].categoryID;
                       }
-                      let NFTAttr = nftElement.attributes;
-                      if (NFTAttr.isArray) {
-                        if (NFTAttr.length > 0) {
-                          NFTAttr.forEach((obj) => {
-                            nft.attributes.push(obj);
-                          });
-                        }
-                      }
+                      nft.attributes = nftElement.attributes;
+                      // let NFTAttr = nftElement.attributes;
+                      // if (NFTAttr.isArray) {
+                      //   if (NFTAttr.length > 0) {
+                      //     NFTAttr.forEach((obj) => {
+                      //       nft.attributes.push(obj);
+                      //     });
+                      //   }
+                      // }
                       nft.ownedBy.push({
                         address: nftElement.owner,
                         quantity: 1,
@@ -850,22 +851,20 @@ class NFTController {
         salesType = req.body.salesType;
       }
 
-      let priceSort = 0;
+      let priceSort = 1;
       if (req.body.priceSort !== undefined) {
         if(req.body.priceSort === "ASC"){
-          priceSort = -1;
-        }else{
           priceSort = 1;
+        }else{
+          priceSort = -1;
         }
       }
-      
       let sortArray = [];
-      if(priceSort !== 0){
-        sortArray["OrderData.price"] = priceSort;
-      }
-      sortArray["createdOn"] = -1;
+      sortArray["OrderData.price"] = priceSort;
+      // sortArray["createdOn"] = -1;
       let sortObj = Object.assign({}, sortArray);
 
+      console.log("sortObj", sortObj);
 
       let searchArray = [];
       searchArray["status"] = 1;
@@ -898,6 +897,7 @@ class NFTController {
         if (isLazyMinted == true) searchArray["lazyMintingStatus"] = 1;
         else searchArray["lazyMintingStatus"] = 0;
       }
+      // searchArray["OrderData.0"] = { $exists:true }
 
       let searchObj = Object.assign({}, searchArray);
 
@@ -930,7 +930,7 @@ class NFTController {
       console.log("salesTypeSearchObj", salesTypeSearchObj);
 
       let nfts = await NFT.aggregate([
-        { $match: searchObj },
+        
         {
           $lookup: {
             from: "collections",
@@ -973,9 +973,13 @@ class NFTController {
             as: "UserData",
           },
         },
+        { $match: searchObj },
         {
           $project: {
             _id: 1,
+            hasOrder: {
+              $cond: { if: { $isArray: "$OrderData" }, then: { $size: "$OrderData" }, else: "NA"} 
+            },
             name: 1,
             type: 1,
             image: 1,
@@ -1006,11 +1010,13 @@ class NFTController {
             "BrandData.name": 1,
             "BrandData.logoImage": 1,
             "BrandData.coverImage": 1,
+            
           },
         },
+        { $sort: { hasOrder: -1, "OrderData.price" : priceSort } },
         { $skip: startIndex },
         { $limit: limit },
-        { $sort: sortObj },
+        
       ]).exec(function (e, nftData) {
         console.log("Error ", e);
         let results = {};
