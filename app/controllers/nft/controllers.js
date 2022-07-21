@@ -726,14 +726,15 @@ class NFTController {
                       ) {
                         nft.categoryID = collectionData[0].categoryID;
                       }
-                      let NFTAttr = nftElement.attributes;
-                      if (NFTAttr.isArray) {
-                        if (NFTAttr.length > 0) {
-                          NFTAttr.forEach((obj) => {
-                            nft.attributes.push(obj);
-                          });
-                        }
-                      }
+                      nft.attributes = nftElement.attributes;
+                      // let NFTAttr = nftElement.attributes;
+                      // if (NFTAttr.isArray) {
+                      //   if (NFTAttr.length > 0) {
+                      //     NFTAttr.forEach((obj) => {
+                      //       nft.attributes.push(obj);
+                      //     });
+                      //   }
+                      // }
                       nft.ownedBy.push({
                         address: nftElement.owner,
                         quantity: 1,
