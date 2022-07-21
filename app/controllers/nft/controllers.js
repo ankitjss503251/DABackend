@@ -851,22 +851,20 @@ class NFTController {
         salesType = req.body.salesType;
       }
 
-      let priceSort = 0;
+      let priceSort = 1;
       if (req.body.priceSort !== undefined) {
         if(req.body.priceSort === "ASC"){
-          priceSort = -1;
-        }else{
           priceSort = 1;
+        }else{
+          priceSort = -1;
         }
       }
-      
       let sortArray = [];
-      if(priceSort !== 0){
-        sortArray["OrderData.price"] = priceSort;
-      }
-      sortArray["createdOn"] = -1;
+      sortArray["OrderData.price"] = priceSort;
+      // sortArray["createdOn"] = -1;
       let sortObj = Object.assign({}, sortArray);
 
+      console.log("sortObj", sortObj);
 
       let searchArray = [];
       searchArray["status"] = 1;
