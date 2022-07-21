@@ -1007,9 +1007,10 @@ class NFTController {
             "BrandData.coverImage": 1,
           },
         },
+        { $sort: sortObj },
         { $skip: startIndex },
         { $limit: limit },
-        { $sort: sortObj },
+        
       ]).exec(function (e, nftData) {
         console.log("Error ", e);
         let results = {};
