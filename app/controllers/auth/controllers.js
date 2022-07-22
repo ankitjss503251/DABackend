@@ -555,7 +555,7 @@ class AuthController {
             if (checkUser == 0) {
               const user = new User({
                 walletAddress: _.toChecksumAddress(req.body.walletAddress),
-                username: _.toChecksumAddress(req.body.walletAddress),
+                // username: _.toChecksumAddress(req.body.walletAddress),
                 fullname: req.body.fullname,
                 profileIcon: req.files.profileIcon[0].location,
                 role: "admin",
