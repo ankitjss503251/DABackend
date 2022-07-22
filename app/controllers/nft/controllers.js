@@ -467,7 +467,7 @@ class NFTController {
         let searchKey = new RegExp(searchText, "i");
         searchArray["$or"] = [
           { name: searchKey },
-          { contractAddress: searchKey },
+          // { contractAddress: searchKey },
         ];
         // searchArray["or"] =  [{ contractAddress:searchKey }];
       }
