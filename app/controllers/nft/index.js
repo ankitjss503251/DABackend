@@ -62,11 +62,7 @@ router.post("/viewNFTByOrder", nftController.viewNFTByOrder);
 router.post("/getOwnedNFTList", nftController.getOwnedNFTlist);
 router.post("/getCombinedNfts", nftController.getCombinedNfts);
 router.post("/getOnSaleItems", nftController.getOnSaleItems);
-router.get(
-  "/getCollectionDetails/:collection",
-  nftController.getCollectionDetails
-);
-
+router.get("/getCollectionDetails/:collection",nftController.getCollectionDetails);
 router.post("/insertMintAddress", nftController.insertMintAddress);
 router.post("/fetchMintAddress", nftController.fetchMintAddress);
 
