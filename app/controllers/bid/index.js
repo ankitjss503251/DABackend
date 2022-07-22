@@ -15,4 +15,7 @@ router.post("/acceptBidNft",bidMiddleware.verifyUserToken,bidController.acceptBi
 router.post("/acceptOfferNft",bidMiddleware.verifyUserToken,bidController.acceptOfferNft);
 
 
+router.post("/fetchUserNftData",bidController.fetchUserNftData);
+
+
 module.exports = router;
