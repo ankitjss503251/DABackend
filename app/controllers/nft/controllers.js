@@ -1499,9 +1499,10 @@ class NFTController {
         .catch((e) => {
           console.log("Error", e);
         });
-      results.results = data;
+      
+      results.results = data[0]?.length ? data[0] : [] ;
       // results.count = await NFT.countDocuments(searchObj).exec();
-      results.count = data?.length ? data.length : 0;
+      results.count = data[0]?.length ? data[0].length : 0;
       return res.reply(messages.success("NFT List"), results);
     } catch (error) {
       console.log("Error " + error);
