@@ -848,8 +848,11 @@ class NFTController {
       }
       let salesType = "";
       if (req.body.salesType !== undefined) {
-        salesType = req.body.salesType;
+        if(salesType !== 2){
+          salesType = req.body.salesType;
+        }
       }
+      
 
       let priceSort = 1;
       if (req.body.priceSort !== undefined) {
@@ -896,6 +899,9 @@ class NFTController {
       if (isLazyMinted !== "") {
         if (isLazyMinted == true) searchArray["lazyMintingStatus"] = 1;
         else searchArray["lazyMintingStatus"] = 0;
+      }
+      if(salesType === 2){
+        searchArray["OrderData.0"] = { $exists:false }
       }
       // searchArray["OrderData.0"] = { $exists:true }
 
@@ -1493,9 +1499,10 @@ class NFTController {
         .catch((e) => {
           console.log("Error", e);
         });
-      results.results = data;
+      
+      results.results = data[0]?.length ? data[0] : [] ;
       // results.count = await NFT.countDocuments(searchObj).exec();
-      results.count = data?.length ? data.length : 0;
+      results.count = data[0]?.length ? data[0].length : 0;
       return res.reply(messages.success("NFT List"), results);
     } catch (error) {
       console.log("Error " + error);
