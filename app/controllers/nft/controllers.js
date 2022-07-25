@@ -1285,8 +1285,11 @@ class NFTController {
         searchArray["name"] = { $regex: new RegExp(searchText), $options: "i" };
       }
 
-      searchArray["createdBy"] = {
-        $in: [mongoose.Types.ObjectId(req.body.userId)],
+      searchArray["ownedBy"] = {
+        $elemMatch: {
+          address: req.body.userWalletAddress?.toLowerCase(),
+          quantity: { $gt: 0 },
+        },
       };
 
       searchArray["OrderData.0"] = { $exists:true }
