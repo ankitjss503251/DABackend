@@ -889,5 +889,128 @@ class BidController {
       return res.reply(messages.error());
     }
   }
+
+  async fetchUserNftData(req, res) {
+    console.log("req", req.body);
+    try {
+      let nftID = req.body.nftID;
+      let orderID = req.body.orderID;
+      let buyerID = req.body.buyerID;
+      let bidStatus = req.body.bidStatus;
+      let oTypeQuery = {};
+      let nftIDQuery = {};
+      let orderIDQuery = {};
+      let buyerIDQuery = {};
+
+      let filters = [];
+
+      if (nftID != "All") {
+        nftIDQuery = { nftID: mongoose.Types.ObjectId(nftID) };
+      }
+      if (orderID != "All") {
+        orderIDQuery = { orderID: mongoose.Types.ObjectId(orderID) };
+      }
+      if (buyerID != "All") {
+        buyerIDQuery = { bidderID: mongoose.Types.ObjectId(buyerID) };
+      }
+      console.log(filters);
+      let data = await Bid.aggregate([
+        {
+          $match: {
+            $and: [
+              { bidQuantity: { $gte: 1 } },
+              { bidStatus: "Bid" },
+              nftIDQuery,
+              orderIDQuery,
+              buyerIDQuery,
+            ],
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            bidderID: 1,
+            owner: 1,
+            bidStatus: 1,
+            bidPrice: 1,
+            nftID: 1,
+            orderID: 1,
+            bidQuantity: 1,
+            buyerSignature: 1,
+            bidDeadline: 1,
+            createdOn: 1,
+            lastUpdatedOn: 1,
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "bidderID",
+            foreignField: "_id",
+            as: "bidderID",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            as: "owner",
+          },
+        },
+        {
+          $lookup: {
+            from: "orders",
+            localField: "orderID",
+            foreignField: "_id",
+            as: "orderID",
+          },
+        },
+        {
+          $sort: {
+            bidPrice: -1,
+            createdOn: -1,
+            lastUpdatedOn: -1,
+          },
+        },
+        { $unwind: "$bidderID" },
+        { $unwind: "$owner" },
+        {
+          $facet: {
+            bids: [
+              {
+                $skip: +0,
+              },
+            ],
+            totalCount: [
+              {
+                $count: "count",
+              },
+            ],
+          },
+        },
+      ]);
+
+      console.log("Datat" + data[0].bids.length);
+      let iFiltered = data[0].bids.length;
+      if (data[0].totalCount[0] == undefined) {
+        return res.reply(messages.no_prefix("Bid Details"), {
+          data: [],
+          draw: req.body.draw,
+          recordsTotal: 0,
+          recordsFiltered: 0,
+        });
+      } else {
+        return res.reply(messages.no_prefix("Bid Details"), {
+          data: data[0].bids,
+          draw: req.body.draw,
+          recordsTotal: data[0].totalCount[0].count,
+          recordsFiltered: iFiltered,
+        });
+      }
+    } catch (error) {
+      return res.reply(messages.server_error());
+    }
+  }
 }
 module.exports = BidController;

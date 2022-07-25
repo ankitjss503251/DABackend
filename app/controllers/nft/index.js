@@ -66,6 +66,9 @@ router.get("/getCollectionDetails/:collection",nftController.getCollectionDetail
 router.post("/insertMintAddress", nftController.insertMintAddress);
 router.post("/fetchMintAddress", nftController.fetchMintAddress);
 
+router.post("/fetchOfferMade", nftController.fetchOfferMade);
+router.post("/fetchOfferReceived", nftController.fetchOfferReceived);
+
 // router.post("/getHotCollections",nftMiddleware.verifyWithoutToken, nftController.getHotCollections);
 // router.post("/likeNFT", nftMiddleware.verifyUserToken, nftController.likeNFT);
 // router.post("/mynftlist", nftMiddleware.verifyUserToken, nftController.mynftlist);

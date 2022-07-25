@@ -167,10 +167,19 @@ class NFTController {
                         if (nftData.length > 0) {
                           return res.reply(messages.already_exists("NFT Name"));
                         } else {
+                          let newFileURl = fileURL;
+                          if(nftElement.fileType === "3D"){
+                            newFileURl = fileURL.replace('https://','http://');
+                            var prefix = 'http://';
+                            if (newFileURl.substr(0, prefix.length) !== prefix)
+                            {
+                              newFileURl = prefix + newFileURl;
+                            }
+                          }
                           let nft = new NFT({
                             name: nftElement.name,
                             description: nftElement.description,
-                            image: fileURL,
+                            image: newFileURl,
                             fileType: nftElement.fileType,
                             tokenID: nftElement.tokenID,
                             collectionID: nftElement.collectionID,
@@ -467,7 +476,7 @@ class NFTController {
         let searchKey = new RegExp(searchText, "i");
         searchArray["$or"] = [
           { name: searchKey },
-          { contractAddress: searchKey },
+          // { contractAddress: searchKey },
         ];
         // searchArray["or"] =  [{ contractAddress:searchKey }];
       }
@@ -1240,69 +1249,73 @@ class NFTController {
   }
 
   async getOnSaleItems(req, res) {
+    console.log("req", req.body);
     try {
       let data = [];
-      let OrderSearchArray = [];
-      let salesType = req.body.salesType;
-      let searchText = req.body.searchText;
-      let nftType = req.body.nftType;
-      let userWalletAddress = req.body.userWalletAddress;
       const page = parseInt(req.body.page);
       const limit = parseInt(req.body.limit);
       const startIndex = (page - 1) * limit;
       const endIndex = page * limit;
-      if (salesType !== "" && salesType !== undefined) {
-        OrderSearchArray["salesType"] = salesType;
-      }
-      let OrderSearchObj = Object.assign({}, OrderSearchArray);
-      // console.log("Order Search", OrderSearchObj);
-      let OrderIdsss = await Order.distinct("nftID", OrderSearchObj);
-      let NFTSearchArray = [];
-      console.log("NFT IDs", OrderIdsss);
 
-      NFTSearchArray["_id"] = { $in: OrderIdsss };
+      
+      let ERCType = "";
+      if (req.body.ERCType && req.body.ERCType !== undefined) {
+        ERCType = req.body.ERCType;
+      }
+      let searchText = "";
+      if (req.body.searchText && req.body.searchText !== undefined) {
+        searchText = req.body.searchText;
+      }
+
+
+      let priceSort = 1;
+      if (req.body.priceSort !== undefined) {
+        if(req.body.priceSort === "ASC"){
+          priceSort = 1;
+        }else{
+          priceSort = -1;
+        }
+      }
+      let sortArray = [];
+      sortArray["OrderData.price"] = priceSort;
+      // sortArray["createdOn"] = -1;
+      let sortObj = Object.assign({}, sortArray);
+
+      console.log("sortObj", sortObj);
+
+      let searchArray = [];
+      searchArray["status"] = 1;
+      
+      if (ERCType !== "") {
+        searchArray["type"] = ERCType;
+      }
+      
       if (searchText !== "") {
-        NFTSearchArray["name"] = {
-          $regex: new RegExp(searchText),
-          $options: "<options>",
-        };
+        searchArray["name"] = { $regex: new RegExp(searchText), $options: "i" };
       }
-      if (nftType !== "" && nftType !== undefined) {
-        NFTSearchArray["type"] = nftType;
-      }
-      NFTSearchArray["status"] = 1;
-      if (userWalletAddress !== "") {
-        NFTSearchArray["ownedBy"] = {
-          $elemMatch: {
-            address: userWalletAddress?.toLowerCase(),
-            quantity: { $gt: 0 },
-          },
-        };
-      }
+
+      searchArray["ownedBy"] = {
+        $elemMatch: {
+          address: req.body.userWalletAddress?.toLowerCase(),
+          quantity: { $gt: 0 },
+        },
+      };
+
+      searchArray["OrderData.0"] = { $exists:true }
+
+      let searchObj = Object.assign({}, searchArray);
+
       let isOnMarketplaceSearchArray = [];
       isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1 };
       let isOnMarketplaceSearchObj = Object.assign(
         {},
         isOnMarketplaceSearchArray
       );
-      let NFTSearchObj = Object.assign({}, NFTSearchArray);
-      // console.log("NFT Search", NFTSearchObj);
-      const results = {};
-      if (endIndex < (await NFT.countDocuments(NFTSearchObj).exec())) {
-        results.next = {
-          page: page + 1,
-          limit: limit,
-        };
-      }
-      if (startIndex > 0) {
-        results.previous = {
-          page: page - 1,
-          limit: limit,
-        };
-      }
-      console.log("search", NFTSearchObj);
+
+      console.log("isOnMarketplaceSearchObj", isOnMarketplaceSearchObj);
+     
       let nfts = await NFT.aggregate([
-        { $match: NFTSearchObj },
+        
         {
           $lookup: {
             from: "collections",
@@ -1320,148 +1333,6 @@ class NFTController {
             as: "OrderData",
           },
         },
-        {
-          $lookup: {
-            from: "users",
-            localField: "createdBy",
-            foreignField: "_id",
-            as: "UserData",
-          },
-        },
-        { $skip: startIndex },
-        { $limit: limit },
-        { $sort: { createdOn: -1 } },
-      ])
-        .exec()
-        .then((res) => {
-          data.push(res);
-        })
-        .catch((e) => {
-          console.log("Error", e);
-        });
-      results.results = data;
-      results.count = await NFT.countDocuments(NFTSearchObj).exec();
-      return res.reply(messages.success("Order List"), results);
-
-      // await NFT.find(NFTSearchObj)
-      //   .sort({ nCreated: -1 })
-      //   .select({
-      //     name: 1,
-      //     collectionID: 1,
-      //     collectionAddress: 1,
-      //     type: 1,
-      //     user_likes: 1,
-      //     image: 1,
-      //     fileType: 1,
-      //     lazyMintingStatus: 1,
-      //   })
-      //   .populate({
-      //     path: "createdBy",
-      //     options: { limit: 1 },
-      //     select: {
-      //       _id: 0,
-      //       username: 1,
-      //       profileIcon: 1,
-      //       walletAddress: 1,
-      //     },
-      //   })
-      //   .populate({
-      //     path: "Orders",
-      //     options: {
-      //       limit: 1,
-      //     },
-      //     select: {
-      //       price: 1,
-      //       salesType: 1,
-      //       deadlineDate: 1,
-      //       status: 1,
-      //       _id: 0,
-      //     },
-      //   })
-      //   .limit(limit)
-      //   .skip(startIndex)
-      //   .lean()
-      //   .exec()
-      //   .then((res) => {
-      //     data.push(res);
-      //   })
-      //   .catch((e) => {
-      //     console.log("Error", e);
-      //   });
-
-      // results.count = await NFT.countDocuments(NFTSearchObj).exec();
-      // results.results = data;
-      // res.header("Access-Control-Max-Age", 600);
-      // return res.reply(messages.success("Order List"), results);
-    } catch (error) {
-      console.log("Error:", error);
-      return res.reply(messages.error());
-    }
-  }
-
-  async getOwnedNFTlist(req, res) {
-    console.log("req", req.body);
-    try {
-      let data = [];
-      const page = parseInt(req.body.page);
-      const limit = parseInt(req.body.limit);
-      const startIndex = (page - 1) * limit;
-      const endIndex = page * limit;
-
-      let searchArray = [];
-
-      let ERCType = "";
-      if (req.body.ERCType && req.body.ERCType !== undefined) {
-        ERCType = req.body.ERCType;
-      }
-      let searchText = "";
-      if (req.body.searchText && req.body.searchText !== undefined) {
-        searchText = req.body.searchText;
-      }
-
-      if (ERCType !== "") {
-        searchArray["type"] = ERCType;
-      }
-
-      if (searchText !== "") {
-        let searchKey = new RegExp(searchText, "i");
-        searchArray["$or"] = [
-          { name: searchKey },
-          { contractAddress: searchKey },
-        ];
-      }
-      if (req.body.searchType === "owned") {
-        searchArray["ownedBy"] = {
-          $elemMatch: {
-            address: req.body.userWalletAddress?.toLowerCase(),
-            quantity: { $gt: 0 },
-          },
-        };
-      } else {
-        searchArray["createdBy"] = {
-          $in: [mongoose.Types.ObjectId(req.body.userId)],
-        };
-      }
-      searchArray["status"] = 1;
-      let isOnMarketplaceSearchArray = [];
-      isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1 };
-      let isOnMarketplaceSearchObj = Object.assign(
-        {},
-        isOnMarketplaceSearchArray
-      );
-      const results = {};
-      let searchObj = Object.assign({}, searchArray);
-      let nfts = await NFT.aggregate([
-        { $match: searchObj },
-        {
-          $lookup: {
-            from: "collections",
-            localField: "collectionID",
-            foreignField: "_id",
-            as: "CollectionData",
-          },
-        },
-        isOnMarketplaceSearchObj,
         {
           $lookup: {
             from: "categories",
@@ -1486,24 +1357,228 @@ class NFTController {
             as: "UserData",
           },
         },
+        { $match: searchObj },
+        {
+          $project: {
+            _id: 1,
+            hasOrder: {
+              $cond: { if: { $isArray: "$OrderData" }, then: { $size: "$OrderData" }, else: "NA"} 
+            },
+            name: 1,
+            type: 1,
+            image: 1,
+            description: 1,
+            collectionAddress: 1,
+            ownedBy: 1,
+            user_likes: 1,
+            totalQuantity: 1,
+            collectionID: 1,
+            assetsInfo: 1,
+            categoryID: 1,
+            tokenID: 1,
+            fileType: 1,
+            createdBy: 1,
+            createdOn: 1,
+            attributes: 1,
+            totalQuantity: 1,
+            "CollectionData._id": 1,
+            "CollectionData.name": 1,
+            "CollectionData.contractAddress": 1,
+            "CollectionData.isOnMarketplace": 1,
+            "CollectionData.status": 1,
+            "OrderData._id": 1,
+            "OrderData.price": 1,
+            "OrderData.salesType": 1,
+            "OrderData.paymentToken": 1,
+            "BrandData._id": 1,
+            "BrandData.name": 1,
+            "BrandData.logoImage": 1,
+            "BrandData.coverImage": 1,
+            
+          },
+        },
+        { $sort: { hasOrder: -1, "OrderData.price" : priceSort } },
         { $skip: startIndex },
         { $limit: limit },
-        { $sort: { createdOn: -1 } },
-      ])
-        .exec()
-        .then((res) => {
-          if (res?.length) {
-            data.push(res);
-          }
-        })
-        .catch((e) => {
-          console.log("Error", e);
-        });
+        
+      ]).exec(function (e, nftData) {
+        console.log("Error ", e);
+        let results = {};
+        results.count = nftData?.length ? nftData.length : 0;
+        results.results = nftData;
+        return res.reply(messages.success("NFT List"), results);
+      });
+    } catch (error) {
+      console.log("Error " + error);
+      return res.reply(messages.server_error());
+    }
+  }
+
+  async getOwnedNFTlist(req, res) {
+    console.log("req", req.body);
+    try {
+      let data = [];
+      const page = parseInt(req.body.page);
+      const limit = parseInt(req.body.limit);
+      const startIndex = (page - 1) * limit;
+      const endIndex = page * limit;
+
       
-      results.results = data[0]?.length ? data[0] : [] ;
-      // results.count = await NFT.countDocuments(searchObj).exec();
-      results.count = data[0]?.length ? data[0].length : 0;
-      return res.reply(messages.success("NFT List"), results);
+      let ERCType = "";
+      if (req.body.ERCType && req.body.ERCType !== undefined) {
+        ERCType = req.body.ERCType;
+      }
+      let searchText = "";
+      if (req.body.searchText && req.body.searchText !== undefined) {
+        searchText = req.body.searchText;
+      }
+
+
+      let priceSort = 1;
+      if (req.body.priceSort !== undefined) {
+        if(req.body.priceSort === "ASC"){
+          priceSort = 1;
+        }else{
+          priceSort = -1;
+        }
+      }
+      let sortArray = [];
+      sortArray["OrderData.price"] = priceSort;
+      // sortArray["createdOn"] = -1;
+      let sortObj = Object.assign({}, sortArray);
+
+      console.log("sortObj", sortObj);
+
+      let searchArray = [];
+      searchArray["status"] = 1;
+      
+      if (ERCType !== "") {
+        searchArray["type"] = ERCType;
+      }
+      
+      if (searchText !== "") {
+        searchArray["name"] = { $regex: new RegExp(searchText), $options: "i" };
+      }
+
+      if (req.body.searchType === "owned") {
+        searchArray["ownedBy"] = {
+          $elemMatch: {
+            address: req.body.userWalletAddress?.toLowerCase(),
+            quantity: { $gt: 0 },
+          },
+        };
+      } else {
+        searchArray["createdBy"] = {
+          $in: [mongoose.Types.ObjectId(req.body.userId)],
+        };
+      }
+      // searchArray["OrderData.0"] = { $exists:true }
+
+      let searchObj = Object.assign({}, searchArray);
+
+      let isOnMarketplaceSearchArray = [];
+      isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1 };
+      let isOnMarketplaceSearchObj = Object.assign(
+        {},
+        isOnMarketplaceSearchArray
+      );
+
+      console.log("isOnMarketplaceSearchObj", isOnMarketplaceSearchObj);
+     
+      let nfts = await NFT.aggregate([
+        
+        {
+          $lookup: {
+            from: "collections",
+            localField: "collectionID",
+            foreignField: "_id",
+            as: "CollectionData",
+          },
+        },
+        isOnMarketplaceSearchObj,
+        {
+          $lookup: {
+            from: "orders",
+            localField: "_id",
+            foreignField: "nftID",
+            as: "OrderData",
+          },
+        },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categoryID",
+            foreignField: "_id",
+            as: "CategoryData",
+          },
+        },
+        {
+          $lookup: {
+            from: "brands",
+            localField: "brandID",
+            foreignField: "_id",
+            as: "BrandData",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "createdBy",
+            foreignField: "_id",
+            as: "UserData",
+          },
+        },
+        { $match: searchObj },
+        {
+          $project: {
+            _id: 1,
+            hasOrder: {
+              $cond: { if: { $isArray: "$OrderData" }, then: { $size: "$OrderData" }, else: "NA"} 
+            },
+            name: 1,
+            type: 1,
+            image: 1,
+            description: 1,
+            collectionAddress: 1,
+            ownedBy: 1,
+            user_likes: 1,
+            totalQuantity: 1,
+            collectionID: 1,
+            assetsInfo: 1,
+            categoryID: 1,
+            tokenID: 1,
+            fileType: 1,
+            createdBy: 1,
+            createdOn: 1,
+            attributes: 1,
+            totalQuantity: 1,
+            "CollectionData._id": 1,
+            "CollectionData.name": 1,
+            "CollectionData.contractAddress": 1,
+            "CollectionData.isOnMarketplace": 1,
+            "CollectionData.status": 1,
+            "OrderData._id": 1,
+            "OrderData.price": 1,
+            "OrderData.salesType": 1,
+            "OrderData.paymentToken": 1,
+            "BrandData._id": 1,
+            "BrandData.name": 1,
+            "BrandData.logoImage": 1,
+            "BrandData.coverImage": 1,
+            
+          },
+        },
+        { $sort: { hasOrder: -1, "OrderData.price" : priceSort } },
+        { $skip: startIndex },
+        { $limit: limit },
+        
+      ]).exec(function (e, nftData) {
+        console.log("Error ", e);
+        let results = {};
+        results.count = nftData?.length ? nftData.length : 0;
+        results.results = nftData;
+        return res.reply(messages.success("NFT List"), results);
+      });
     } catch (error) {
       console.log("Error " + error);
       return res.reply(messages.server_error());
@@ -6706,6 +6781,254 @@ class NFTController {
       return res.reply(messages.server_error());
     }
   }
+
+  async fetchOfferMade(req, res) {
+    console.log("req", req.body);
+    try {
+      let data = [];
+      const page = parseInt(req.body.page);
+      const limit = parseInt(req.body.limit);
+      const startIndex = (page - 1) * limit;
+      const endIndex = page * limit;
+
+      let searchArray = [];
+      searchArray["nftsData.status"] = 1;
+      searchArray["bidStatus"] = "MakeOffer";
+      searchArray["bidderID"] = mongoose.Types.ObjectId(req.body.userID);
+      let searchObj = Object.assign({}, searchArray);
+
+      let isOnMarketplaceSearchArray = [];
+      isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1 };
+      let isOnMarketplaceSearchObj = Object.assign(
+        {},
+        isOnMarketplaceSearchArray
+      );
+      console.log("isOnMarketplaceSearchObj", isOnMarketplaceSearchObj);
+
+      let bids = await Bid.aggregate([    
+        {
+          $lookup: {
+            from: "nfts",
+            localField: "nftID",
+            foreignField: "_id",
+            as: "nftsData",
+          },
+        },
+        {
+          $lookup: {
+            from: "collections",
+            localField: "nftsData.collectionID",
+            foreignField: "_id",
+            as: "CollectionData",
+          },
+        },
+        isOnMarketplaceSearchObj,
+        {
+          $lookup: {
+            from: "orders",
+            localField: "nftsData._id",
+            foreignField: "nftID",
+            as: "OrderData",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            as: "OwnerData",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "bidderID",
+            foreignField: "_id",
+            as: "BidderData",
+          },
+        },
+        { $match: searchObj },
+        {
+          $project: {
+            _id: 1,
+            bidderID: 1,
+            owner: 1,
+            bidStatus: 1,
+            bidPrice: 1,
+            bidDeadline: 1,
+            bidQuantity: 1,
+            isOffer: 1,
+            paymentToken: 1,
+            "nftsData._id": 1,
+            "nftsData.name": 1,
+            "nftsData.type": 1,
+            "nftsData.image": 1,
+            "CollectionData._id": 1,
+            "CollectionData.name": 1,
+            "CollectionData.contractAddress": 1,
+            "CollectionData.isOnMarketplace": 1,
+            "CollectionData.status": 1,
+            "OrderData._id": 1,
+            "OrderData.price": 1,
+            "OrderData.salesType": 1,
+            "OrderData.paymentToken": 1,
+            "BrandData._id": 1,
+            "BrandData.name": 1,
+            "BrandData.logoImage": 1,
+            "BrandData.coverImage": 1,
+            "OwnerData._id": 1,
+            "OwnerData.username": 1,
+            "OwnerData.fullname": 1,
+            "OwnerData.walletAddress": 1,
+            "BidderData._id": 1,
+            "BidderData.username": 1,
+            "BidderData.fullname": 1,
+            "BidderData.walletAddress": 1,
+          },
+        },
+        { $sort: { createdOn: -1 } },
+        { $skip: startIndex },
+        { $limit: limit },
+        
+      ]).exec(function (e, offerData) {
+        console.log("Error ", e);
+        let results = {};
+        results.count = offerData?.length ? offerData.length : 0;
+        results.results = offerData;
+        return res.reply(messages.success("Offer List"), results);
+      });
+    } catch (error) {
+      console.log("Error " + error);
+      return res.reply(messages.server_error());
+    }
+  }
+
+  async fetchOfferReceived(req, res) {
+    console.log("req", req.body);
+    try {
+      let data = [];
+      const page = parseInt(req.body.page);
+      const limit = parseInt(req.body.limit);
+      const startIndex = (page - 1) * limit;
+      const endIndex = page * limit;
+
+      let searchArray = [];
+      searchArray["nftsData.status"] = 1;
+      searchArray["bidStatus"] = "MakeOffer";
+      searchArray["nftsData.ownedBy"] = {
+        $elemMatch: {
+          address: req.body.userWalletAddress?.toLowerCase(),
+          quantity: { $gt: 0 },
+        },
+      };
+      let searchObj = Object.assign({}, searchArray);
+
+      let isOnMarketplaceSearchArray = [];
+      isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1 };
+      let isOnMarketplaceSearchObj = Object.assign(
+        {},
+        isOnMarketplaceSearchArray
+      );
+      console.log("isOnMarketplaceSearchObj", isOnMarketplaceSearchObj);
+
+      let bids = await Bid.aggregate([    
+        {
+          $lookup: {
+            from: "nfts",
+            localField: "nftID",
+            foreignField: "_id",
+            as: "nftsData",
+          },
+        },
+        {
+          $lookup: {
+            from: "collections",
+            localField: "nftsData.collectionID",
+            foreignField: "_id",
+            as: "CollectionData",
+          },
+        },
+        isOnMarketplaceSearchObj,
+        {
+          $lookup: {
+            from: "orders",
+            localField: "nftsData._id",
+            foreignField: "nftID",
+            as: "OrderData",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            as: "OwnerData",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "bidderID",
+            foreignField: "_id",
+            as: "BidderData",
+          },
+        },
+        { $match: searchObj },
+        {
+          $project: {
+            _id: 1,
+            bidderID: 1,
+            owner: 1,
+            bidStatus: 1,
+            bidPrice: 1,
+            bidDeadline: 1,
+            bidQuantity: 1,
+            isOffer: 1,
+            paymentToken: 1,
+            "nftsData._id": 1,
+            "nftsData.name": 1,
+            "nftsData.type": 1,
+            "nftsData.image": 1,
+            "CollectionData._id": 1,
+            "CollectionData.name": 1,
+            "CollectionData.contractAddress": 1,
+            "CollectionData.isOnMarketplace": 1,
+            "CollectionData.status": 1,
+            "OrderData._id": 1,
+            "OrderData.price": 1,
+            "OrderData.salesType": 1,
+            "OrderData.paymentToken": 1,
+            "BrandData._id": 1,
+            "BrandData.name": 1,
+            "BrandData.logoImage": 1,
+            "BrandData.coverImage": 1,
+            "OwnerData._id": 1,
+            "OwnerData.username": 1,
+            "OwnerData.fullname": 1,
+            "OwnerData.walletAddress": 1,
+            "BidderData._id": 1,
+            "BidderData.username": 1,
+            "BidderData.fullname": 1,
+            "BidderData.walletAddress": 1,
+          },
+        },
+        { $sort: { createdOn: -1 } },
+        { $skip: startIndex },
+        { $limit: limit },
+        
+      ]).exec(function (e, offerData) {
+        console.log("Error ", e);
+        let results = {};
+        results.count = offerData?.length ? offerData.length : 0;
+        results.results = offerData;
+        return res.reply(messages.success("Offer List"), results);
+      });
+    } catch (error) {
+      console.log("Error " + error);
+      return res.reply(messages.server_error());
+    }
+  }
+
 }
 
 module.exports = NFTController;

@@ -490,6 +490,13 @@ class AuthController {
                   var token = signJWT(user);
                   req.session["_id"] = user._id;
                   req.session["username"] = user.username;
+                  res.cookie('admin_auth_token', token, {
+                    expires: new Date(Date.now() + (3600 * 1000 * 24 * 1 * 1)), //second min hour days year
+                    secure: true, // set to true if your using https or samesite is none
+                    httpOnly: true, // backend only
+                    sameSite: 'none' // set to none for cross-request
+                  });
+                  console.log("Hiii");
                   return res.reply(
                     messages.successfully("Super Admin Logged In"),
                     {
@@ -555,7 +562,7 @@ class AuthController {
             if (checkUser == 0) {
               const user = new User({
                 walletAddress: _.toChecksumAddress(req.body.walletAddress),
-                username: _.toChecksumAddress(req.body.walletAddress),
+                // username: _.toChecksumAddress(req.body.walletAddress),
                 fullname: req.body.fullname,
                 profileIcon: req.files.profileIcon[0].location,
                 role: "admin",
