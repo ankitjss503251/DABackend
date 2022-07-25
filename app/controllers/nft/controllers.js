@@ -6782,43 +6782,10 @@ class NFTController {
       const startIndex = (page - 1) * limit;
       const endIndex = page * limit;
 
-      let ERCType = "";
-      if (req.body.ERCType && req.body.ERCType !== undefined) {
-        ERCType = req.body.ERCType;
-      }
-      let searchText = "";
-      if (req.body.searchText && req.body.searchText !== undefined) {
-        searchText = req.body.searchText;
-      }
-
-      let priceSort = 1;
-      if (req.body.priceSort !== undefined) {
-        if(req.body.priceSort === "ASC"){
-          priceSort = 1;
-        }else{
-          priceSort = -1;
-        }
-      }
-      let sortArray = [];
-      sortArray["OrderData.price"] = priceSort;
-      let sortObj = Object.assign({}, sortArray);
-
-      console.log("sortObj", sortObj);
-
       let searchArray = [];
-      searchArray["status"] = 1;
-      
-      if (ERCType !== "") {
-        searchArray["type"] = ERCType;
-      }
-
-      searchArray["BidsData.bidderID"] = mongoose.Types.ObjectId(req.body.userID);
-      searchArray["BidsData.bidStatus"] = "MakeOffer";
-
-      if (searchText !== "") {
-        searchArray["name"] = { $regex: new RegExp(searchText), $options: "i" };
-      }
-
+      searchArray["nftsData.status"] = 1;
+      searchArray["bidStatus"] = "MakeOffer";
+      searchArray["bidderID"] = mongoose.Types.ObjectId(req.body.userID);
       let searchObj = Object.assign({}, searchArray);
 
       let isOnMarketplaceSearchArray = [];
@@ -6827,15 +6794,21 @@ class NFTController {
         {},
         isOnMarketplaceSearchArray
       );
-
       console.log("isOnMarketplaceSearchObj", isOnMarketplaceSearchObj);
-     
-      let nfts = await NFT.aggregate([
-        
+
+      let bids = await Bid.aggregate([    
+        {
+          $lookup: {
+            from: "nfts",
+            localField: "nftID",
+            foreignField: "_id",
+            as: "nftsData",
+          },
+        },
         {
           $lookup: {
             from: "collections",
-            localField: "collectionID",
+            localField: "nftsData.collectionID",
             foreignField: "_id",
             as: "CollectionData",
           },
@@ -6844,67 +6817,43 @@ class NFTController {
         {
           $lookup: {
             from: "orders",
-            localField: "_id",
+            localField: "nftsData._id",
             foreignField: "nftID",
             as: "OrderData",
           },
         },
         {
           $lookup: {
-            from: "categories",
-            localField: "categoryID",
+            from: "users",
+            localField: "owner",
             foreignField: "_id",
-            as: "CategoryData",
-          },
-        },
-        {
-          $lookup: {
-            from: "brands",
-            localField: "brandID",
-            foreignField: "_id",
-            as: "BrandData",
+            as: "OwnerData",
           },
         },
         {
           $lookup: {
             from: "users",
-            localField: "createdBy",
+            localField: "bidderID",
             foreignField: "_id",
-            as: "UserData",
-          },
-        },
-        {
-          $lookup: {
-            from: "bids",
-            localField: "_id",
-            foreignField: "nftID",
-            as: "BidsData",
+            as: "BidderData",
           },
         },
         { $match: searchObj },
         {
           $project: {
             _id: 1,
-            hasOrder: {
-              $cond: { if: { $isArray: "$OrderData" }, then: { $size: "$OrderData" }, else: "NA"} 
-            },
-            name: 1,
-            type: 1,
-            image: 1,
-            description: 1,
-            collectionAddress: 1,
-            ownedBy: 1,
-            user_likes: 1,
-            totalQuantity: 1,
-            collectionID: 1,
-            assetsInfo: 1,
-            categoryID: 1,
-            tokenID: 1,
-            fileType: 1,
-            createdBy: 1,
-            createdOn: 1,
-            attributes: 1,
-            totalQuantity: 1,
+            bidderID: 1,
+            owner: 1,
+            bidStatus: 1,
+            bidPrice: 1,
+            bidDeadline: 1,
+            bidQuantity: 1,
+            isOffer: 1,
+            paymentToken: 1,
+            "nftsData._id": 1,
+            "nftsData.name": 1,
+            "nftsData.type": 1,
+            "nftsData.image": 1,
             "CollectionData._id": 1,
             "CollectionData.name": 1,
             "CollectionData.contractAddress": 1,
@@ -6918,23 +6867,26 @@ class NFTController {
             "BrandData.name": 1,
             "BrandData.logoImage": 1,
             "BrandData.coverImage": 1,
-            "BidsData._id":1,
-            "BidsData.bidderID":1,
-            "BidsData.bidStatus":1,
-            "BidsData.bidQuantity":1,
-            "BidsData.bidPrice":1,
+            "OwnerData._id": 1,
+            "OwnerData.username": 1,
+            "OwnerData.fullname": 1,
+            "OwnerData.walletAddress": 1,
+            "BidderData._id": 1,
+            "BidderData.username": 1,
+            "BidderData.fullname": 1,
+            "BidderData.walletAddress": 1,
           },
         },
-        { $sort: { hasOrder: -1, "OrderData.price" : priceSort } },
+        { $sort: { createdOn: -1 } },
         { $skip: startIndex },
         { $limit: limit },
         
-      ]).exec(function (e, nftData) {
+      ]).exec(function (e, offerData) {
         console.log("Error ", e);
         let results = {};
-        results.count = nftData?.length ? nftData.length : 0;
-        results.results = nftData;
-        return res.reply(messages.success("NFT List"), results);
+        results.count = offerData?.length ? offerData.length : 0;
+        results.results = offerData;
+        return res.reply(messages.success("Offer List"), results);
       });
     } catch (error) {
       console.log("Error " + error);
@@ -6951,49 +6903,15 @@ class NFTController {
       const startIndex = (page - 1) * limit;
       const endIndex = page * limit;
 
-      let ERCType = "";
-      if (req.body.ERCType && req.body.ERCType !== undefined) {
-        ERCType = req.body.ERCType;
-      }
-      let searchText = "";
-      if (req.body.searchText && req.body.searchText !== undefined) {
-        searchText = req.body.searchText;
-      }
-
-      let priceSort = 1;
-      if (req.body.priceSort !== undefined) {
-        if(req.body.priceSort === "ASC"){
-          priceSort = 1;
-        }else{
-          priceSort = -1;
-        }
-      }
-      let sortArray = [];
-      sortArray["OrderData.price"] = priceSort;
-      let sortObj = Object.assign({}, sortArray);
-
-      console.log("sortObj", sortObj);
-
       let searchArray = [];
-      searchArray["status"] = 1;
-      
-      if (ERCType !== "") {
-        searchArray["type"] = ERCType;
-      }
-
-      searchArray["ownedBy"] = {
+      searchArray["nftsData.status"] = 1;
+      searchArray["bidStatus"] = "MakeOffer";
+      searchArray["nftsData.ownedBy"] = {
         $elemMatch: {
           address: req.body.userWalletAddress?.toLowerCase(),
           quantity: { $gt: 0 },
         },
       };
-
-      searchArray["BidsData.bidStatus"] = "MakeOffer";
-
-      if (searchText !== "") {
-        searchArray["name"] = { $regex: new RegExp(searchText), $options: "i" };
-      }
-
       let searchObj = Object.assign({}, searchArray);
 
       let isOnMarketplaceSearchArray = [];
@@ -7002,15 +6920,21 @@ class NFTController {
         {},
         isOnMarketplaceSearchArray
       );
-
       console.log("isOnMarketplaceSearchObj", isOnMarketplaceSearchObj);
-     
-      let nfts = await NFT.aggregate([
-        
+
+      let bids = await Bid.aggregate([    
+        {
+          $lookup: {
+            from: "nfts",
+            localField: "nftID",
+            foreignField: "_id",
+            as: "nftsData",
+          },
+        },
         {
           $lookup: {
             from: "collections",
-            localField: "collectionID",
+            localField: "nftsData.collectionID",
             foreignField: "_id",
             as: "CollectionData",
           },
@@ -7019,67 +6943,43 @@ class NFTController {
         {
           $lookup: {
             from: "orders",
-            localField: "_id",
+            localField: "nftsData._id",
             foreignField: "nftID",
             as: "OrderData",
           },
         },
         {
           $lookup: {
-            from: "categories",
-            localField: "categoryID",
+            from: "users",
+            localField: "owner",
             foreignField: "_id",
-            as: "CategoryData",
-          },
-        },
-        {
-          $lookup: {
-            from: "brands",
-            localField: "brandID",
-            foreignField: "_id",
-            as: "BrandData",
+            as: "OwnerData",
           },
         },
         {
           $lookup: {
             from: "users",
-            localField: "createdBy",
+            localField: "bidderID",
             foreignField: "_id",
-            as: "UserData",
-          },
-        },
-        {
-          $lookup: {
-            from: "bids",
-            localField: "_id",
-            foreignField: "nftID",
-            as: "BidsData",
+            as: "BidderData",
           },
         },
         { $match: searchObj },
         {
           $project: {
             _id: 1,
-            hasOrder: {
-              $cond: { if: { $isArray: "$OrderData" }, then: { $size: "$OrderData" }, else: "NA"} 
-            },
-            name: 1,
-            type: 1,
-            image: 1,
-            description: 1,
-            collectionAddress: 1,
-            ownedBy: 1,
-            user_likes: 1,
-            totalQuantity: 1,
-            collectionID: 1,
-            assetsInfo: 1,
-            categoryID: 1,
-            tokenID: 1,
-            fileType: 1,
-            createdBy: 1,
-            createdOn: 1,
-            attributes: 1,
-            totalQuantity: 1,
+            bidderID: 1,
+            owner: 1,
+            bidStatus: 1,
+            bidPrice: 1,
+            bidDeadline: 1,
+            bidQuantity: 1,
+            isOffer: 1,
+            paymentToken: 1,
+            "nftsData._id": 1,
+            "nftsData.name": 1,
+            "nftsData.type": 1,
+            "nftsData.image": 1,
             "CollectionData._id": 1,
             "CollectionData.name": 1,
             "CollectionData.contractAddress": 1,
@@ -7093,23 +6993,26 @@ class NFTController {
             "BrandData.name": 1,
             "BrandData.logoImage": 1,
             "BrandData.coverImage": 1,
-            "BidsData._id":1,
-            "BidsData.owner":1,
-            "BidsData.bidStatus":1,
-            "BidsData.bidQuantity":1,
-            "BidsData.bidPrice":1,
+            "OwnerData._id": 1,
+            "OwnerData.username": 1,
+            "OwnerData.fullname": 1,
+            "OwnerData.walletAddress": 1,
+            "BidderData._id": 1,
+            "BidderData.username": 1,
+            "BidderData.fullname": 1,
+            "BidderData.walletAddress": 1,
           },
         },
-        { $sort: { hasOrder: -1, "OrderData.price" : priceSort } },
+        { $sort: { createdOn: -1 } },
         { $skip: startIndex },
         { $limit: limit },
         
-      ]).exec(function (e, nftData) {
+      ]).exec(function (e, offerData) {
         console.log("Error ", e);
         let results = {};
-        results.count = nftData?.length ? nftData.length : 0;
-        results.results = nftData;
-        return res.reply(messages.success("NFT List"), results);
+        results.count = offerData?.length ? offerData.length : 0;
+        results.results = offerData;
+        return res.reply(messages.success("Offer List"), results);
       });
     } catch (error) {
       console.log("Error " + error);

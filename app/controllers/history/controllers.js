@@ -19,17 +19,23 @@ class HistoryController {
     console.log("req", req.body);
     try {
       let nftID = req.body.nftID;
-      let userId = req.body.userId;
+      let buyerID = req.body.buyerID;
+      let sellerID = req.body.sellerID;
       let action = req.body.action;
       let type = req.body.type;
-      let message = req.body.message;
+      let paymentToken = req.body.paymentToken;
+      let price = req.body.price;
+      let quantity = req.body.price;
       let createdBy = req.body.createdBy;
       const insertData = new History({
         nftID: nftID,
-        userId: userId,
+        buyerID: buyerID,
+        sellerID: sellerID,
         action: action,
         type: type,
-        message: message,
+        paymentToken: paymentToken,
+        price: price,
+        quantity: quantity,
         createdBy: createdBy
       });
       console.log("Insert Data is " + insertData);
@@ -49,14 +55,12 @@ class HistoryController {
     console.log("req", req.body);
     try {
       let data = [];
+      const page = parseInt(req.body.page);
+      const limit = parseInt(req.body.limit);
       let nftID = req.body.nftID;
       let userId = req.body.userId;
       let action = req.body.action;
       let type = req.body.type;
-
-      const page = parseInt(req.body.page);
-      const limit = parseInt(req.body.limit);
-
       const startIndex = (page - 1) * limit;
       const endIndex = page * limit;
 
