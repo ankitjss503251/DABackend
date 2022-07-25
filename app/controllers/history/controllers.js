@@ -25,7 +25,7 @@ class HistoryController {
       let type = req.body.type;
       let paymentToken = req.body.paymentToken;
       let price = req.body.price;
-      let quantity = req.body.price;
+      let quantity = req.body.quantity;
       let createdBy = req.body.createdBy;
       const insertData = new History({
         nftID: nftID,
