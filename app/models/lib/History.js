@@ -5,18 +5,6 @@ const historySchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: "NFT",
   },
-  collectionID: {
-    type: mongoose.Schema.ObjectId,
-    ref: "Collection",
-  },
-  brandID: {
-    type: mongoose.Schema.ObjectId,
-    ref: "Brand",
-  },
-  bidID: {
-    type: mongoose.Schema.ObjectId,
-    ref: "Bid",
-  },
   buyerID: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
@@ -27,22 +15,21 @@ const historySchema = new mongoose.Schema({
   },
   action : { 
     type: String,
-    enum: ["Put on Sale","Remove from Sale"],
+    enum: ["PutOnSale","RemoveFromSale", "Offer", "Sold", "Bid"],
   },
   type : { 
     type: String,
-    enum: ["Bid", "Cancelled", "Accepted", "Sold", "Rejected", "MakeOffer", "AcceptOffer", "RejectOffer", "CancelledOffer"],
+    enum: ["List", "Accepted", "Rejected", "Created", "Cancelled", "Updated"],
   },
-  quantity: Number,
-  message: {
+  paymentToken: {
     type: String,
   },
   price: {
     type: mongoose.Types.Decimal128,
     required: true,
   },
-  transactionHash: {
-    type: String,
+  quantity: {
+    type: Number,
   },
   createdBy: {
     type: mongoose.Schema.ObjectId,
