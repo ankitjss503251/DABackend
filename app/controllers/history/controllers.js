@@ -152,6 +152,7 @@ class HistoryController {
             paymentToken: 1,
             price: 1,
             quantity: 1,
+            createdOn: 1,
             "nftsData._id": 1,
             "nftsData.name": 1,
             "nftsData.type": 1,
