@@ -12,7 +12,12 @@ const routes = require("./routes");
 function Router() {
   this.app = express();
   this.httpServer = http.createServer(this.app);
+  // console.log("IP ", process.env.ORIGIN_IP+" "+process.env.ORIGIN_DOMAIN)
   this.corsOptions = {
+    // origin: [process.env.ORIGIN_IP, process.env.ORIGIN_DOMAIN], 
+    // methods: ["GET", "POST", "PUT", "DELETE"],
+    // allowedHeaders: ["Content-Type", "Authorization"],
+    // credentials: true,
     origin: ["*"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],

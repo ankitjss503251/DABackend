@@ -167,10 +167,19 @@ class NFTController {
                         if (nftData.length > 0) {
                           return res.reply(messages.already_exists("NFT Name"));
                         } else {
+                          let newFileURl = fileURL;
+                          if(nftElement.fileType === "3D"){
+                            newFileURl = fileURL.replace('https://','http://');
+                            var prefix = 'http://';
+                            if (newFileURl.substr(0, prefix.length) !== prefix)
+                            {
+                              newFileURl = prefix + newFileURl;
+                            }
+                          }
                           let nft = new NFT({
                             name: nftElement.name,
                             description: nftElement.description,
-                            image: fileURL,
+                            image: newFileURl,
                             fileType: nftElement.fileType,
                             tokenID: nftElement.tokenID,
                             collectionID: nftElement.collectionID,
