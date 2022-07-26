@@ -189,6 +189,8 @@ class NFTController {
                             type: nftElement.type,
                             isMinted: nftElement.isMinted,
                             assetsInfo: fileObj,
+                            hash: req.body.hash,
+                            hashStatus: req.body.hashStatus,
                             ownedBy: [],
                           });
                           if (
@@ -723,6 +725,8 @@ class NFTController {
                         type: nftElement.type,
                         isMinted: nftElement.isMinted,
                         createdBy: creatorID,
+                        hash: "0x0",
+                        hashStatus: 1,
                         ownedBy: [],
                       });
                       if (
