@@ -37,14 +37,15 @@ async function checkCollection() {
         } else {
           if (resData.length > 0) {
             for (const data of resData) {
-              // console.log("Hash", data.hash);
+              console.log("Hash", data.hash);
               let receipt = await web3.eth.getTransactionReceipt(data.hash);
-              // console.log("receipt is---->",receipt)
+              console.log("receipt is---->",receipt)
               if(receipt===null){
                 return;
               }
               if(receipt.status===true) {
-                let updateData =  { hashStatus: 1 };
+                let contractAddress = receipt.logs[0].address;
+                let updateData =  { hashStatus: 1, contractAddress: contractAddress };
                 await Collection.findByIdAndUpdate(
                   data._id,
                   updateData,

@@ -7073,6 +7073,10 @@ class NFTController {
       }
       if(DBCollection === "Collection" ){
         console.log("Inside Collection");
+        details = {
+          hashStatus: req.body.hashStatus,
+          contractAddress: req.body.contractAddress,
+        };
         await Collection.findByIdAndUpdate(
           req.body.recordID,
           details,
