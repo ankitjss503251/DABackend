@@ -28,14 +28,28 @@ mongoose.connect(process.env.DB_URL,options)
     throw error;
 });
 
-async function mintChecker() {
+async function checkCollection() {
   try {
-    console.log("Checking for pending Mints...");
+    console.log("Checking for Collection Hash...");
+    Collection.find({ hashStatus: 0 },
+      async function (err, resData) {
+        if (err) {
+          
+        } else {
+          if (resData.length > 0) {
+            resData.forEach(data => {
+              console.log(data);
+              console.log("Hash", data.hash);
+            });
+            
+          }
+        }
+    })
   } catch(error) {
     console.log(error);
   }
 }
 
 setInterval(() => {
-    mintChecker();
+  checkCollection();
 },5000);

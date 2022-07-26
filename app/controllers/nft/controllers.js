@@ -362,6 +362,8 @@ class NFTController {
             isImported: req.body.isImported,
             isMinted: req.body.isMinted,
             link: req.body.link,
+            hash: req.body.hash,
+            hashStatus: req.body.hashStatus,
           });
           collection
             .save()
