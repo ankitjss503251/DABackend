@@ -30,7 +30,10 @@ const orderSchema = mongoose.Schema({
   tokenID: {
     type: String,
   },
-
+  hash: {
+    type: String,
+    require: true
+  },
   deadlineDate: {
     type: Date,
   },
@@ -50,6 +53,12 @@ const orderSchema = mongoose.Schema({
     type: Number,
     default: 0,
     enum: [0, 1],
+  },
+  hashStatus: {
+    //0 - Inactive & 1 - Active
+    type: Number,
+    enum: [0, 1],
+    default: 1,
   },
   createdBy: {
     type: mongoose.Schema.ObjectId,

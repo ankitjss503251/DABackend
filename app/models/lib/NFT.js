@@ -11,6 +11,10 @@ const nftSchema = mongoose.Schema({
     require: true,
     enum: [1, 2],
   },
+  hash: {
+    type: String,
+    require: true
+  },
   image: { type: String, require: true },
   fileType: { type: String, default: "Image" },
   price: { type: mongoose.Types.Decimal128, require: true },
@@ -121,6 +125,12 @@ const nftSchema = mongoose.Schema({
     ref: "Category",
   },
   status: {
+    //0 - Inactive & 1 - Active
+    type: Number,
+    enum: [0, 1],
+    default: 1,
+  },
+  hashStatus: {
     //0 - Inactive & 1 - Active
     type: Number,
     enum: [0, 1],

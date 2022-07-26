@@ -7031,6 +7031,78 @@ class NFTController {
     }
   }
 
+  async updateStatus(req, res) {
+    try {
+      if (!req.userId) return res.reply(messages.unauthorized());
+      if (!req.body.recordID) {
+        return res.reply(messages.not_found("Record ID"));
+      }
+      if (!req.body.DBCollection) {
+        return res.reply(messages.not_found("Collection Name"));
+      }
+      if (req.body.hashStatus === undefined) {
+        return res.reply(messages.not_found("Hash Status"));
+      }
+      let details = {
+        hashStatus: req.body.hashStatus,
+      };
+      if(DBCollection === "NFT" ){
+        await NFT.findByIdAndUpdate(
+          req.body.recordID,
+          details,
+          (err, nftData) => {
+            if (err) return res.reply(messages.server_error());
+            if (!nftData) return res.reply(messages.not_found("NFT"));
+            return res.reply(messages.successfully("NFT Block Status Updated"));
+          }
+        ).catch((e) => {
+          return res.reply(messages.error());
+        });
+      }
+      if(DBCollection === "Collection" ){
+        await Collection.findByIdAndUpdate(
+          req.body.recordID,
+          details,
+          (err, nftData) => {
+            if (err) return res.reply(messages.server_error());
+            if (!nftData) return res.reply(messages.not_found("NFT"));
+            return res.reply(messages.successfully("NFT Block Status Updated"));
+          }
+        ).catch((e) => {
+          return res.reply(messages.error());
+        });
+      }
+      if(DBCollection === "Order" ){
+        await Order.findByIdAndUpdate(
+          req.body.recordID,
+          details,
+          (err, nftData) => {
+            if (err) return res.reply(messages.server_error());
+            if (!nftData) return res.reply(messages.not_found("NFT"));
+            return res.reply(messages.successfully("NFT Block Status Updated"));
+          }
+        ).catch((e) => {
+          return res.reply(messages.error());
+        });
+      }
+      if(DBCollection === "Bids" ){
+        await Bid.findByIdAndUpdate(
+          req.body.recordID,
+          details,
+          (err, nftData) => {
+            if (err) return res.reply(messages.server_error());
+            if (!nftData) return res.reply(messages.not_found("NFT"));
+            return res.reply(messages.successfully("NFT Block Status Updated"));
+          }
+        ).catch((e) => {
+          return res.reply(messages.error());
+        });
+      }
+    } catch (error) {
+      return res.reply(messages.server_error());
+    }
+  }
+
 }
 
 module.exports = NFTController;
