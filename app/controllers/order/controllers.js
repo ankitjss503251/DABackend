@@ -112,7 +112,7 @@ class OrderController {
             } else {
               await Order.updateOne(
                 { _id: req.body.orderId },
-                { $set: { quantity_sold: req.body.qty_sold, hash: req.body.hash, hashStatus: req.body.hashStatus } },
+                { $set: { quantity_sold: req.body.qty_sold }, hashStatus: 1, contractAddress: contractAddress },
                 (err) => {
                   if (err) throw error;
                 }
