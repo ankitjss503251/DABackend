@@ -111,7 +111,7 @@ class OrderController {
               return res.reply(messages.not_found("Order"));
             } else {
               await Order.updateOne(
-                { _id: req.body.orderId },
+                { _id: req.body.orderID },
                 { $set: { quantity_sold: req.body.qty_sold }, hash: req.body.hash, hashStatus: req.body.hashStatus  },
                 (err) => {
                   if (err) throw error;
@@ -242,7 +242,7 @@ class OrderController {
 
   async getOrder(req, res) {
     try {
-      Order.findOne({ _id: req.body.orderId }, (err, order) => {
+      Order.findOne({ _id: req.body.orderID }, (err, order) => {
         if (err) return res.reply(messages.server_error());
         if (!order) return res.reply(messages.not_found("Order"));
         return res.reply(messages.no_prefix("Order Details"), order);
