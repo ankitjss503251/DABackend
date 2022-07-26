@@ -7033,7 +7033,10 @@ class NFTController {
 
   async updateStatus(req, res) {
     try {
+      
       if (!req.userId) return res.reply(messages.unauthorized());
+      console.log("Here");
+      console.log("req", req.body);
       if (!req.body.recordID) {
         return res.reply(messages.not_found("Record ID"));
       }
@@ -7043,62 +7046,69 @@ class NFTController {
       if (req.body.hashStatus === undefined) {
         return res.reply(messages.not_found("Hash Status"));
       }
-      let details = {
+      let details = { };
+      details = {
         hashStatus: req.body.hashStatus,
       };
+      let DBCollection = req.body.DBCollection;
       if(DBCollection === "NFT" ){
+        console.log("Inside NFT");
         await NFT.findByIdAndUpdate(
           req.body.recordID,
           details,
-          (err, nftData) => {
+          (err, resData) => {
             if (err) return res.reply(messages.server_error());
-            if (!nftData) return res.reply(messages.not_found("NFT"));
-            return res.reply(messages.successfully("NFT Block Status Updated"));
+            if (!resData) return res.reply(messages.not_found("NFT"));
+            return res.reply(messages.successfully("NFT Hash Status Updated"));
           }
         ).catch((e) => {
           return res.reply(messages.error());
         });
       }
       if(DBCollection === "Collection" ){
+        console.log("Inside Collection");
         await Collection.findByIdAndUpdate(
           req.body.recordID,
           details,
-          (err, nftData) => {
+          (err, resData) => {
             if (err) return res.reply(messages.server_error());
-            if (!nftData) return res.reply(messages.not_found("NFT"));
-            return res.reply(messages.successfully("NFT Block Status Updated"));
+            if (!resData) return res.reply(messages.not_found("Collection"));
+            return res.reply(messages.successfully("Collection Hash Status Updated"));
           }
         ).catch((e) => {
           return res.reply(messages.error());
         });
       }
       if(DBCollection === "Order" ){
+        console.log("Inside Order");
         await Order.findByIdAndUpdate(
           req.body.recordID,
           details,
-          (err, nftData) => {
+          (err, resData) => {
             if (err) return res.reply(messages.server_error());
-            if (!nftData) return res.reply(messages.not_found("NFT"));
-            return res.reply(messages.successfully("NFT Block Status Updated"));
+            if (!resData) return res.reply(messages.not_found("Order"));
+            return res.reply(messages.successfully("Order Hash Status Updated"));
           }
         ).catch((e) => {
           return res.reply(messages.error());
         });
       }
       if(DBCollection === "Bids" ){
+        console.log("Inside Bids");
         await Bid.findByIdAndUpdate(
           req.body.recordID,
           details,
-          (err, nftData) => {
+          (err, resData) => {
             if (err) return res.reply(messages.server_error());
-            if (!nftData) return res.reply(messages.not_found("NFT"));
-            return res.reply(messages.successfully("NFT Block Status Updated"));
+            if (!resData) return res.reply(messages.not_found("Bids"));
+            return res.reply(messages.successfully("Bids Hash Status Updated"));
           }
         ).catch((e) => {
           return res.reply(messages.error());
         });
       }
     } catch (error) {
+      console.log("Error", error)
       return res.reply(messages.server_error());
     }
   }
