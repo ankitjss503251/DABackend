@@ -37,11 +37,28 @@ async function checkCollection() {
           
         } else {
           if (resData.length > 0) {
-            resData.forEach(data => {
-              console.log(data);
-              console.log("Hash", data.hash);
-            });
-            
+            for (const data of resData) {
+              // console.log("Hash", data.hash);
+              let receipt = await web3.eth.getTransactionReceipt(data.hash);
+              // console.log("receipt is---->",receipt)
+              if(receipt===null){
+                return;
+              }
+              if(receipt.status===true) {
+                let updateData =  { hashStatus: 1 };
+                await Collection.findByIdAndUpdate(
+                  data._id,
+                  updateData,
+                  (err, resData) => {
+                    if(resData){
+                      console.log("Updated record", data._id)
+                    }
+                  }
+                ).catch((e) => {
+                  return;
+                });
+              }
+            }
           }
         }
     })
