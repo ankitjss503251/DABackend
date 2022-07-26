@@ -34,7 +34,6 @@ async function checkCollection() {
     Collection.find({ hashStatus: 0 },
       async function (err, resData) {
         if (err) {
-          
         } else {
           if (resData.length > 0) {
             for (const data of resData) {
@@ -66,7 +65,45 @@ async function checkCollection() {
     console.log(error);
   }
 }
+async function checkNFTs() {
+  try {
+    console.log("Checking for NFT Hash...");
+    NFT.find({ hashStatus: 0 },
+      async function (err, resData) {
+        if (err) {
+        } else {
+          if (resData.length > 0) {
+            for (const data of resData) {
+              // console.log("Hash", data.hash);
+              let receipt = await web3.eth.getTransactionReceipt(data.hash);
+              // console.log("receipt is---->",receipt)
+              if(receipt===null){
+                return;
+              }
+              if(receipt.status===true) {
+                let updateData =  { hashStatus: 1 };
+                await NFT.findByIdAndUpdate(
+                  data._id,
+                  updateData,
+                  (err, resData) => {
+                    if(resData){
+                      console.log("Updated record", data._id)
+                    }
+                  }
+                ).catch((e) => {
+                  return;
+                });
+              }
+            }
+          }
+        }
+    })
+  } catch(error) {
+    console.log(error);
+  }
+}
 
 setInterval(() => {
   checkCollection();
+  checkNFTs();
 },5000);
