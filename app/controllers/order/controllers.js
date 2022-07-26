@@ -48,6 +48,8 @@ class OrderController {
           bundleTokens: [],
           bundleTokensQuantities: [],
           sellerID: req.userId,
+          hash: req.body.hash,
+          hashStatus: req.body.hashStatus,
         });
 
         order
