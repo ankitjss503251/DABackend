@@ -69,6 +69,7 @@ async function checkCollection() {
     console.log(error);
   }
 }
+
 async function checkNFTs() {
   try {
     console.log("Checking for NFT Hash...");
@@ -118,7 +119,7 @@ async function checkOrders() {
             for (const data of resData) {
               console.log("Hash", data.hash);
 
-              web3.eth.getTransactionReceipt(data.hash, function(e, receipt) {
+              web3.eth.getTransactionReceipt(data.hash, async function(e, receipt) {
                 if(receipt===null){
                   return;
                 }
@@ -154,7 +155,29 @@ async function checkOrders() {
                       quantity = sales.value;
                     }
                   }
-                  console.log("sales",buyer,seller,tokenAddress,tokenId,amount,quantity);
+
+                  let buyerID = "";
+                  let sellerID = "";
+                  User.findOne( { walletAddress: _.toChecksumAddress(buyer)?.toLowerCase() },
+                    (err, user) => {
+                      if (err){ return; }
+                      if (!user) { return; }
+                      buyerID = user._id;
+                      User.findOne(
+                        {
+                          walletAddress: _.toChecksumAddress(seller)?.toLowerCase(),
+                        },
+                        (err, user) => {
+                          if (err){ return; }
+                          if (!user) { return; }
+                          sellerID = user._id;
+                          console.log("BuyerId", buyerID);
+                          console.log("sellerID", sellerID);
+                        }
+                      );
+
+                    }
+                  );
                 }
               });
               

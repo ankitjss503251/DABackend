@@ -7052,10 +7052,18 @@ class NFTController {
       if (req.body.hashStatus === undefined) {
         return res.reply(messages.not_found("Hash Status"));
       }
+      let hash = "";
+      if (req.body.hash !== undefined) {
+        hash = req.body.hash;
+      }
       let details = { };
+      
       details = {
         hashStatus: req.body.hashStatus,
       };
+      if(hash !== ""){
+        details.hash = hash;
+      }
       let DBCollection = req.body.DBCollection;
       if(DBCollection === "NFT" ){
         console.log("Inside NFT");
