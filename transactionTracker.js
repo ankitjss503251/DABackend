@@ -121,6 +121,7 @@ async function checkOrders() {
 
               web3.eth.getTransactionReceipt(data.hash, async function (e, receipt) {
                 if (receipt === null) {
+                  console.log("Rec Null")
                   return;
                 }
                 if (receipt.status === true) {
@@ -158,6 +159,8 @@ async function checkOrders() {
                     }
                   }
 
+                  console.log("Order", seller + " " + buyer)
+
 
                   Order.findById(orderID, async (err, orderData) => {
                     if (err) {
@@ -188,6 +191,7 @@ async function checkOrders() {
                       let leftQty = currentQty - boughtQty;
                       console.log("leftQty", leftQty);
                       if (leftQty < 1) {
+                        console.log("leftQty is less than 1");
                         await NFT.findOneAndUpdate(
                           { _id: mongoose.Types.ObjectId(nftID) },
                           {
@@ -199,6 +203,7 @@ async function checkOrders() {
                           return;
                         });
                       } else {
+                        console.log("leftQty is greater than 1");
                         await NFT.findOneAndUpdate(
                           {
                             _id: mongoose.Types.ObjectId(nftID),
@@ -240,7 +245,7 @@ async function checkOrders() {
                           )
                           : 0;
                         boughtQty = quantity;
-                        let ownedQty = currentQty + boughtQty;
+                        let ownedQty = parseInt(currentQty) + parseInt(boughtQty);
                         console.log("777");
                         console.log("ownedQty", ownedQty);
                         console.log("buyer", buyer);
@@ -312,4 +317,4 @@ setInterval(() => {
   checkCollection();
   checkNFTs();
   checkOrders();
-},10000);
+}, 10000);
