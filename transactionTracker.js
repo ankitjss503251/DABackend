@@ -127,7 +127,13 @@ async function checkOrders() {
                 if (receipt.status === true) {
                   const decodedLogs = logsDecoder.decodeLogs(receipt.logs);
                   // console.log("result is---->",decodedLogs[7].events);
-                  let saleData = decodedLogs[7].events;
+                  let saleData = "";
+                  if (data.salesType === 1) {
+                    saleData = decodedLogs[11].events;
+                  } else {
+                    saleData = decodedLogs[7].events
+                  }
+
 
                   let orderID = data._id;
                   let nftID = data.nftID;
@@ -137,6 +143,18 @@ async function checkOrders() {
                   let tokenId = "";
                   let amount = "";
                   let quantity = "";
+                  let sellerID = "";
+                  await User.findOne({ walletAddress: _.toChecksumAddress(seller)?.toLowerCase() },
+                    (err, user) => {
+                      if (err) {
+                        return;
+                      }
+                      if (!user) {
+                        return;
+                      }
+                      sellerID = user._id
+                    }
+                  );
 
                   for (const sales of saleData) {
                     if (sales.name === "buyer") {
@@ -301,6 +319,81 @@ async function checkOrders() {
                       });
                     }
                   });
+
+                  if (data.salesType === 1) {
+                    try {
+                      await Bid.findOneAndUpdate(
+                        {
+                          hash: data.hash,
+                        },
+                        { bidStatus: "Accepted" },
+                        function (err, acceptBid) {
+                          if (err) {
+                            console.log("Error in Accepting Bid" + err);
+                            return res.reply(messages.error());
+                          } else {
+                            console.log("Bid Accepted : ", acceptBid);
+                          }
+                        }
+                      );
+                      if (ERC721) {
+                        await Bid.deleteMany({
+                          owner: mongoose.Types.ObjectId(sellerID),
+                          nftID: mongoose.Types.ObjectId(nftID),
+                          bidStatus: "Bid",
+                        })
+                          .then(function () {
+                            console.log("Data deleted");
+                          })
+                          .catch(function (error) {
+                            console.log(error);
+                          });
+
+                        await Bid.deleteMany({
+                          owner: mongoose.Types.ObjectId(sellerID),
+                          nftID: mongoose.Types.ObjectId(nftID),
+                          bidStatus: "MakeOffer",
+                        })
+                          .then(function () {
+                            console.log("Data deleted");
+                          })
+                          .catch(function (error) {
+                            console.log(error);
+                          });
+                      } else {
+                        let _order = await Order.findOne({
+                          _id: mongoose.Types.ObjectId(orderID),
+                        });
+                        let leftQty2 = _order.quantity - quantity;
+                        if (leftQty2 <= 0) {
+                          await Order.deleteOne({ _id: mongoose.Types.ObjectId(orderID) });
+                        }
+                        console.log("left qty 1155", leftQty2);
+                        await Bid.deleteMany({
+                          owner: mongoose.Types.ObjectId(sellerID),
+                          nftID: mongoose.Types.ObjectId(nftID),
+                          bidStatus: "Bid",
+                          bidQuantity: { $gt: leftQty2 },
+                        }).then(function () {
+                          console.log("Data deleted from 1155");
+                        }).catch(function (error) {
+                          console.log(error);
+                        });
+
+                        await Bid.deleteMany({
+                          owner: mongoose.Types.ObjectId(sellerID),
+                          nftID: mongoose.Types.ObjectId(nftID),
+                          bidStatus: "MakeOffer",
+                        }).then(function () {
+                          console.log("Data deleted");
+                        }).catch(function (error) {
+                          console.log(error);
+                        });
+                      }
+                    } catch (e) {
+                      return;
+                    }
+                  }
                 }
               });
 
@@ -521,6 +614,6 @@ async function checkOffers() {
 setInterval(() => {
   checkCollection();
   checkNFTs();
-  // checkOrders();
+  checkOrders();
   // checkOffers();
 }, 10000);
