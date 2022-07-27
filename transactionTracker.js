@@ -117,35 +117,47 @@ async function checkOrders() {
           if (resData.length > 0) {
             for (const data of resData) {
               console.log("Hash", data.hash);
-              let receipt = await web3.eth.getTransactionReceipt(data.hash);
-              console.log("logs is---->",contract.events)
-              
+
               web3.eth.getTransactionReceipt(data.hash, function(e, receipt) {
-                const decodedLogs = logsDecoder.decodeLogs(receipt.logs);
-                console.log("result is---->",decodedLogs[7].events)
+                if(receipt===null){
+                  return;
+                }
+                if(receipt.status===true) {
+                  const decodedLogs = logsDecoder.decodeLogs(receipt.logs);
+                  // console.log("result is---->",decodedLogs[7].events);
+                  let saleData = decodedLogs[7].events;
+
+                  let buyer = "";
+                  let seller = "";
+                  let tokenAddress = "";
+                  let tokenId = "";
+                  let amount = "";
+                  let quantity = "";
+
+                  for (const sales of saleData) {
+                    if(sales.name === "buyer"){
+                      buyer = sales.value;
+                    }
+                    if(sales.name === "seller"){
+                      seller = sales.value;
+                    }
+                    if(sales.name === "tokenAddress"){
+                      tokenAddress = sales.value;
+                    }
+                    if(sales.name === "tokenId"){
+                      tokenId = sales.value;
+                    }
+                    if(sales.name === "amount"){
+                      amount = sales.value;
+                    }
+                    if(sales.name === "quantity"){
+                      quantity = sales.value;
+                    }
+                  }
+                  console.log("sales",buyer,seller,tokenAddress,tokenId,amount,quantity);
+                }
               });
-
               
-              // console.log("receipt Data  is---->", web3.utils.toBN(receipt.logs[7].data))
-              if(receipt===null){
-                return;
-              }
-              if(receipt.status===true) {
-
-                
-                // let updateData =  { hashStatus: 1 };
-                // await Order.findByIdAndUpdate(
-                //   data._id,
-                //   updateData,
-                //   (err, resData) => {
-                //     if(resData){
-                //       console.log("Updated record", data._id)
-                //     }
-                //   }
-                // ).catch((e) => {
-                //   return;
-                // });
-              }
             }
           }
         }
