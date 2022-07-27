@@ -127,8 +127,8 @@ class BidController {
         isOffer: true,
         salt: req.body.salt,
         tokenAddress: req.body.tokenAddress,
-        hash: req.body.hash,
-        hashStatus: req.body.hashStatus,
+        // hash: req.body.hash,
+        // hashStatus: req.body.hashStatus,
         lastUpdatedOn: Date.now(),
       });
       console.log("bidDat is--->", bidData);
