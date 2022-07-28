@@ -410,18 +410,19 @@ async function checkOrders() {
                     });
                   
                     let updateData = { hashStatus: 1 };
-                        await Order.findByIdAndUpdate(
-                          data._id,
-                          updateData,
-                          (err, resData) => {
-                            if (resData) {
-                              console.log("Updated Order record", data._id)
-                            }
-                          }
-                        ).catch((e) => {
-                          return;
-                        });
-                    
+                    await Order.findByIdAndUpdate(
+                      data._id,
+                      updateData,
+                      (err, resData) => {
+                        if (resData) {
+                          console.log("Updated Order record", data._id)
+                        }
+                      }
+                    ).catch((e) => {
+                      return;
+                    });
+                    await Order.find({ _id: mongoose.Types.ObjectId(data._id) }).remove().exec();
+                    await Bid.find({orderID: mongoose.Types.ObjectId(data._id),bidStatus: "Bid",}).remove().exec();
                   }
                 });
               }
