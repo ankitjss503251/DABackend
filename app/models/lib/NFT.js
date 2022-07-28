@@ -131,10 +131,10 @@ const nftSchema = mongoose.Schema({
     default: 1,
   },
   hashStatus: {
-    //0 - Inactive & 1 - Active
+    //0 - Inactive & 1 - Active & 2 - Failed/Cancel
     type: Number,
-    enum: [0, 1],
-    default: 1,
+    enum: [0, 1, 2],
+    default: 0,
   },
   createdBy: {
     type: mongoose.Schema.ObjectId,

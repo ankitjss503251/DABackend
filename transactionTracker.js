@@ -45,6 +45,20 @@ async function checkCollection() {
                 if (receipt === null) {
                   return;
                 }
+                if (receipt.status === false) {
+                  let updateData = { hashStatus: 2 };
+                  await Collection.findByIdAndUpdate(
+                    data._id,
+                    updateData,
+                    (err, resData) => {
+                      if (resData) {
+                        console.log("Updated record", data._id)
+                      }
+                    }
+                  ).catch((e) => {
+                    return;
+                  });
+                }
                 if (receipt.status === true) {
                   let contractAddress = receipt.logs[0].address;
                   let updateData = { hashStatus: 1, contractAddress: contractAddress };
@@ -83,6 +97,20 @@ async function checkNFTs() {
                 let receipt = await web3.eth.getTransactionReceipt(data.hash);
                 if (receipt === null) {
                   return;
+                }
+                if (receipt.status === false) {
+                  let updateData = { hashStatus: 2 };
+                  await NFT.findByIdAndUpdate(
+                    data._id,
+                    updateData,
+                    (err, resData) => {
+                      if (resData) {
+                        console.log("Updated record", data._id)
+                      }
+                    }
+                  ).catch((e) => {
+                    return;
+                  });
                 }
                 if (receipt.status === true) {
                   let updateData = { hashStatus: 1 };
@@ -124,6 +152,20 @@ async function checkOrders() {
                   if (receipt === null) {
                     console.log("Rec Null")
                     return;
+                  }
+                  if (receipt.status === false) {
+                    let updateData = { hashStatus: 2 };
+                    await Order.findByIdAndUpdate(
+                      data._id,
+                      updateData,
+                      (err, resData) => {
+                        if (resData) {
+                          console.log("Updated record", data._id)
+                        }
+                      }
+                    ).catch((e) => {
+                      return;
+                    });
                   }
                   if (receipt.status === true) {
                     const decodedLogs = logsDecoder.decodeLogs(receipt.logs);
@@ -404,6 +446,20 @@ async function checkOffers() {
                     console.log("Rec Null")
                     return;
                   }
+                  if (receipt.status === false) {
+                    let updateData = { hashStatus: 2 };
+                    await Bid.findByIdAndUpdate(
+                      data._id,
+                      updateData,
+                      (err, resData) => {
+                        if (resData) {
+                          console.log("Updated record", data._id)
+                        }
+                      }
+                    ).catch((e) => {
+                      return;
+                    });
+                  }
                   if (receipt.status === true) {
                     const decodedLogs = logsDecoder.decodeLogs(receipt.logs);
                     let saleData = decodedLogs[11].events;
@@ -592,6 +648,7 @@ async function checkOffers() {
     console.log(error);
   }
 }
+
 
 setInterval(() => {
   checkCollection();
