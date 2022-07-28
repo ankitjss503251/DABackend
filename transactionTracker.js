@@ -309,29 +309,64 @@ async function checkOrders() {
                   });
 
                   if (data.salesType === 1) {
-                    await Bid.findOneAndUpdate(
-                    {
-                      hash: data.hash,
-                    },
-                    { bidStatus: "Accepted" },
-                    function (err, acceptBid) {
-                      if (err) {
-                        return;
-                      } else {
-                        console.log("Bid Accepted ");
-                        return;
+                    let sellerID = "";
+                    let buyerID = "";
+                    User.findOne(
+                      {
+                        walletAddress: _.toChecksumAddress(seller)?.toLowerCase(),
+                      },
+                      (err, user) => {
+                        if (err){
+                          return;
+                        }
+                        if (!user) {
+                          return;
+                        }
+                        sellerID = user._id;
+                        User.findOne(
+                          {
+                            walletAddress: _.toChecksumAddress(buyer)?.toLowerCase(),
+                          },
+                          (err, user2) => {
+                            if (err){
+                              return;
+                            }
+                            if (!user2) {
+                              return;
+                            }
+                            buyerID = user2._id;
+                            Bid.findOneAndUpdate(
+                            {
+                              orderID: mongoose.Types.ObjectId(orderID),
+                              nftID: mongoose.Types.ObjectId(nftID),
+                              owner: mongoose.Types.ObjectId(sellerID),
+                              bidderID: mongoose.Types.ObjectId(buyerID),
+                            },
+                            { bidStatus: "Accepted" },
+                            function (err, acceptBid) {
+                              if (err) {
+                                return;
+                              } else {
+                                console.log("Bid Accepted ");
+                                return;
+                              }
+                            });
+                            Bid.deleteMany({
+                              orderID: mongoose.Types.ObjectId(orderID),
+                              nftID: mongoose.Types.ObjectId(nftID),
+                              owner: mongoose.Types.ObjectId(sellerID),
+                              bidStatus: "Bid",
+                            }).then(function () {
+                              console.log("Bid Data deleted");
+                            }).catch(function (error) {
+                              console.log(error);
+                            });
+                          }
+                        );
                       }
-                    });
-                    await Bid.deleteMany({
-                      orderID: mongoose.Types.ObjectId(orderID),
-                      bidStatus: "Bid",
-                    }).then(function () {
-                      console.log("Bid Data deleted");
-                    }).catch(function (error) {
-                      console.log(error);
-                    });
+                    );
                   }
-                  await Bid.deleteMany({
+                  Bid.deleteMany({
                     orderID: mongoose.Types.ObjectId(orderID),
                     bidStatus: "MakeOffer",
                   }).then(function () {

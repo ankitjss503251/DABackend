@@ -57,8 +57,6 @@ class BidController {
           buyerSignature: req.body.buyerSignature,
           bidDeadline: req.body.bidDeadline,
           isOffer: req.body.isOffer,
-          hash: req.body.hash,
-          hashStatus: req.body.hashStatus,
           lastUpdatedOn: Date.now(),
         });
         bidData
@@ -127,8 +125,6 @@ class BidController {
         isOffer: true,
         salt: req.body.salt,
         tokenAddress: req.body.tokenAddress,
-        // hash: req.body.hash,
-        // hashStatus: req.body.hashStatus,
         lastUpdatedOn: Date.now(),
       });
       console.log("bidDat is--->", bidData);
