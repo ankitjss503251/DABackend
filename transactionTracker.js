@@ -452,7 +452,7 @@ async function checkOffers() {
                         (o) => o.address === seller.toLowerCase()
                       ).quantity;
 
-                    let leftQty = currentQty - boughtQty;
+                    let leftQty = parseInt(currentQty) - parseInt(boughtQty);
                     if (leftQty < 1) {
                       await NFT.findOneAndUpdate(
                         { _id: mongoose.Types.ObjectId(nftID) },
@@ -508,7 +508,7 @@ async function checkOffers() {
                         )
                         : 0;
 
-                      let ownedQty = currentQty + boughtQty;
+                      let ownedQty = parseInt(currentQty) + parseInt(boughtQty);
                       await NFT.findOneAndUpdate(
                         {
                           _id: mongoose.Types.ObjectId(nftID),
