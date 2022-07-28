@@ -189,6 +189,8 @@ class NFTController {
                             type: nftElement.type,
                             isMinted: nftElement.isMinted,
                             assetsInfo: fileObj,
+                            hash: req.body.hash,
+                            hashStatus: req.body.hashStatus,
                             ownedBy: [],
                           });
                           if (
@@ -362,6 +364,8 @@ class NFTController {
             isImported: req.body.isImported,
             isMinted: req.body.isMinted,
             link: req.body.link,
+            hash: req.body.hash,
+            hashStatus: req.body.hashStatus,
           });
           collection
             .save()
@@ -721,6 +725,8 @@ class NFTController {
                         type: nftElement.type,
                         isMinted: nftElement.isMinted,
                         createdBy: creatorID,
+                        hash: "0x0",
+                        hashStatus: 1,
                         ownedBy: [],
                       });
                       if (
@@ -7027,6 +7033,100 @@ class NFTController {
       });
     } catch (error) {
       console.log("Error " + error);
+      return res.reply(messages.server_error());
+    }
+  }
+
+  async updateStatus(req, res) {
+    try {
+      
+      if (!req.userId) return res.reply(messages.unauthorized());
+      console.log("Here");
+      console.log("req", req.body);
+      if (!req.body.recordID) {
+        return res.reply(messages.not_found("Record ID"));
+      }
+      if (!req.body.DBCollection) {
+        return res.reply(messages.not_found("Collection Name"));
+      }
+      if (req.body.hashStatus === undefined) {
+        return res.reply(messages.not_found("Hash Status"));
+      }
+      let hash = "";
+      if (req.body.hash !== undefined) {
+        hash = req.body.hash;
+      }
+      let details = { };
+      
+      details = {
+        hashStatus: req.body.hashStatus,
+      };
+      if(hash !== ""){
+        details.hash = hash;
+      }
+      let DBCollection = req.body.DBCollection;
+      if(DBCollection === "NFT" ){
+        console.log("Inside NFT");
+        await NFT.findByIdAndUpdate(
+          req.body.recordID,
+          details,
+          (err, resData) => {
+            if (err) return res.reply(messages.server_error());
+            if (!resData) return res.reply(messages.not_found("NFT"));
+            return res.reply(messages.successfully("NFT Hash Status Updated"));
+          }
+        ).catch((e) => {
+          return res.reply(messages.error());
+        });
+      }
+      if(DBCollection === "Collection" ){
+        console.log("Inside Collection");
+        details = {
+          hashStatus: req.body.hashStatus,
+          contractAddress: req.body.contractAddress,
+        };
+        await Collection.findByIdAndUpdate(
+          req.body.recordID,
+          details,
+          (err, resData) => {
+            if (err) return res.reply(messages.server_error());
+            if (!resData) return res.reply(messages.not_found("Collection"));
+            return res.reply(messages.successfully("Collection Hash Status Updated"));
+          }
+        ).catch((e) => {
+          return res.reply(messages.error());
+        });
+      }
+      if(DBCollection === "Order" ){
+        console.log("Inside Order");
+        await Order.findByIdAndUpdate(
+          req.body.recordID,
+          details,
+          (err, resData) => {
+            if (err) return res.reply(messages.server_error());
+            if (!resData) return res.reply(messages.not_found("Order"));
+            return res.reply(messages.successfully("Order Hash Status Updated"));
+          }
+        ).catch((e) => {
+          return res.reply(messages.error());
+        });
+      }
+      if(DBCollection === "Bids" ){
+        console.log("Inside Bids");
+        await Bid.findByIdAndUpdate(
+          req.body.recordID,
+          details,
+          (err, resData) => {
+            if (err) return res.reply(messages.server_error());
+            if (!resData) return res.reply(messages.not_found("Bids"));
+            return res.reply(messages.successfully("Bids Hash Status Updated"));
+          }
+        ).catch((e) => {
+          return res.reply(messages.error());
+        });
+      }
+    } catch (error) {
+      console.log("Error", error)
       return res.reply(messages.server_error());
     }
   }

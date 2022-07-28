@@ -11,6 +11,10 @@ const collectionSchema = mongoose.Schema({
     enum: [1, 2],
     default: 1,
   },
+  hash: {
+    type: String,
+    require: true
+  },
   symbol: {
     type: String,
   },
@@ -113,6 +117,12 @@ const collectionSchema = mongoose.Schema({
     type: Number,
     enum: [0, 1],
     default: 1,
+  },
+  hashStatus: {
+    //0 - Inactive & 1 - Active & 2 - Failed/Cancel
+    type: Number,
+    enum: [0, 1, 2],
+    default: 0,
   },
   createdBy: {
     type: mongoose.Schema.ObjectId,
