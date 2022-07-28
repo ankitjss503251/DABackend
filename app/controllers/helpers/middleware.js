@@ -95,6 +95,7 @@ middleware.verifyAdminToken = (req, res, next) => {
     return res.reply(messages.server_error());
   }
 };
+
 middleware.verifySuperAdminToken = (req, res, next) => {
   try {
     var token = req.headers.authorization;
