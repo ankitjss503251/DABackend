@@ -389,7 +389,7 @@ async function checkOrders() {
 
 async function checkOffers() {
   try {
-    console.log("Checking for Order Hash...");
+    console.log("Checking for Offer Hash...");
     Bid.find({ hashStatus: 0 },
       async function (err, resData) {
         if (err) {
