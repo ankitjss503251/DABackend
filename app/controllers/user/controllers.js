@@ -1234,7 +1234,6 @@ class UserController {
               { $set: { user_followings: followMAINarray } }
             ).then((user) => {
               // if (err) return res.reply(messages.server_error());
-
               if (flag == "like") {
                 return res.reply(messages.successfully("User followed"));
               } else {
