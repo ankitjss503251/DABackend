@@ -1255,23 +1255,15 @@ class UserController {
 
   async checkIfBlocked(req, res) {
     try {
-      // if (!req.userId) {
-      //     return res.reply(messages.unauthorized());
-      // }
-      console.log("user profile api is hit", req.body.walletAddress);
-
-      let user =await User.findOne(
-        {
-          walletAddress: req.body.walletAddress,
-          status: 0
-        }
-
-      ).exec();
+      let user = await User.findOne({
+        walletAddress: req.body.walletAddress,
+        status: 0
+      }).exec();
       console.log("user", user)
-      if(user!==undefined && user!="" && user!==null){
+      if (user !== undefined && user != "" && user !== null) {
         return res.reply(messages.successfully("Result"), true);
       }
-      else{
+      else {
         return res.reply(messages.successfully("Result"), false);
       }
     } catch (error) {
