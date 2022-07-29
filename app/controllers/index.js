@@ -17,7 +17,7 @@ function Router() {
     // origin: [process.env.ORIGIN_IP, process.env.ORIGIN_DOMAIN], 
     // methods: ["GET", "POST", "PUT", "DELETE"],
     // allowedHeaders: ["Content-Type", "Authorization"],
-    // credentials: true,
+    credentials: true,
     origin: ["*"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -60,7 +60,7 @@ Router.prototype.setupMiddleware = function () {
       saveUninitialized: true,
     })
   );
-  
+
   this.app.use(compression());
   // this.app.set('view engine', 'ejs');
   this.app.engine("html", require("ejs").renderFile);

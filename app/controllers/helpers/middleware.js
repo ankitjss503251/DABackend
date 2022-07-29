@@ -105,6 +105,7 @@ middleware.verifySuperAdminToken = (req, res, next) => {
     token = token.replace("Bearer ", "");
     jwt.verify(token, process.env.JWT_SECRET, function (err, decoded) {
       if (err) return res.reply(messages.unauthorized());
+      console.log(decoded.role)
       if (decoded.role === "superadmin") {
         User.findOne({ _id: mongoose.Types.ObjectId(decoded.id) }, function (err, userData) {
           if (err) {
