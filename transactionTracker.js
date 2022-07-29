@@ -45,6 +45,20 @@ async function checkCollection() {
                 if (receipt === null) {
                   return;
                 }
+                if (receipt.status === false) {
+                  let updateData = { hashStatus: 2 };
+                  await Collection.findByIdAndUpdate(
+                    data._id,
+                    updateData,
+                    (err, resData) => {
+                      if (resData) {
+                        console.log("Updated Collection record", data._id)
+                      }
+                    }
+                  ).catch((e) => {
+                    return;
+                  });
+                }
                 if (receipt.status === true) {
                   let contractAddress = receipt.logs[0].address;
                   let updateData = { hashStatus: 1, contractAddress: contractAddress };
@@ -53,7 +67,7 @@ async function checkCollection() {
                     updateData,
                     (err, resData) => {
                       if (resData) {
-                        console.log("Updated record", data._id)
+                        console.log("Updated Collection record", data._id)
                       }
                     }
                   ).catch((e) => {
@@ -84,6 +98,20 @@ async function checkNFTs() {
                 if (receipt === null) {
                   return;
                 }
+                if (receipt.status === false) {
+                  let updateData = { hashStatus: 2 };
+                  await NFT.findByIdAndUpdate(
+                    data._id,
+                    updateData,
+                    (err, resData) => {
+                      if (resData) {
+                        console.log("Updated NFT record", data._id)
+                      }
+                    }
+                  ).catch((e) => {
+                    return;
+                  });
+                }
                 if (receipt.status === true) {
                   let updateData = { hashStatus: 1 };
                   await NFT.findByIdAndUpdate(
@@ -91,7 +119,7 @@ async function checkNFTs() {
                     updateData,
                     (err, resData) => {
                       if (resData) {
-                        console.log("Updated record", data._id)
+                        console.log("Updated NFT record", data._id)
                       }
                     }
                   ).catch((e) => {
@@ -118,12 +146,26 @@ async function checkOrders() {
           if (resData.length > 0) {
             for (const data of resData) {
               if (data.hash !== undefined) {
-                console.log("Hash", data.hash);
+                console.log("Order Hash", data.hash);
 
                 web3.eth.getTransactionReceipt(data.hash, async function (e, receipt) {
                   if (receipt === null) {
                     console.log("Rec Null")
                     return;
+                  }
+                  if (receipt.status === false) {
+                    let updateData = { hashStatus: 2 };
+                    await Order.findByIdAndUpdate(
+                      data._id,
+                      updateData,
+                      (err, resData) => {
+                        if (resData) {
+                          console.log("Updated Order record", data._id)
+                        }
+                      }
+                    ).catch((e) => {
+                      return;
+                    });
                   }
                   if (receipt.status === true) {
                     const decodedLogs = logsDecoder.decodeLogs(receipt.logs);
@@ -176,9 +218,10 @@ async function checkOrders() {
                       if (!orderData) {
                         return;
                       } else {
+                        console.log("quantity", quantity)
                         await Order.updateOne(
                           { _id: orderID },
-                          { $set: { quantity_sold: quantity } },
+                          { $set: { quantity_sold: parseInt(quantity) } },
                           (err) => {
                             return;
                           }
@@ -195,7 +238,8 @@ async function checkOrders() {
                           ).quantity;
                         }
                         let boughtQty = parseInt(quantity);
-                        let leftQty = currentQty - boughtQty;
+                        console.log("boughtQty", boughtQty)
+                        let leftQty = parseInt(currentQty) - parseInt(boughtQty);
                         console.log("leftQty", leftQty);
                         if (leftQty < 1) {
                           console.log("leftQty is less than 1");
@@ -294,18 +338,7 @@ async function checkOrders() {
                         ).catch((e) => {
                           return;
                         });
-                        let updateData = { hashStatus: 1 };
-                        await Order.findByIdAndUpdate(
-                          data._id,
-                          updateData,
-                          (err, resData) => {
-                            if (resData) {
-                              console.log("Updated record", data._id)
-                            }
-                          }
-                        ).catch((e) => {
-                          return;
-                        });
+                        
                       }
                     });
 
@@ -375,6 +408,21 @@ async function checkOrders() {
                     }).catch(function (error) {
                       console.log(error);
                     });
+                  
+                    let updateData = { hashStatus: 1 };
+                    await Order.findByIdAndUpdate(
+                      orderID,
+                      updateData,
+                      (err, resData) => {
+                        if (resData) {
+                          console.log("Updated Order record", orderID)
+                        }
+                      }
+                    ).catch((e) => {
+                      return;
+                    });
+                    await Order.find({ _id: mongoose.Types.ObjectId(orderID) }).remove().exec();
+                    await Bid.find({orderID: mongoose.Types.ObjectId(orderID),bidStatus: "Bid",}).remove().exec();
                   }
                 });
               }
@@ -397,12 +445,26 @@ async function checkOffers() {
           if (resData.length > 0) {
             for (const data of resData) {
               if (data.hash !== undefined) {
-                console.log("Hash", data.hash);
+                console.log("Offer Hash", data.hash);
 
                 web3.eth.getTransactionReceipt(data.hash, async function (e, receipt) {
                   if (receipt === null) {
                     console.log("Rec Null")
                     return;
+                  }
+                  if (receipt.status === false) {
+                    let updateData = { hashStatus: 2 };
+                    await Bid.findByIdAndUpdate(
+                      data._id,
+                      updateData,
+                      (err, resData) => {
+                        if (resData) {
+                          console.log("Updated Bid record", data._id)
+                        }
+                      }
+                    ).catch((e) => {
+                      return;
+                    });
                   }
                   if (receipt.status === true) {
                     const decodedLogs = logsDecoder.decodeLogs(receipt.logs);
@@ -439,6 +501,7 @@ async function checkOffers() {
                       }
                     }
                     let boughtQty = parseInt(quantity);
+                    console.log("boughtQty", boughtQty)
                     console.log("seller", seller, " buyer ", buyer, " NFT ", nftID);
                     //deduct previous owner
                     let _NFT = await NFT.find({
@@ -451,8 +514,10 @@ async function checkOffers() {
                       currentQty = _NFT[0].ownedBy.find(
                         (o) => o.address === seller.toLowerCase()
                       ).quantity;
+                      console.log("currentQty", currentQty)
 
-                    let leftQty = currentQty - boughtQty;
+                    let leftQty = parseInt(currentQty) - parseInt(boughtQty);
+                    console.log("leftQty", leftQty)
                     if (leftQty < 1) {
                       await NFT.findOneAndUpdate(
                         { _id: mongoose.Types.ObjectId(nftID) },
@@ -465,6 +530,7 @@ async function checkOffers() {
                         console.log("Error1", e.message);
                       });
                     } else {
+                      console.log("leftQty", leftQty)
                       await NFT.findOneAndUpdate(
                         {
                           _id: mongoose.Types.ObjectId(nftID),
@@ -508,7 +574,7 @@ async function checkOffers() {
                         )
                         : 0;
 
-                      let ownedQty = currentQty + boughtQty;
+                      let ownedQty = parseInt(currentQty) + parseInt(boughtQty);
                       await NFT.findOneAndUpdate(
                         {
                           _id: mongoose.Types.ObjectId(nftID),
@@ -580,6 +646,18 @@ async function checkOffers() {
                     }).catch(function (error) {
                       console.log(error);
                     });
+                    let updateData = { hashStatus: 1 };
+                        await Bid.findByIdAndUpdate(
+                          data._id,
+                          updateData,
+                          (err, resData) => {
+                            if (resData) {
+                              console.log("Updated Bid record", data._id)
+                            }
+                          }
+                        ).catch((e) => {
+                          return;
+                        });
 
                   }
                 });
@@ -592,6 +670,7 @@ async function checkOffers() {
     console.log(error);
   }
 }
+
 
 setInterval(() => {
   checkCollection();
