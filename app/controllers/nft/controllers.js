@@ -1083,11 +1083,11 @@ class NFTController {
       console.log("isOnMarketplaceSearchObj", isOnMarketplaceSearchObj);
 
       
-      let salesTypeSearchArray = [];
-      salesTypeSearchArray["$match"] = { "OrderData.hashStatus": 1 };
-      let salesTypeSearchObj = Object.assign({}, salesTypeSearchArray);
+      // let salesTypeSearchArray = [];
+      // salesTypeSearchArray["$match"] = { "OrderData.hashStatus": 1 };
+      // let salesTypeSearchObj = Object.assign({}, salesTypeSearchArray);
 
-      console.log("salesTypeSearchObj", salesTypeSearchObj);
+      // console.log("salesTypeSearchObj", salesTypeSearchObj);
 
       let nfts = await NFT.aggregate([
         { $match: searchObj },
@@ -1108,7 +1108,7 @@ class NFTController {
             as: "OrderData",
           },
         },
-        salesTypeSearchObj,
+        // salesTypeSearchObj,
         {
           $lookup: {
             from: "categories",
