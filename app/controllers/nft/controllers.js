@@ -1188,7 +1188,6 @@ class NFTController {
             let isOnMarketplaceSearchArray = [];
             isOnMarketplaceSearchArray["$match"] = {
               "CollectionData.status": 1,
-              "CollectionData.hashStatus": 1
             };
             let isOnMarketplaceSearchObj = Object.assign( {}, isOnMarketplaceSearchArray );
             console.log("isOnMarketplaceSearchObj", isOnMarketplaceSearchObj);
