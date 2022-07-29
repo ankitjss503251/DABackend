@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const LogsDecoder = require('logs-decoder');
 const logsDecoder = LogsDecoder.create()
 const config = require("dotenv").config();
-const { NFT, Collection, User, Bid, Order, Brand, Category } = require("./app/models");
+const { NFT, Collection, User, Bid, Order } = require("./app/models");
 
 // TODO: Change the URL to MainNet URL
 var web3 = new Web3(process.env.NETWORK_RPC_URL);
@@ -38,8 +38,8 @@ async function checkCollection() {
         } else {
           if (resData.length > 0) {
             for (const data of resData) {
-              if (data.hash !== undefined) {
-                console.log("Hash", data.hash);
+              if (data.hash !== undefined && data.hash !== "0x0") {
+                console.log("Collection Hash is", data.hash)
                 let receipt = await web3.eth.getTransactionReceipt(data.hash);
                 console.log("receipt is---->", receipt)
                 if (receipt === null) {
@@ -93,7 +93,8 @@ async function checkNFTs() {
         } else {
           if (resData.length > 0) {
             for (const data of resData) {
-              if (data.hash !== undefined) {
+              if (data.hash !== undefined && data.hash !== "0x0") {
+                console.log("NFT Hash is", data.hash)
                 let receipt = await web3.eth.getTransactionReceipt(data.hash);
                 if (receipt === null) {
                   return;
@@ -145,15 +146,17 @@ async function checkOrders() {
         } else {
           if (resData.length > 0) {
             for (const data of resData) {
-              if (data.hash !== undefined) {
+              if (data.hash !== undefined && data.hash !== "0x0") {
                 console.log("Order Hash", data.hash);
 
                 web3.eth.getTransactionReceipt(data.hash, async function (e, receipt) {
+                  console.log("Rec",receipt.status);
                   if (receipt === null) {
                     console.log("Rec Null")
                     return;
                   }
                   if (receipt.status === false) {
+                    console.log("Inside false");
                     let updateData = { hashStatus: 2 };
                     await Order.findByIdAndUpdate(
                       data._id,
@@ -168,8 +171,9 @@ async function checkOrders() {
                     });
                   }
                   if (receipt.status === true) {
+                    console.log("Inside True");
                     const decodedLogs = logsDecoder.decodeLogs(receipt.logs);
-                    // console.log("result is---->",decodedLogs[7].events);
+                    
                     let saleData = "";
                     if (data.salesType === 1) {
                       saleData = decodedLogs[11].events;
@@ -420,8 +424,8 @@ async function checkOrders() {
                     ).catch((e) => {
                       return;
                     });
-                    await Order.find({ _id: mongoose.Types.ObjectId(orderID) }).remove().exec();
-                    await Bid.find({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).remove().exec();
+                    // await Order.find({ _id: mongoose.Types.ObjectId(orderID) }).remove().exec();
+                    // await Bid.find({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).remove().exec();
 
 
                     
@@ -475,8 +479,8 @@ async function checkOrders() {
         }
       })
   } catch (error) {
-    console.log(error);
-  }
+    console.log("Error is", error);
+  } 
 }
 
 async function checkOffers() {
@@ -488,7 +492,7 @@ async function checkOffers() {
         } else {
           if (resData.length > 0) {
             for (const data of resData) {
-              if (data.hash !== undefined) {
+              if (data.hash !== undefined && data.hash !== "0x0") {
                 console.log("Offer Hash", data.hash);
 
                 web3.eth.getTransactionReceipt(data.hash, async function (e, receipt) {
@@ -744,6 +748,6 @@ async function checkOffers() {
 setInterval(() => {
   checkCollection();
   checkNFTs();
-  checkOrders();
-  checkOffers();
+  // checkOrders();
+  // checkOffers();
 }, 7000);
