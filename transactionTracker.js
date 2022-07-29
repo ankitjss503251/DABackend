@@ -424,49 +424,49 @@ async function checkOrders() {
                     await Bid.find({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).remove().exec();
 
 
-                    
+
                     await User.findOne({ walletAddress: _.toChecksumAddress(buyer) },
-                    (err, user) => {
-                      if (err){
-                        return;
-                      }
-                      if (!user) {
-                        return;
-                      }
-                      let buyerID = user._id;
-                      let sellerID = data.sellerID;
-                      let action = "";
-                      if (data.salesType === 1) {
-                        action = "Bid";
-                      } else {
-                        action = "Sold";
-                      }
-                      let type = "Accepted";
-                      let paymentToken = data.paymentToken;
-                      let price = data.price;
-                      let createdBy = "";
-                      if (data.salesType === 1) {
-                        createdBy = user._id;
-                      } else {
-                        createdBy = data.sellerID;
-                      }
-                      const insertData = new History({
-                        nftID: nftID,
-                        buyerID: buyerID,
-                        sellerID: sellerID,
-                        action: action,
-                        type: type,
-                        paymentToken: paymentToken,
-                        price: price,
-                        quantity: quantity,
-                        createdBy: createdBy
+                      (err, user) => {
+                        if (err) {
+                          return;
+                        }
+                        if (!user) {
+                          return;
+                        }
+                        let buyerID = user._id;
+                        let sellerID = data.sellerID;
+                        let action = "";
+                        if (data.salesType === 1) {
+                          action = "Bid";
+                        } else {
+                          action = "Sold";
+                        }
+                        let type = "Accepted";
+                        let paymentToken = data.paymentToken;
+                        let price = data.price;
+                        let createdBy = "";
+                        if (data.salesType === 1) {
+                          createdBy = user._id;
+                        } else {
+                          createdBy = data.sellerID;
+                        }
+                        const insertData = new History({
+                          nftID: nftID,
+                          buyerID: buyerID,
+                          sellerID: sellerID,
+                          action: action,
+                          type: type,
+                          paymentToken: paymentToken,
+                          price: price,
+                          quantity: quantity,
+                          createdBy: createdBy
+                        });
+                        insertData.save().then(async (result) => {
+                          console.log("Record Added in adding History");
+                        }).catch((error) => {
+                          console.log("Error in adding History");
+                        });
                       });
-                      insertData.save().then(async (result) => { 
-                        console.log("Record Added in adding History");
-                      }).catch((error) => {
-                        console.log("Error in adding History");
-                      });
-                    });
                   }
                 });
               }
@@ -722,7 +722,7 @@ async function checkOffers() {
                       quantity: quantity,
                       createdBy: createdBy
                     });
-                    insertData.save().then(async (result) => { 
+                    insertData.save().then(async (result) => {
                       console.log("Record Added in adding History");
                     }).catch((error) => {
                       console.log("Error in adding History");
@@ -741,9 +741,9 @@ async function checkOffers() {
 }
 
 
-setInterval(() => {
-  checkCollection();
-  checkNFTs();
-  checkOrders();
-  checkOffers();
-}, 7000);
+// setInterval(() => {
+//   checkCollection();
+//   checkNFTs();
+//   checkOrders();
+//   checkOffers();
+// }, 7000);
