@@ -1222,9 +1222,11 @@ class NFTController {
               
             ]).exec(function (e, nftData) {
               console.log("Error ", e);
+              let nftList = [];
+              nftList[0] = nftData;
               let results = {};
               results.count = nftData?.length ? nftData.length : 0;
-              results.results[0] = nftData;
+              results.results = nftList;
               return res.reply(messages.success("NFT List"), results);
             });
           }
