@@ -268,7 +268,7 @@ class OrderController {
       const endIndex = page * limit;
       const results = {};
       let searchArray = [];
-      searchArray["hashStatus"] = 1;
+      // searchArray["hashStatus"] = 1;
       if (req.body.nftID != undefined && req.body.nftID != "") {
         searchArray["nftID"] = req.body.nftID;
       }
