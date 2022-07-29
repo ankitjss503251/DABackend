@@ -26,17 +26,17 @@ validators.isValidName = function (sName) {
     return reName.test(sName);
 }
 
-validators.isValidWalletAddress = function (sWalletAddress) {
-    return _web3.utils.isAddress(sWalletAddress);
+validators.isValidWalletAddress = function (walletAddress) {
+    return _web3.utils.isAddress(walletAddress);
 }
 
-validators.isValidSignature = function (oSigData) {
+validators.isValidSignature = function (signData) {
     try {
-        const msgH = `\x19Ethereum Signed Message:\n${oSigData.sMessage.length}${oSigData.sMessage}`; // adding prefix
-        var addrHex = oSigData.sWalletAddress;
+        const msgH = `\x19Ethereum Signed Message:\n${signData.message.length}${signData.message}`; // adding prefix
+        var addrHex = signData.walletAddress;
         addrHex = addrHex.replace("0x", "").toLowerCase();
         var msgSha = EthJSUtil.keccak256(Buffer.from(msgH));
-        var sigDecoded = EthJSUtil.fromRpcSig(oSigData.sSignature);
+        var sigDecoded = EthJSUtil.fromRpcSig(signData.signature);
         var recoveredPub = EthJSUtil.ecrecover(msgSha, sigDecoded.v, sigDecoded.r, sigDecoded.s);
         var recoveredAddress = EthJSUtil.pubToAddress(recoveredPub).toString("hex");
         return (addrHex === recoveredAddress);

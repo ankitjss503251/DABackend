@@ -121,6 +121,13 @@ class AuthController {
     try {
       if (!req.body.walletAddress)
         return res.reply(messages.required_field("Wallet Address"));
+        
+      if (!req.body.signature){
+        return res.reply(messages.required_field('Signature'));
+      } 
+      if (!validators.isValidSignature(req.body)){
+        return res.reply(messages.invalid('Data'));
+      }
       User.findOne(
         {
           walletAddress: _.toChecksumAddress(req.body.walletAddress),
@@ -214,6 +221,13 @@ class AuthController {
     try {
       if (!req.body.walletAddress)
         return res.reply(messages.required_field("Wallet Address"));
+
+      if (!req.body.signature){
+        return res.reply(messages.required_field('Signature'));
+      } 
+      if (!validators.isValidSignature(req.body)){
+        return res.reply(messages.invalid('Data'));
+      }
       User.findOne(
         {
           walletAddress: _.toChecksumAddress(req.body.walletAddress),
