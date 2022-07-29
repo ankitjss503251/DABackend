@@ -443,6 +443,7 @@ class NFTController {
 
       let searchArray = [];
       searchArray["status"] = 1;
+      searchArray["hashStatus"] = 1;
       if (collectionID !== "") {
         searchArray["_id"] = mongoose.Types.ObjectId(collectionID);
       }
@@ -886,6 +887,7 @@ class NFTController {
 
       let searchArray = [];
       searchArray["status"] = 1;
+      searchArray["hashStatus"] = 1;
       if (nftID !== "") {
         searchArray["_id"] = mongoose.Types.ObjectId(nftID);
       }
@@ -928,10 +930,12 @@ class NFTController {
         isOnMarketplaceSearchArray["$match"] = {
           "CollectionData.isOnMarketplace": isOnMarketplace,
           "CollectionData.status": 1,
+          "CollectionData.hashStatus": 1,
         };
       } else {
         isOnMarketplaceSearchArray["$match"] = {
           "CollectionData.status": 1,
+          "CollectionData.hashStatus": 1,
         };
       }
       let isOnMarketplaceSearchObj = Object.assign(
@@ -942,9 +946,9 @@ class NFTController {
       console.log("isOnMarketplaceSearchObj", isOnMarketplaceSearchObj);
 
       let salesTypeSearchArray = [];
-      salesTypeSearchArray["$match"] = {};
+      salesTypeSearchArray["$match"] = { };
       if (salesType === 1 || salesType === 0) {
-        salesTypeSearchArray["$match"] = { "OrderData.salesType": salesType };
+        salesTypeSearchArray["$match"] = { "OrderData.hashStatus": 1, "OrderData.salesType": salesType };
       }
       let salesTypeSearchObj = Object.assign({}, salesTypeSearchArray);
 
@@ -1061,6 +1065,7 @@ class NFTController {
       }
       let searchArray = [];
       searchArray["status"] = 1;
+      searchArray["hashStatus"] = 1;
       if (nftID !== "") {
         searchArray["_id"] = mongoose.Types.ObjectId(nftID);
       }
@@ -1069,12 +1074,21 @@ class NFTController {
       let isOnMarketplaceSearchArray = [];
       isOnMarketplaceSearchArray["$match"] = {
         "CollectionData.status": 1,
+        "CollectionData.hashStatus": 1
       };
       let isOnMarketplaceSearchObj = Object.assign(
         {},
         isOnMarketplaceSearchArray
       );
       console.log("isOnMarketplaceSearchObj", isOnMarketplaceSearchObj);
+
+      
+      // let salesTypeSearchArray = [];
+      // salesTypeSearchArray["$match"] = { "OrderData.hashStatus": 1 };
+      // let salesTypeSearchObj = Object.assign({}, salesTypeSearchArray);
+
+      // console.log("salesTypeSearchObj", salesTypeSearchObj);
+
       let nfts = await NFT.aggregate([
         { $match: searchObj },
         {
@@ -1094,6 +1108,7 @@ class NFTController {
             as: "OrderData",
           },
         },
+        // salesTypeSearchObj,
         {
           $lookup: {
             from: "categories",
@@ -1150,13 +1165,14 @@ class NFTController {
             return res.reply(messages.unauthorized());
           } else {
             let searchArray = [];
+            searchArray["status"] = 1;
+            searchArray["hashStatus"] = 1;
             searchArray["ownedBy"] = {
               $elemMatch: {
                 address: userData.walletAddress?.toLowerCase(),
                 quantity: { $gt: 0 },
               },
             };
-            // searchArray["createdBy"] = mongoose.Types.ObjectId(req.userId);
             if (searchText !== "") {
               searchArray["$or"] = [
                 { name: { $regex: new RegExp(searchText), $options: "i" } },
@@ -1169,6 +1185,13 @@ class NFTController {
               ];
             }
             let searchObj = Object.assign({}, searchArray);
+            let isOnMarketplaceSearchArray = [];
+            isOnMarketplaceSearchArray["$match"] = {
+              "CollectionData.status": 1,
+              "CollectionData.hashStatus": 1
+            };
+            let isOnMarketplaceSearchObj = Object.assign( {}, isOnMarketplaceSearchArray );
+            console.log("isOnMarketplaceSearchObj", isOnMarketplaceSearchObj);
 
             const results = {};
             if (endIndex < (await NFT.countDocuments(searchObj).exec())) {
@@ -1183,23 +1206,28 @@ class NFTController {
                 limit: limit,
               };
             }
-
-            await NFT.find(searchObj)
-              .sort({ createdOn: -1 })
-              .limit(limit)
-              .skip(startIndex)
-              .lean()
-              .exec()
-              .then((res) => {
-                data.push(res);
-              })
-              .catch((e) => {
-                console.log("Error", e);
-              });
-            results.count = await NFT.countDocuments(searchObj).exec();
-            results.results = data;
-            res.header("Access-Control-Max-Age", 600);
-            return res.reply(messages.success("Collection List"), results);
+            await NFT.aggregate([
+              {
+                $lookup: {
+                  from: "collections",
+                  localField: "collectionID",
+                  foreignField: "_id",
+                  as: "CollectionData",
+                },
+              },
+              isOnMarketplaceSearchObj,
+              { $match: searchObj },
+              { $sort: { createdOn : -1 } },
+              { $skip: startIndex },
+              { $limit: limit },
+              
+            ]).exec(function (e, nftData) {
+              console.log("Error ", e);
+              let results = {};
+              results.count = nftData?.length ? nftData.length : 0;
+              results.results = nftData;
+              return res.reply(messages.success("NFT List"), results);
+            });
           }
         }
       );
@@ -1291,6 +1319,7 @@ class NFTController {
 
       let searchArray = [];
       searchArray["status"] = 1;
+      searchArray["hashStatus"] = 1;
       
       if (ERCType !== "") {
         searchArray["type"] = ERCType;
@@ -1312,7 +1341,7 @@ class NFTController {
       let searchObj = Object.assign({}, searchArray);
 
       let isOnMarketplaceSearchArray = [];
-      isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1 };
+      isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1, "CollectionData.hashStatus": 1 };
       let isOnMarketplaceSearchObj = Object.assign(
         {},
         isOnMarketplaceSearchArray
@@ -1457,6 +1486,7 @@ class NFTController {
 
       let searchArray = [];
       searchArray["status"] = 1;
+      searchArray["hashStatus"] = 1;
       
       if (ERCType !== "") {
         searchArray["type"] = ERCType;
@@ -1483,7 +1513,7 @@ class NFTController {
       let searchObj = Object.assign({}, searchArray);
 
       let isOnMarketplaceSearchArray = [];
-      isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1 };
+      isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1, "CollectionData.hashStatus": 1 };
       let isOnMarketplaceSearchObj = Object.assign(
         {},
         isOnMarketplaceSearchArray
@@ -1619,6 +1649,7 @@ class NFTController {
       let searchArray = [];
       searchArray["_id"] = { $in: orderData };
       searchArray["status"] = 1;
+      searchArray["hashStatus"] = 1;
 
       let searchObj = Object.assign({}, searchArray);
       console.log("searchArray", searchArray);
@@ -6669,6 +6700,7 @@ class NFTController {
       //   }
       // }
       searchArray["status"] = 1;
+      searchArray["hashStatus"] = 1;
       let searchObj = Object.assign({}, searchArray);
       let result = [];
       const nfts = await NFT.find(searchObj);
@@ -6804,7 +6836,7 @@ class NFTController {
       let searchObj = Object.assign({}, searchArray);
 
       let isOnMarketplaceSearchArray = [];
-      isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1 };
+      isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1 , "CollectionData.hashStatus": 1};
       let isOnMarketplaceSearchObj = Object.assign(
         {},
         isOnMarketplaceSearchArray
@@ -6931,7 +6963,7 @@ class NFTController {
       let searchObj = Object.assign({}, searchArray);
 
       let isOnMarketplaceSearchArray = [];
-      isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1 };
+      isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1, "CollectionData.hashStatus": 1 };
       let isOnMarketplaceSearchObj = Object.assign(
         {},
         isOnMarketplaceSearchArray

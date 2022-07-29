@@ -186,7 +186,6 @@ async function checkOrders() {
                     let tokenId = "";
                     let amount = "";
                     let quantity = "";
-                    let sellerID = "";
 
 
                     for (const sales of saleData) {
@@ -338,7 +337,7 @@ async function checkOrders() {
                         ).catch((e) => {
                           return;
                         });
-                        
+
                       }
                     });
 
@@ -408,7 +407,7 @@ async function checkOrders() {
                     }).catch(function (error) {
                       console.log(error);
                     });
-                  
+
                     let updateData = { hashStatus: 1 };
                     await Order.findByIdAndUpdate(
                       orderID,
@@ -422,7 +421,52 @@ async function checkOrders() {
                       return;
                     });
                     await Order.find({ _id: mongoose.Types.ObjectId(orderID) }).remove().exec();
-                    await Bid.find({orderID: mongoose.Types.ObjectId(orderID),bidStatus: "Bid",}).remove().exec();
+                    await Bid.find({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).remove().exec();
+
+
+                    
+                    await User.findOne({ walletAddress: _.toChecksumAddress(buyer) },
+                    (err, user) => {
+                      if (err){
+                        return;
+                      }
+                      if (!user) {
+                        return;
+                      }
+                      let buyerID = user._id;
+                      let sellerID = data.sellerID;
+                      let action = "";
+                      if (data.salesType === 1) {
+                        action = "Bid";
+                      } else {
+                        action = "Sold";
+                      }
+                      let type = "Accepted";
+                      let paymentToken = data.paymentToken;
+                      let price = data.price;
+                      let createdBy = "";
+                      if (data.salesType === 1) {
+                        createdBy = user._id;
+                      } else {
+                        createdBy = data.sellerID;
+                      }
+                      const insertData = new History({
+                        nftID: nftID,
+                        buyerID: buyerID,
+                        sellerID: sellerID,
+                        action: action,
+                        type: type,
+                        paymentToken: paymentToken,
+                        price: price,
+                        quantity: quantity,
+                        createdBy: createdBy
+                      });
+                      insertData.save().then(async (result) => { 
+                        console.log("Record Added in adding History");
+                      }).catch((error) => {
+                        console.log("Error in adding History");
+                      });
+                    });
                   }
                 });
               }
@@ -514,7 +558,7 @@ async function checkOffers() {
                       currentQty = _NFT[0].ownedBy.find(
                         (o) => o.address === seller.toLowerCase()
                       ).quantity;
-                      console.log("currentQty", currentQty)
+                    console.log("currentQty", currentQty)
 
                     let leftQty = parseInt(currentQty) - parseInt(boughtQty);
                     console.log("leftQty", leftQty)
@@ -647,17 +691,42 @@ async function checkOffers() {
                       console.log(error);
                     });
                     let updateData = { hashStatus: 1 };
-                        await Bid.findByIdAndUpdate(
-                          data._id,
-                          updateData,
-                          (err, resData) => {
-                            if (resData) {
-                              console.log("Updated Bid record", data._id)
-                            }
-                          }
-                        ).catch((e) => {
-                          return;
-                        });
+                    await Bid.findByIdAndUpdate(
+                      data._id,
+                      updateData,
+                      (err, resData) => {
+                        if (resData) {
+                          console.log("Updated Bid record", data._id)
+                        }
+                      }
+                    ).catch((e) => {
+                      return;
+                    });
+
+                    let buyerID = data.bidderID;
+                    let sellerID = data.owner;
+                    let action = "Offer";
+                    let type = "Accepted";
+                    let paymentToken = data.paymentToken;
+                    let price = data.bidPrice;
+                    let createdBy = data.bidderID;
+
+                    const insertData = new History({
+                      nftID: nftID,
+                      buyerID: buyerID,
+                      sellerID: sellerID,
+                      action: action,
+                      type: type,
+                      paymentToken: paymentToken,
+                      price: price,
+                      quantity: quantity,
+                      createdBy: createdBy
+                    });
+                    insertData.save().then(async (result) => { 
+                      console.log("Record Added in adding History");
+                    }).catch((error) => {
+                      console.log("Error in adding History");
+                    });
 
                   }
                 });

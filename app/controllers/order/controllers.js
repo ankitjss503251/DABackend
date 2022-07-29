@@ -242,7 +242,7 @@ class OrderController {
 
   async getOrder(req, res) {
     try {
-      Order.findOne({ _id: req.body.orderID }, (err, order) => {
+      Order.findOne({ _id: req.body.orderID, }, (err, order) => {
         if (err) return res.reply(messages.server_error());
         if (!order) return res.reply(messages.not_found("Order"));
         return res.reply(messages.no_prefix("Order Details"), order);
@@ -268,6 +268,7 @@ class OrderController {
       const endIndex = page * limit;
       const results = {};
       let searchArray = [];
+      searchArray["hashStatus"] = 1;
       if (req.body.nftID != undefined && req.body.nftID != "") {
         searchArray["nftID"] = req.body.nftID;
       }

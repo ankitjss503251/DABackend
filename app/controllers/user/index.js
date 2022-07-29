@@ -34,5 +34,5 @@ router.get("/getUserDetails/:user", userController.getUserDetails);
 router.post("/getAllUsers", userController.getAllUsers);
 router.post("/getIndividualUser/:userID", userController.getIndividualUser);
 router.post("/profileDetail", userController.getUserProfilewithNfts);
-
+router.post("/checkIfBlocked", userController.checkIfBlocked);
 module.exports = router;
