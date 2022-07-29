@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const LogsDecoder = require('logs-decoder');
 const logsDecoder = LogsDecoder.create()
 const config = require("dotenv").config();
-const { NFT, Collection, User, Bid, Order } = require("./app/models");
+const { NFT, Collection, User, Bid, Order, History } = require("./app/models");
 
 // TODO: Change the URL to MainNet URL
 var web3 = new Web3(process.env.NETWORK_RPC_URL);
@@ -424,8 +424,8 @@ async function checkOrders() {
                     ).catch((e) => {
                       return;
                     });
-                    // await Order.find({ _id: mongoose.Types.ObjectId(orderID) }).remove().exec();
-                    // await Bid.find({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).remove().exec();
+                    await Order.find({ _id: mongoose.Types.ObjectId(orderID) }).remove().exec();
+                    await Bid.find({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).remove().exec();
 
 
                     
@@ -748,6 +748,6 @@ async function checkOffers() {
 setInterval(() => {
   checkCollection();
   checkNFTs();
-  // checkOrders();
-  // checkOffers();
+  checkOrders();
+  checkOffers();
 }, 7000);
