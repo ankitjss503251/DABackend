@@ -1224,7 +1224,7 @@ class NFTController {
               console.log("Error ", e);
               let results = {};
               results.count = nftData?.length ? nftData.length : 0;
-              results.results = nftData;
+              results.results[0] = nftData;
               return res.reply(messages.success("NFT List"), results);
             });
           }
