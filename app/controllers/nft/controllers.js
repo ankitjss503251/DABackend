@@ -65,7 +65,7 @@ let fileFilter = function (req, file, cb) {
 let oMulterObj = {
   storage: storage,
   limits: {
-    fileSize: 200 * 1024 * 1024, // 15mb
+    fileSize: 200 * 1024 * 1024,
   },
   fileFilter: fileFilter,
 };
@@ -94,17 +94,21 @@ class NFTController {
         "audio/mpeg",
       ];
       errAllowed = "JPG, JPEG, PNG, GIF, GLTF, GLB MP3, WEBP & MPEG";
-
-      upload(req, res, function (error) {
+      uploadBanner.fields([
+        { name: "nftFile", maxCount: 1 },
+        { name: "previewImg", maxCount: 1 },
+      ])(req, res, function (error) {
         if (error) {
           log.red(error);
-          console.log("Error ");
           return res.reply(messages.bad_request(error.message));
         } else {
           console.log("Here");
           log.green(req.body);
-          if (req.file.nftFile != "" && req.file.nftFile != undefined) {
-            log.green(req.file.nftFile[0].location);
+          if ( req.files.nftFile != "" && req.files.nftFile != undefined ) {
+            log.green(req.files.nftFile[0].location);
+          }
+          if ( req.files.previewImg != "" && req.files.previewImg != undefined ) {
+            log.green(req.files.previewImg[0].location);
           }
           if (!req.body.creatorAddress) {
             return res.reply(messages.not_found("Creator Wallet Address"));
@@ -124,26 +128,29 @@ class NFTController {
           if (req.body.description.trim().length > 1000) {
             return res.reply(messages.invalid("Description"));
           }
-          if (!req.file) {
-            return res.reply(messages.not_found("File"));
-          }
-          console.log("Files", req.file);
+          // if (!req.file) {
+          //   return res.reply(messages.not_found("File"));
+          // }
+          // console.log("Files", req.file);
           let nftElement = req.body;
+          
+          let previewImgURL = req.files.previewImg ? req.files.previewImg[0].location : "";
+          let nftFileURL = req.files.nftFile ? req.files.nftFile[0].location : "";
+
           let fileAttr = [];
           fileAttr["size"] = nftElement.imageSize;
           fileAttr["type"] = nftElement.imageType;
           fileAttr["dimension"] = nftElement.imageDimension;
           let fileObj = Object.assign({}, fileAttr);
-          let fileURL = req.file.location;
-          console.log("file Location", req.file);
+          
           if (
-            fileURL.indexOf("http://") == 0 ||
-            fileURL.indexOf("https://") == 0
+            nftFileURL.indexOf("http://") == 0 ||
+            nftFileURL.indexOf("https://") == 0
           ) {
           } else {
-            fileURL = "https://" + fileURL;
+            nftFileURL = "https://" + nftFileURL;
           }
-          console.log("fileURL", fileURL);
+          console.log("fileURL", nftFileURL);
 
           Collection.find(
             { _id: mongoose.Types.ObjectId(nftElement.collectionID) },
@@ -167,7 +174,7 @@ class NFTController {
                         if (nftData.length > 0) {
                           return res.reply(messages.already_exists("NFT Name"));
                         } else {
-                          let newFileURl = fileURL;
+                          let newFileURl = nftFileURL;
                           if(nftElement.fileType === "3D"){
                             newFileURl = fileURL.replace('https://','http://');
                             var prefix = 'http://';
@@ -190,6 +197,7 @@ class NFTController {
                             isMinted: nftElement.isMinted,
                             assetsInfo: fileObj,
                             hash: req.body.hash,
+                            previewImg: previewImgURL,
                             hashStatus: req.body.hashStatus,
                             ownedBy: [],
                           });
@@ -293,6 +301,8 @@ class NFTController {
               }
             }
           );
+
+
         }
       });
     } catch (error) {
