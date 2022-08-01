@@ -176,7 +176,7 @@ class NFTController {
                         } else {
                           let newFileURl = nftFileURL;
                           if(nftElement.fileType === "3D"){
-                            newFileURl = fileURL.replace('https://','http://');
+                            newFileURl = newFileURl.replace('https://','http://');
                             var prefix = 'http://';
                             if (newFileURl.substr(0, prefix.length) !== prefix)
                             {
