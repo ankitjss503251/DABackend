@@ -189,6 +189,7 @@ async function checkOrders() {
                     let tokenAddress = "";
                     let tokenId = "";
                     let amount = "";
+                    let bidsamount = "";
                     let quantity = "";
 
 
@@ -207,6 +208,7 @@ async function checkOrders() {
                       }
                       if (sales.name === "amount") {
                         amount = sales.value;
+                        bidsamount = sales.value;
                       }
                       if (sales.name === "quantity") {
                         quantity = sales.value;
@@ -440,14 +442,16 @@ async function checkOrders() {
                       let buyerID = user._id;
                       let sellerID = data.sellerID;
                       let action = "";
+                      let price = "";
                       if (data.salesType === 1) {
                         action = "Bid";
+                        price = bidsamount;
                       } else {
                         action = "Sold";
+                        price = data.price;
                       }
                       let type = "Accepted";
                       let paymentToken = data.paymentToken;
-                      let price = data.price;
                       let createdBy = "";
                       if (data.salesType === 1) {
                         createdBy = user._id;
