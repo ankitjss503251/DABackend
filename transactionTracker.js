@@ -430,8 +430,9 @@ async function checkOrders() {
                     await Bid.find({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).remove().exec();
 
 
-                    
+
                     await User.findOne({ walletAddress: _.toChecksumAddress(buyer) },
+
                     (err, user) => {
                       if (err){
                         return;
@@ -473,8 +474,8 @@ async function checkOrders() {
                         console.log("Record Added in adding History");
                       }).catch((error) => {
                         console.log("Error in adding History");
+
                       });
-                    });
                   }
                 });
               }
@@ -730,7 +731,7 @@ async function checkOffers() {
                       quantity: quantity,
                       createdBy: createdBy
                     });
-                    insertData.save().then(async (result) => { 
+                    insertData.save().then(async (result) => {
                       console.log("Record Added in adding History");
                     }).catch((error) => {
                       console.log("Error in adding History");
@@ -749,9 +750,9 @@ async function checkOffers() {
 }
 
 
-setInterval(() => {
-  checkCollection();
-  checkNFTs();
-  checkOrders();
-  checkOffers();
-}, 7000);
+ setInterval(() => {
+   checkCollection();
+   checkNFTs();
+   checkOrders();
+   checkOffers();
+ }, 7000);
