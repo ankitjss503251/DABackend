@@ -285,6 +285,32 @@ class NFTController {
                                   function () {}
                                 );
                               }
+
+                              // let metaData= {
+                              //   "image":newFileURl,
+                              //   "previewImg": previewImgURL,
+                              //   "animation_url":"",
+                              //   "description":nftElement.description,
+                              //   "name":nftElement.name,
+                              //   "tokenID":nftElement.tokenID,
+                              //   "attributes":NFTAttr
+                              // }
+                              // const oOptions = {
+                              //   pinataMetadata: {
+                              //     name: req.file.originalname,
+                              //   },
+                              //   pinataOptions: {
+                              //     cidVersion: 0,
+                              //   },
+                              // };
+                              // const tempJsonpath = './nft/'+(Math.random() + 1).toString(36).substring(7)+'.json';
+                              // fs.writeFileSync(tempJsonpath, JSON.stringify(metaData));
+                              // let testFileJSON = fs.readFileSync(tempJsonpath);
+                              // let testFileJSONBuffer = Buffer.from(testFileJSON);
+                              // let addRecv = await ipfs.files.add(testFileJSONBuffer);
+                              // let cid = addRecv[0].path;
+                              // clearStorage();
+
                               return res.reply(messages.created("NFT"), result);
                             })
                             .catch((error) => {

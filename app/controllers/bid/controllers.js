@@ -652,7 +652,6 @@ class BidController {
               });
 
               await Bid.deleteMany({
-                owner: mongoose.Types.ObjectId(owner),
                 nftID: mongoose.Types.ObjectId(nftID),
                 bidStatus: "MakeOffer",
               })
@@ -683,7 +682,6 @@ class BidController {
             });
             
             await Bid.deleteMany({
-              owner: mongoose.Types.ObjectId(owner),
               nftID: mongoose.Types.ObjectId(nftID),
               bidStatus: "MakeOffer",
             }).then(function () {
@@ -861,7 +859,6 @@ class BidController {
             });
 
             await Bid.deleteMany({
-              owner: mongoose.Types.ObjectId(owner),
               nftID: mongoose.Types.ObjectId(nftID),
               bidStatus: "MakeOffer",
             }).then(function () {

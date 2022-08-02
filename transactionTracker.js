@@ -420,7 +420,7 @@ async function checkOrders() {
                     });
                     await Order.find({ _id: mongoose.Types.ObjectId(orderID) }).remove().exec();
                     await Bid.find({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).remove().exec();
-                    await Bid.find({ nftID: mongoose.Types.ObjectId(nftID), owner: mongoose.Types.ObjectId(data.sellerID), bidStatus: "MakeOffer" }).remove().exec();
+                    await Bid.find({ nftID: mongoose.Types.ObjectId(nftID), bidStatus: "MakeOffer" }).remove().exec();
 
                     await User.findOne({ walletAddress: _.toChecksumAddress(buyer) },
                     (err, user) => {
@@ -672,7 +672,6 @@ async function checkOffers() {
                     });
 
                     await Bid.deleteMany({
-                      owner: mongoose.Types.ObjectId(owner),
                       nftID: mongoose.Types.ObjectId(nftID),
                       bidStatus: "MakeOffer",
                     }).then(function () {
