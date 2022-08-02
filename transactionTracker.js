@@ -140,7 +140,7 @@ async function checkNFTs() {
 async function checkOrders() {
   try {
     console.log("Checking for Order Hash...");
-    Order.find({ hashStatus: 0 },
+    Order.find({ hashStatus: 0, createdOn: { $gt: new Date(ISODate().getTime() - 1000 * 60 * 2) } },
       async function (err, resData) {
         if (err) {
         } else {
@@ -422,50 +422,50 @@ async function checkOrders() {
                     await Bid.find({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).remove().exec();
                     await Bid.find({ nftID: mongoose.Types.ObjectId(nftID), owner: mongoose.Types.ObjectId(data.sellerID), bidStatus: "MakeOffer" }).remove().exec();
 
-                    // await User.findOne({ walletAddress: _.toChecksumAddress(buyer) },
-                    // (err, user) => {
-                    //   if (err){
-                    //     return;
-                    //   }
-                    //   if (!user) {
-                    //     return;
-                    //   }
-                    //   let buyerID = user._id;
-                    //   let sellerID = data.sellerID;
-                    //   let action = "";
-                    //   let price = "";
-                    //   if (data.salesType === 1) {
-                    //     action = "Bid";
-                    //     price = bidsamount;
-                    //   } else {
-                    //     action = "Sold";
-                    //     price = data.price;
-                    //   }
-                    //   let type = "Accepted";
-                    //   let paymentToken = data.paymentToken;
-                    //   let createdBy = "";
-                    //   if (data.salesType === 1) {
-                    //     createdBy = user._id;
-                    //   } else {
-                    //     createdBy = data.sellerID;
-                    //   }
-                    //   const insertData = new History({
-                    //     nftID: nftID,
-                    //     buyerID: buyerID,
-                    //     sellerID: sellerID,
-                    //     action: action,
-                    //     type: type,
-                    //     paymentToken: paymentToken,
-                    //     price: price,
-                    //     quantity: quantity,
-                    //     createdBy: createdBy
-                    //   });
-                    //   insertData.save().then(async (result) => { 
-                    //     console.log("Record Added in adding History....");
-                    //   }).catch((error) => {
-                    //     console.log("Error in adding History...");
-                    //   });
-                    // });
+                    await User.findOne({ walletAddress: _.toChecksumAddress(buyer) },
+                    (err, user) => {
+                      if (err){
+                        return;
+                      }
+                      if (!user) {
+                        return;
+                      }
+                      let buyerID = user._id;
+                      let sellerID = data.sellerID;
+                      let action = "";
+                      let price = "";
+                      if (data.salesType === 1) {
+                        action = "Bid";
+                        price = bidsamount;
+                      } else {
+                        action = "Sold";
+                        price = data.price;
+                      }
+                      let type = "Accepted";
+                      let paymentToken = data.paymentToken;
+                      let createdBy = "";
+                      if (data.salesType === 1) {
+                        createdBy = user._id;
+                      } else {
+                        createdBy = data.sellerID;
+                      }
+                      const insertData = new History({
+                        nftID: nftID,
+                        buyerID: buyerID,
+                        sellerID: sellerID,
+                        action: action,
+                        type: type,
+                        paymentToken: paymentToken,
+                        price: price,
+                        quantity: quantity,
+                        createdBy: createdBy
+                      });
+                      insertData.save().then(async (result) => { 
+                        console.log("Record Added in adding History....");
+                      }).catch((error) => {
+                        console.log("Error in adding History...");
+                      });
+                    });
                   }
                 })
               }
@@ -481,7 +481,7 @@ async function checkOrders() {
 async function checkOffers() {
   try {
     console.log("Checking for Offer Hash...");
-    Bid.find({ hashStatus: 0 },
+    Bid.find({ hashStatus: 0, createdOn: { $gt: new Date(ISODate().getTime() - 1000 * 60 * 2) } },
       async function (err, resData) {
         if (err) {
         } else {
@@ -710,22 +710,22 @@ async function checkOffers() {
                     let price = data.bidPrice;
                     let createdBy = data.bidderID;
 
-                    // const insertData = new History({
-                    //   nftID: nftID,
-                    //   buyerID: buyerID,
-                    //   sellerID: sellerID,
-                    //   action: action,
-                    //   type: type,
-                    //   paymentToken: paymentToken,
-                    //   price: price,
-                    //   quantity: quantity,
-                    //   createdBy: createdBy
-                    // });
-                    // insertData.save().then(async (result) => {
-                    //   console.log("Record Added in adding History");
-                    // }).catch((error) => {
-                    //   console.log("Error in adding History");
-                    // });
+                    const insertData = new History({
+                      nftID: nftID,
+                      buyerID: buyerID,
+                      sellerID: sellerID,
+                      action: action,
+                      type: type,
+                      paymentToken: paymentToken,
+                      price: price,
+                      quantity: quantity,
+                      createdBy: createdBy
+                    });
+                    insertData.save().then(async (result) => {
+                      console.log("Record Added in adding History");
+                    }).catch((error) => {
+                      console.log("Error in adding History");
+                    });
 
                   }
                 });
