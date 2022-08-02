@@ -13,13 +13,13 @@ const historySchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: "User",
   },
-  action : { 
+  action: {
     type: String,
-    enum: ["PutOnSale","RemoveFromSale", "Offer", "Sold", "Bid"],
+    enum: ["PutOnSale", "RemoveFromSale", "Offer", "Sold", "Bid"],
   },
-  type : { 
+  type: {
     type: String,
-    enum: ["List", "Accepted", "Rejected", "Created", "Cancelled", "Updated"],
+    enum: ["List", "Accepted", "Rejected", "Created", "Cancelled", "Updated", "Fixed Sale", "Timed Auction", "Open for Bids"],
   },
   paymentToken: {
     type: String,
