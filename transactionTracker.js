@@ -432,7 +432,6 @@ async function checkOrders() {
 
 
                     await User.findOne({ walletAddress: _.toChecksumAddress(buyer) },
-
                     (err, user) => {
                       if (err){
                         return;
@@ -471,13 +470,13 @@ async function checkOrders() {
                         createdBy: createdBy
                       });
                       insertData.save().then(async (result) => { 
-                        console.log("Record Added in adding History");
+                        console.log("Record Added in adding History....");
                       }).catch((error) => {
-                        console.log("Error in adding History");
-
+                        console.log("Error in adding History...");
                       });
+                    });
                   }
-                });
+                })
               }
             }
           }
