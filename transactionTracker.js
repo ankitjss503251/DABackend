@@ -470,9 +470,9 @@ async function checkOrders() {
                         createdBy: createdBy
                       });
                       insertData.save().then(async (result) => { 
-                        console.log("Record Added in adding History");
+                        console.log("Record Added in adding History....");
                       }).catch((error) => {
-                        console.log("Error in adding History");
+                        console.log("Error in adding History...");
                       });
                     });
                   }
