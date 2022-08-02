@@ -117,6 +117,8 @@ class AuthController {
       return res.reply(messages.server_error());
     }
   }
+
+  
   login(req, res) {
     try {
       if (!req.body.walletAddress)
