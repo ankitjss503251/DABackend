@@ -405,15 +405,7 @@ async function checkOrders() {
                         }
                       );
                     }
-                    Bid.deleteMany({
-                      orderID: mongoose.Types.ObjectId(orderID),
-                      bidStatus: "MakeOffer",
-                    }).then(function () {
-                      console.log("Make Offer Data deleted");
-                    }).catch(function (error) {
-                      console.log(error);
-                    });
-
+                    
                     let updateData = { hashStatus: 1 };
                     await Order.findByIdAndUpdate(
                       orderID,
@@ -428,7 +420,7 @@ async function checkOrders() {
                     });
                     await Order.find({ _id: mongoose.Types.ObjectId(orderID) }).remove().exec();
                     await Bid.find({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).remove().exec();
-
+                    await Bid.find({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "MakeOffer", }).remove().exec();
 
 
                     await User.findOne({ walletAddress: _.toChecksumAddress(buyer) },
@@ -749,9 +741,9 @@ async function checkOffers() {
 }
 
 
- setInterval(() => {
-   checkCollection();
-   checkNFTs();
-   checkOrders();
-   checkOffers();
- }, 7000);
+setInterval(() => {
+  checkCollection();
+  checkNFTs();
+  checkOrders();
+  checkOffers();
+}, 10000);
