@@ -153,7 +153,6 @@ async function checkOrders() {
                 console.log("Order Hash", data.hash);
 
                 web3.eth.getTransactionReceipt(data.hash, async function (e, receipt) {
-                  console.log("Rec",receipt.status);
                   if (receipt === null) {
                     console.log("Rec Null")
                     return;
