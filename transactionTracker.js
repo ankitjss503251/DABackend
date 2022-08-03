@@ -140,7 +140,10 @@ async function checkNFTs() {
 async function checkOrders() {
   try {
     console.log("Checking for Order Hash...");
-    Order.find({ hashStatus: 0, createdOn: { $gt: new Date(ISODate().getTime() - 1000 * 60 * 2) } },
+    let currentTime = new Date().getTime();
+    let minutes = 2 * 60 * 1000;
+    let newDateTime = new Date(currentTime + minutes);
+    Order.find({ hashStatus: 0, createdOn: { $gt: newDateTime } },
       async function (err, resData) {
         if (err) {
         } else {
@@ -481,7 +484,10 @@ async function checkOrders() {
 async function checkOffers() {
   try {
     console.log("Checking for Offer Hash...");
-    Bid.find({ hashStatus: 0, createdOn: { $gt: new Date(ISODate().getTime() - 1000 * 60 * 2) } },
+    let currentTime = new Date().getTime();
+    let minutes = 2 * 60 * 1000;
+    let newDateTime = new Date(currentTime + minutes);
+    Bid.find({ hashStatus: 0, createdOn: { $gt: newDateTime } },
       async function (err, resData) {
         if (err) {
         } else {

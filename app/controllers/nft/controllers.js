@@ -286,31 +286,40 @@ class NFTController {
                                 );
                               }
 
-                              // let metaData= {
-                              //   "image":newFileURl,
-                              //   "previewImg": previewImgURL,
-                              //   "animation_url":"",
-                              //   "description":nftElement.description,
-                              //   "name":nftElement.name,
-                              //   "tokenID":nftElement.tokenID,
-                              //   "attributes":NFTAttr
-                              // }
-                              // const oOptions = {
-                              //   pinataMetadata: {
-                              //     name: req.file.originalname,
-                              //   },
-                              //   pinataOptions: {
-                              //     cidVersion: 0,
-                              //   },
-                              // };
-                              // const tempJsonpath = './nft/'+(Math.random() + 1).toString(36).substring(7)+'.json';
-                              // fs.writeFileSync(tempJsonpath, JSON.stringify(metaData));
-                              // let testFileJSON = fs.readFileSync(tempJsonpath);
-                              // let testFileJSONBuffer = Buffer.from(testFileJSON);
-                              // let addRecv = await ipfs.files.add(testFileJSONBuffer);
-                              // let cid = addRecv[0].path;
-                              // clearStorage();
+                              
 
+                                // let metaData= {
+                                //   "image":newFileURl,
+                                //   "previewImg": previewImgURL,
+                                //   "description":nftElement.description,
+                                //   "name":nftElement.name,
+                                //   "tokenID":nftElement.tokenID,
+                                //   "collectionAddress":nftElement.collectionAddress,
+                                //   "attributes":NFTAttr
+                                // }
+                                // if(nftElement.fileType !== "images"){
+                                //   metaData.animation_url = newFileURl;
+                                // }
+                                // console.log("metaData is" , metaData)
+                                // const oOptions = {
+                                //   pinataMetadata: {
+                                //     name: req.files.originalname,
+                                //   },
+                                //   pinataOptions: {
+                                //     cidVersion: 0,
+                                //   },
+                                // };
+                                // const tempJsonpath = './nft/'+(Math.random() + 1).toString(36).substring(7)+'.json';
+                                // fs.writeFileSync(tempJsonpath, JSON.stringify(metaData));
+                                // let testFileJSON = fs.readFileSync(tempJsonpath);
+                                // let testFileJSONBuffer = Buffer.from(testFileJSON);
+                                // let addRecv = await ipfs.files.add(testFileJSONBuffer);
+                                // let cid = addRecv[0].path;
+                                // result.cid = cid;
+                                // console.log("HASH cid ", cid);
+                                // clearStorage();
+
+                              
                               return res.reply(messages.created("NFT"), result);
                             })
                             .catch((error) => {
