@@ -140,7 +140,10 @@ async function checkNFTs() {
 async function checkOrders() {
   try {
     console.log("Checking for Order Hash...");
-    Order.find({ hashStatus: 0, createdOn: { $gt: new Date(ISODate().getTime() - 1000 * 60 * 2) } },
+    let currentTime = new Date().getTime();
+    let minutes = 2 * 60 * 1000;
+    let newDateTime = new Date(currentTime + minutes);
+    Order.find({ hashStatus: 0, createdOn: { $gt: newDateTime } },
       async function (err, resData) {
         if (err) {
         } else {
@@ -420,7 +423,7 @@ async function checkOrders() {
                     });
                     await Order.find({ _id: mongoose.Types.ObjectId(orderID) }).remove().exec();
                     await Bid.find({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).remove().exec();
-                    await Bid.find({ nftID: mongoose.Types.ObjectId(nftID), owner: mongoose.Types.ObjectId(data.sellerID), bidStatus: "MakeOffer" }).remove().exec();
+                    await Bid.find({ nftID: mongoose.Types.ObjectId(nftID), bidStatus: "MakeOffer" }).remove().exec();
 
                     await User.findOne({ walletAddress: _.toChecksumAddress(buyer) },
                     (err, user) => {
@@ -481,7 +484,10 @@ async function checkOrders() {
 async function checkOffers() {
   try {
     console.log("Checking for Offer Hash...");
-    Bid.find({ hashStatus: 0, createdOn: { $gt: new Date(ISODate().getTime() - 1000 * 60 * 2) } },
+    let currentTime = new Date().getTime();
+    let minutes = 2 * 60 * 1000;
+    let newDateTime = new Date(currentTime + minutes);
+    Bid.find({ hashStatus: 0, createdOn: { $gt: newDateTime } },
       async function (err, resData) {
         if (err) {
         } else {
@@ -672,7 +678,6 @@ async function checkOffers() {
                     });
 
                     await Bid.deleteMany({
-                      owner: mongoose.Types.ObjectId(owner),
                       nftID: mongoose.Types.ObjectId(nftID),
                       bidStatus: "MakeOffer",
                     }).then(function () {

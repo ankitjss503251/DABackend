@@ -11,6 +11,9 @@ const nftSchema = mongoose.Schema({
     require: true,
     enum: [1, 2],
   },
+  metaDatahash: {
+    type: String
+  },
   hash: {
     type: String,
     require: true

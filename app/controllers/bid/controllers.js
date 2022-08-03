@@ -3,6 +3,7 @@ const validators = require("../helpers/validators");
 const mongoose = require("mongoose");
 const nodemailer = require("../../utils/lib/nodemailer");
 
+
 class BidController {
   constructor() {}
 
@@ -652,7 +653,6 @@ class BidController {
               });
 
               await Bid.deleteMany({
-                owner: mongoose.Types.ObjectId(owner),
                 nftID: mongoose.Types.ObjectId(nftID),
                 bidStatus: "MakeOffer",
               })
@@ -683,7 +683,6 @@ class BidController {
             });
             
             await Bid.deleteMany({
-              owner: mongoose.Types.ObjectId(owner),
               nftID: mongoose.Types.ObjectId(nftID),
               bidStatus: "MakeOffer",
             }).then(function () {
@@ -861,7 +860,6 @@ class BidController {
             });
 
             await Bid.deleteMany({
-              owner: mongoose.Types.ObjectId(owner),
               nftID: mongoose.Types.ObjectId(nftID),
               bidStatus: "MakeOffer",
             }).then(function () {
