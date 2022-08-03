@@ -421,10 +421,21 @@ async function checkOrders() {
                     ).catch((e) => {
                       return;
                     });
-                    await Order.find({ _id: mongoose.Types.ObjectId(orderID) }).remove().exec();
-                    await Bid.find({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).remove().exec();
-                    await Bid.find({ nftID: mongoose.Types.ObjectId(nftID), bidStatus: "MakeOffer" }).remove().exec();
-                    console.log("Makeoffer Delete");
+                    await Order.deleteMany({ _id: mongoose.Types.ObjectId(orderID) }).then(function () { 
+                      console.log("Order Data Deleted Cronjon");
+                    }).catch(function (error) {
+                      console.log("Error in Order Data Deleted Cronjon",error);
+                    });
+                    await Bid.deleteMany({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).then(function () { 
+                      console.log("Order Bid Deleted Cronjon");
+                    }).catch(function (error) {
+                      console.log("Error in Bid Data Deleted Cronjon",error);
+                    });
+                    await Bid.deleteMany({ nftID: mongoose.Types.ObjectId(nftID), bidStatus: "MakeOffer" }).then(function () { 
+                      console.log("Bid Offer Data Deleted Cronjon");
+                    }).catch(function (error) {
+                      console.log("Error in Bid Offer Data Deleted Cronjon",error);
+                    });
 
                     await User.findOne({ walletAddress: _.toChecksumAddress(buyer) },
                     (err, user) => {
