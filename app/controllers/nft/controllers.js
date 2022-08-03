@@ -218,7 +218,7 @@ class NFTController {
                                     uploadingData = {
                                       id: "#"+nftElement.tokenID,
                                       name: nftElement.name,
-                                      edition: "#"+nftElement.tokenID,
+                                      edition: nftElement.tokenID,
                                       description: nftElement.description,
                                       attributes: JSON.parse(nftElement.attributes),
                                       collectionAddress: nftElement.collectionAddress,
