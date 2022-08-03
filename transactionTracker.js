@@ -424,6 +424,7 @@ async function checkOrders() {
                     await Order.find({ _id: mongoose.Types.ObjectId(orderID) }).remove().exec();
                     await Bid.find({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).remove().exec();
                     await Bid.find({ nftID: mongoose.Types.ObjectId(nftID), bidStatus: "MakeOffer" }).remove().exec();
+                    console.log("Makeoffer Delete");
 
                     await User.findOne({ walletAddress: _.toChecksumAddress(buyer) },
                     (err, user) => {
@@ -681,9 +682,9 @@ async function checkOffers() {
                       nftID: mongoose.Types.ObjectId(nftID),
                       bidStatus: "MakeOffer",
                     }).then(function () {
-                      console.log("Data deleted");
+                      console.log("Makeoffer deleted cronjob 1");
                     }).catch(function (error) {
-                      console.log(error);
+                      console.log("Error  in Makeoffer deleted cronjob 1", error);
                     });
 
                     await Order.deleteMany({

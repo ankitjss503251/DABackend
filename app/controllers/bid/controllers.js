@@ -646,7 +646,7 @@ class BidController {
               bidStatus: "Bid",
             })
               .then(function () {
-                console.log("Data deleted");
+                console.log("Bids Data deleted Code");
               })
               .catch(function (error) {
                 console.log(error);
@@ -657,10 +657,10 @@ class BidController {
                 bidStatus: "MakeOffer",
               })
                 .then(function () {
-                  console.log("Data deleted");
+                  console.log("MakeOffer Data deleted Code");
                 })
                 .catch(function (error) {
-                  console.log(error);
+                  console.log("Error in Bid Delete 2",error);
                 });
           } else {
             let _order = await Order.findOne({
@@ -686,9 +686,9 @@ class BidController {
               nftID: mongoose.Types.ObjectId(nftID),
               bidStatus: "MakeOffer",
             }).then(function () {
-              console.log("Data deleted");
+              console.log("MakeOffer Data deleted Code 2");
             }).catch(function (error) {
-              console.log(error);
+              console.log("Error in Bid Delete 2",error);
             });
           }
           return res.reply(messages.updated("order"));
@@ -863,9 +863,9 @@ class BidController {
               nftID: mongoose.Types.ObjectId(nftID),
               bidStatus: "MakeOffer",
             }).then(function () {
-              console.log("Data deleted");
+              console.log("Offer Delete 55",);
             }).catch(function (error) {
-              console.log(error);
+              console.log("Error in Bid Delete 3",error);
             });
 
             await Order.deleteMany({
