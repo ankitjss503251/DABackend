@@ -230,6 +230,16 @@ class OrderController {
               ).catch((e) => {
                 console.log("Error1", e.message);
               });
+              await Bid.deleteMany({ orderID: mongoose.Types.ObjectId(req.body.orderID), bidStatus: "Bid", }).then(function () { 
+                console.log("Order Bid Deleted UpdateOrder");
+              }).catch(function (error) {
+                console.log("Error in Bid Data Deleted UpdateOrder",error);
+              });
+              await Bid.deleteMany({ nftID: mongoose.Types.ObjectId(req.body.nftID), bidStatus: "MakeOffer" }).then(function () { 
+                console.log("Bid Offer Data Deleted UpdateOrder");
+              }).catch(function (error) {
+                console.log("Error in Bid Offer Data Deleted UpdateOrder",error);
+              });
               return res.reply(messages.updated("order"));
             }
           });

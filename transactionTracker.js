@@ -715,7 +715,7 @@ async function checkOffers() {
                         }
                       }
                     ).catch((e) => {
-                      return;
+                      console.log("Error 1212", e);
                     });
 
                     let buyerID = data.bidderID;
