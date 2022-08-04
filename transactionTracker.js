@@ -412,7 +412,7 @@ async function checkOrders() {
                     await Order.findByIdAndUpdate(
                       orderID,
                       updateData,
-                      (err, resData) => {
+                      async (err, resData) => {
                         if (resData) {
                           console.log("Updated Order record", orderID)
                           await User.findOne({ walletAddress: _.toChecksumAddress(buyer) },
@@ -708,7 +708,7 @@ async function checkOffers() {
                     await Bid.findByIdAndUpdate(
                       data._id,
                       updateData,
-                      (err, resData) => {
+                      async (err, resData) => {
                         if (resData) {
                           console.log("Updated Bid record", data._id)
                           let buyerID = data.bidderID;
