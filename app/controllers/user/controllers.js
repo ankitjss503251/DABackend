@@ -59,16 +59,16 @@ let oMulterObj = {
   fileFilter: fileFilter,
 };
 const upload = multer(oMulterObj).single("userProfile");
-class UserController{
-  constructor(){
-    
+class UserController {
+  constructor() {
+
   }
-  
-  async getIndividualUser(req, res){
+
+  async getIndividualUser(req, res) {
     try {
       if (!req.params.userID)
         return res.reply(messages.not_found("User ID"));
-  
+
       User.findById(req.params.userID, (err, user) => {
         if (err) return res.reply(messages.server_error());
         if (!user) return res.reply(messages.not_found("User"));
@@ -79,15 +79,15 @@ class UserController{
     }
   };
 
-  async getUserDetails(req, res){
+  async getUserDetails(req, res) {
     console.log("Fun called");
     try {
       if (!req.params.user)
         return res.reply(messages.not_found("Request"));
 
       let searchKey = req.params.user;
-      
-      User.findOne({ $or:[ {'fullname':searchKey}, {'username':searchKey}, {'walletAddress':searchKey} ] }, (err, user) => {
+
+      User.findOne({ $or: [{ 'fullname': searchKey }, { 'username': searchKey }, { 'walletAddress': searchKey }] }, (err, user) => {
         if (err) return res.reply(messages.server_error());
         if (!user) return res.reply(messages.not_found("User"));
         return res.reply(messages.successfully("User Details Found"), user);
@@ -96,11 +96,11 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
-  
-  async getUsers(req, res){
+
+  async getUsers(req, res) {
     try {
       console.log("Called Here");
-      console.log("Req " , req.userId);
+      console.log("Req ", req.userId);
       if (!req.userId) return res.reply(messages.unauthorized());
       let data = [];
       let searchText = req.body.searchText;
@@ -109,12 +109,12 @@ class UserController{
       const startIndex = (page - 1) * limit;
       const endIndex = page * limit;
       let UserSearchArray = [];
-  
+
       User.findById(req.userId, async (err, userData) => {
         if (err) return res.reply(messages.server_error());
         if (!userData) return res.reply(messages.not_found("User"));
         if (userData.role == "admin") {
-          
+
           UserSearchArray["role"] = "user";
           if (searchText !== "") {
             UserSearchArray["$or"] = [
@@ -167,14 +167,14 @@ class UserController{
             .catch((e) => {
               console.log("Error", e);
             });
-  
+
           results.count = await User.countDocuments(UserSearchObj).exec();
           results.results = data;
           res.header("Access-Control-Max-Age", 600);
           return res.reply(messages.success("User List"), results);
-  
+
         } else if (userData.role == "superadmin") {
-  
+
           UserSearchArray["_id"] = mongoose.Types.ObjectId(req.userId);;
           if (searchText !== "") {
             UserSearchArray["$or"] = [
@@ -227,24 +227,24 @@ class UserController{
             .catch((e) => {
               console.log("Error", e);
             });
-  
+
           results.count = await User.countDocuments(UserSearchObj).exec();
           results.results = data;
           res.header("Access-Control-Max-Age", 600);
           return res.reply(messages.success("User List"), results);
-  
+
         } else {
           return res.reply(messages.unauthorized());
         }
-  
+
       });
     } catch (error) {
       console.log("Error:", error);
       return res.reply(messages.error());
     }
   };
-  
-  async getAllUsers(req, res){
+
+  async getAllUsers(req, res) {
     try {
       let data = [];
       let searchText = req.body.searchText;
@@ -252,7 +252,7 @@ class UserController{
       const limit = parseInt(req.body.limit);
       const startIndex = (page - 1) * limit;
       const endIndex = page * limit;
-  
+
       let UserSearchArray = [];
       UserSearchArray["role"] = "user";
       if (searchText !== "") {
@@ -306,7 +306,7 @@ class UserController{
         .catch((e) => {
           console.log("Error", e);
         });
-  
+
       results.count = await User.countDocuments(UserSearchObj).exec();
       results.results = data;
       res.header("Access-Control-Max-Age", 600);
@@ -316,15 +316,13 @@ class UserController{
       return res.reply(messages.error());
     }
   };
-  
-  
-  
-  async blockUser(req, res){
+
+  async blockUser(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
       if (!req.body.userID)
         return res.reply(messages.not_found("User ID"));
-  
+
       User.findById(req.userId, async (err, user) => {
         if (err) return res.reply(messages.server_error());
         if (!user) return res.reply(messages.not_found("User"));
@@ -350,8 +348,8 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
-  
-  async profile(req, res){
+
+  async profile(req, res) {
     try {
       // if (!req.userId) {
       //     return res.reply(messages.unauthorized());
@@ -394,8 +392,8 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
-  
-  async updateProfile(req, res, next){
+
+  async updateProfile(req, res, next) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
       let profileDetails = {};
@@ -421,7 +419,7 @@ class UserController{
               bio: req.body.bio,
               email: req.body.email,
             };
-  
+
             console.log("here--->>");
             const aAllowedMimes = [
               "image/jpeg",
@@ -433,9 +431,9 @@ class UserController{
               if (!aAllowedMimes.includes(req.file.mimetype)) {
                 return res.reply(messages.invalid("File Type"));
               }
-  
+
               profileDetails["profileIcon"] = req.file.location;
-  
+
               console.log("req.file.location", req.file.location);
             }
             await User.findByIdAndUpdate(
@@ -457,12 +455,12 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
-  
-  async addCollaborator(req, res){
+
+  async addCollaborator(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
       if (!req.body) return res.reply(messages.not_found("Collaborator Details"));
-  
+
       if (!validators.isValidwalletAddress(req.body.sAddress))
         return res.reply(messages.invalid("Collaborator Address"));
       if (
@@ -470,27 +468,27 @@ class UserController{
         !validators.isValidName(req.body.sfullname)
       )
         return res.reply(messages.invalid("Collaborator Name"));
-  
+
       req.body.sAddress = _.toChecksumAddress(req.body.sAddress);
-  
+
       User.findById(req.userId, (err, user) => {
         if (err) return res.reply(messages.server_error());
         if (!user) return res.reply(messages.not_found("User"));
-  
+
         if (user.swalletAddress == req.body.sAddress)
           return res.reply(
             messages.bad_request("You Can't Add Yourself As a Collaborator")
           );
-  
+
         let aUserCollaborators = user.aCollaborators;
         let bAlreadyExists;
         aUserCollaborators.forEach((oCollaborator) => {
           if (oCollaborator.sAddress == req.body.sAddress) bAlreadyExists = true;
         });
-  
+
         if (bAlreadyExists)
           return res.reply(messages.already_exists("Collaborator"));
-  
+
         oCollaboratorDetails = {
           $push: {
             aCollaborators: [req.body],
@@ -499,7 +497,7 @@ class UserController{
         User.findByIdAndUpdate(req.userId, oCollaboratorDetails, (err, user) => {
           if (err) return res.reply(messages.server_error());
           if (!user) return res.reply(messages.not_found("User"));
-  
+
           return res.reply(messages.successfully("Collaborator Added"));
         });
       });
@@ -507,14 +505,14 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
-  
-  async collaboratorList(req, res){
+
+  async collaboratorList(req, res) {
     try {
       // Per page limit
       var nLimit = parseInt(req.body.length);
       // From where to start
       var nOffset = parseInt(req.body.start);
-  
+
       let oAggregation = [
         {
           $match: {
@@ -554,11 +552,11 @@ class UserController{
           },
         },
       ];
-  
+
       let aUsers = await User.aggregate(oAggregation);
-  
+
       let data = aUsers[0].aCollaborators;
-  
+
       return res.status(200).json({
         message: "Collaborator List Details",
         data: data,
@@ -570,8 +568,8 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
-  
-  async getCollaboratorList(req, res){
+
+  async getCollaboratorList(req, res) {
     try {
       User.findById(req.userId, (err, user) => {
         if (err) return res.reply(messages.server_error());
@@ -585,15 +583,15 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
-  
-  async addNewsLetteremails(req, res){
+
+  async addNewsLetteremails(req, res) {
     try {
       if (!req.body.sName || !req.body.email)
         return res.reply(messages.required_field("Name and email "));
       if (_.iemail(req.body.email)) return res.reply(messages.invalid("email"));
       if (_.iusername(req.body.sName))
         return res.reply(messages.invalid("username"));
-  
+
       const newsLetteremail = new NewsLetteremail({
         sName: req.body.sName,
         email: req.body.email,
@@ -615,23 +613,23 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
-  
-  async deleteCollaborator(req, res){
+
+  async deleteCollaborator(req, res) {
     log.green(req.params.collaboratorAddress);
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
       if (!req.params.collaboratorAddress)
         return res.reply(messages.not_found("Collaborator Address"));
-  
+
       if (!validators.isValidwalletAddress(req.params.collaboratorAddress))
         return res.reply(messages.invalid("Collaborator Address"));
-  
+
       User.findById(req.userId, (err, user) => {
         if (err) return res.reply(messages.server_error());
         if (!user) return res.reply(messages.not_found("User"));
-  
+
         let aUserCollaborators = user.aCollaborators;
-  
+
         aUserCollaborators.forEach((oCollaborator, index) => {
           if (oCollaborator.sAddress == req.params.collaboratorAddress) {
             aUserCollaborators[index] =
@@ -640,13 +638,13 @@ class UserController{
             return;
           }
         });
-  
+
         user.aCollaborators = aUserCollaborators;
-  
+
         User.findByIdAndUpdate(req.userId, user, (err, user) => {
           if (err) return res.reply(messages.server_error());
           if (!user) return res.reply(messages.not_found("User"));
-  
+
           return res.reply(messages.successfully("Collaborator Deleted"));
         });
       });
@@ -654,47 +652,47 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
-  
-  async getCollaboratorName(req, res){
+
+  async getCollaboratorName(req, res) {
     log.green(req.params.collaboratorAddress);
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
       if (!req.params.collaboratorAddress)
         return res.reply(messages.not_found("Collaborator Address"));
-  
+
       if (!validators.isValidwalletAddress(req.params.collaboratorAddress))
         return res.reply(messages.invalid("Collaborator Address"));
-  
+
       User.findById(req.userId, (err, user) => {
         if (err) return res.reply(messages.server_error());
         if (!user) return res.reply(messages.not_found("User"));
-  
+
         let aUserCollaborators = user.aCollaborators;
-  
+
         if (!aUserCollaborators[0])
           return res.reply(messages.not_found("Collaborator"));
-  
+
         let oCollaborator;
-  
+
         aUserCollaborators.forEach((collaborator) => {
           if (collaborator.sAddress == req.params.collaboratorAddress) {
             oCollaborator = collaborator;
             return;
           }
         });
-  
+
         return res.reply(messages.successfully("Details Found"), oCollaborator);
       });
     } catch (error) {
       return res.reply(messages.server_error());
     }
   };
-  
-  async editCollaborator(req, res){
+
+  async editCollaborator(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
       if (!req.body) return res.reply(messages.not_found("Collaborator Details"));
-  
+
       if (!validators.isValidwalletAddress(req.body.sAddress))
         return res.reply(messages.invalid("Collaborator Address"));
       if (!validators.isValidwalletAddress(req.body.sPreviousAddress))
@@ -704,27 +702,27 @@ class UserController{
         !validators.isValidName(req.body.sfullname)
       )
         return res.reply(messages.invalid("Collaborator Name"));
-  
+
       req.body.sAddress = _.toChecksumAddress(req.body.sAddress);
-  
+
       let aUsers = await User.find({
         swalletAddress: req.body.sAddress,
       });
-  
+
       if (!aUsers.length)
         return res.reply(
           messages.bad_request("User with the given address is not registered")
         );
-  
+
       User.findById(req.userId, (err, user) => {
         if (err) return res.reply(messages.server_error());
         if (!user) return res.reply(messages.not_found("User"));
-  
+
         if (user.swalletAddress == req.body.sAddress)
           return res.reply(
             messages.bad_request("You Can't Add Yourself As a Collaborator")
           );
-  
+
         let aUserCollaborators = user.aCollaborators;
         aUserCollaborators.forEach((oCollaborator, index) => {
           if (oCollaborator.sAddress == req.body.sPreviousAddress) {
@@ -737,7 +735,7 @@ class UserController{
         User.findByIdAndUpdate(req.userId, user, (err, user) => {
           if (err) return res.reply(messages.server_error());
           if (!user) return res.reply(messages.not_found("User"));
-  
+
           return res.reply(messages.successfully("Collaborator Updated"));
         });
       });
@@ -745,8 +743,8 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
-  
-  async getCategories(req, res){
+
+  async getCategories(req, res) {
     try {
       const aCategories = await Category.find(
         {
@@ -761,7 +759,7 @@ class UserController{
       ).sort({
         sName: 1,
       });
-  
+
       return res.reply(messages.success(), {
         aCategories,
       });
@@ -770,8 +768,8 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
-  
-  async getAboutusData(req, res){
+
+  async getAboutusData(req, res) {
     try {
       const aAboutus = await Aboutus.findOne(
         {},
@@ -789,8 +787,8 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
-  
-  async getFAQsData(req, res){
+
+  async getFAQsData(req, res) {
     try {
       const aFAQs = await FAQs.find(
         {},
@@ -804,8 +802,8 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
-  
-  async getTermsData(req, res){
+
+  async getTermsData(req, res) {
     try {
       const aTerms = await Terms.findOne(
         {},
@@ -823,8 +821,8 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
-  
-  async getUserProfilewithNfts(req, res){
+
+  async getUserProfilewithNfts(req, res) {
     console.log("req", req.body);
     try {
       if (!req.body.userId) {
@@ -873,7 +871,7 @@ class UserController{
         (err, user) => {
           if (err) return res.reply(messages.server_error());
           if (!user) return res.reply(messages.not_found("User"));
-  
+
           return res.reply(messages.no_prefix("User Details"), user);
         }
       );
@@ -882,16 +880,16 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
-  
-  async getUserWithNfts(req, res){
+
+  async getUserWithNfts(req, res) {
     try {
       if (!req.body.userId) return res.reply(messages.unauthorized());
-  
+
       var nLimit = parseInt(req.body.length);
       var nOffset = parseInt(req.body.start);
       let oSortingOrder = {};
       log.red(req.body);
-  
+
       if (req.body.sSortingType == "Recently Added") {
         oSortingOrder["sCreated"] = -1;
       } else if (req.body.sSortingType == "Most Viewed") {
@@ -904,7 +902,7 @@ class UserController{
         oSortingOrder["_id"] = -1;
       }
       console.log("-----------------------------------------------2");
-  
+
       let data = await NFT.aggregate([
         {
           $match: {
@@ -1019,7 +1017,7 @@ class UserController{
           },
         },
       ]);
-  
+
       console.log("-----------------------------------------------2");
       let iFiltered = data[0].nfts.length;
       if (data[0].totalCount[0] == undefined) {
@@ -1042,8 +1040,8 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
-  
-  async getAllUserDetails(req, res){
+
+  async getAllUserDetails(req, res) {
     try {
       let data = [];
       const page = parseInt(req.body.page);
@@ -1051,12 +1049,12 @@ class UserController{
       const startIndex = (page - 1) * limit;
       const endIndex = page * limit;
       let searchText = req.body.searchText;
-  
+
       let UserSearchArray = [];
       if (req.userId) {
         UserSearchArray["_id"] = { $ne: mongoose.Types.ObjectId(req.userId) };
       }
-  
+
       let UserSearchObj = Object.assign({}, UserSearchArray);
       console.log(UserSearchObj);
       let totalCount = 0;
@@ -1080,7 +1078,7 @@ class UserController{
           ]
         }).exec()
       }
-  
+
       const results = {};
       if (endIndex < totalCount) {
         results.next = {
@@ -1140,9 +1138,9 @@ class UserController{
           .catch((e) => {
             console.log("Error", e);
           });
-  
+
       } else {
-  
+
         await User.find(UserSearchObj)
           .sort({ sCreated: -1 })
           .select({
@@ -1174,7 +1172,7 @@ class UserController{
             console.log("Error", e);
           });
       }
-  
+
       results.count = totalCount;
       results.results = data;
       res.header('Access-Control-Max-Age', 600);
@@ -1184,21 +1182,21 @@ class UserController{
       return res.reply(messages.server_error());
     }
   };
-  
-  async followUser(req, res){
+
+  async followUser(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
-  
+
       let { id } = req.body;
-  
+
       return User.findOne({ _id: mongoose.Types.ObjectId(id) }).then(
         async (userData) => {
           if (userData && userData != null) {
             let followMAINarray = [];
             followMAINarray = userData.user_followings;
-  
+
             let flag = "";
-  
+
             let followARY =
               userData.user_followings && userData.user_followings.length
                 ? userData.user_followings.filter(
@@ -1209,9 +1207,9 @@ class UserController{
               _id: mongoose.Types.ObjectId(req.userId),
             });
             let followerSize = CurrUser.user_followers_size;
-  
+
             console.log("followerSize", followerSize);
-  
+
             let newFollowerSize = 0;
             if (followARY && followARY.length) {
               flag = "dislike";
@@ -1225,18 +1223,17 @@ class UserController{
               followMAINarray.push(mongoose.Types.ObjectId(req.userId));
               newFollowerSize += 1;
             }
-  
+
             await User.findByIdAndUpdate(
               { _id: mongoose.Types.ObjectId(req.userId) },
               { $set: { user_followers_size: newFollowerSize } }
             );
-  
+
             await User.findByIdAndUpdate(
               { _id: mongoose.Types.ObjectId(id) },
               { $set: { user_followings: followMAINarray } }
             ).then((user) => {
               // if (err) return res.reply(messages.server_error());
-  
               if (flag == "like") {
                 return res.reply(messages.successfully("User followed"));
               } else {
@@ -1254,5 +1251,23 @@ class UserController{
     }
   };
 
+
+  async checkIfBlocked(req, res) {
+    try {
+      let user = await User.findOne({
+        walletAddress: req.body.walletAddress,
+        status: 0
+      }).exec();
+      console.log("user", user)
+      if (user !== undefined && user != "" && user !== null) {
+        return res.reply(messages.successfully("Result"), true);
+      }
+      else {
+        return res.reply(messages.successfully("Result"), false);
+      }
+    } catch (error) {
+      return res.reply(messages.server_error());
+    }
+  }
 }
 module.exports = UserController;

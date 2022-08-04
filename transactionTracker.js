@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const LogsDecoder = require('logs-decoder');
 const logsDecoder = LogsDecoder.create()
 const config = require("dotenv").config();
-const { NFT, Collection, User, Bid, Order, Brand, Category } = require("./app/models");
+const { NFT, Collection, User, Bid, Order, History } = require("./app/models");
 
 // TODO: Change the URL to MainNet URL
 var web3 = new Web3(process.env.NETWORK_RPC_URL);
@@ -38,8 +38,8 @@ async function checkCollection() {
         } else {
           if (resData.length > 0) {
             for (const data of resData) {
-              if (data.hash !== undefined) {
-                console.log("Hash", data.hash);
+              if (data.hash !== undefined && data.hash !== "0x0") {
+                console.log("Collection Hash is", data.hash)
                 let receipt = await web3.eth.getTransactionReceipt(data.hash);
                 console.log("receipt is---->", receipt)
                 if (receipt === null) {
@@ -93,7 +93,8 @@ async function checkNFTs() {
         } else {
           if (resData.length > 0) {
             for (const data of resData) {
-              if (data.hash !== undefined) {
+              if (data.hash !== undefined && data.hash !== "0x0") {
+                console.log("NFT Hash is", data.hash)
                 let receipt = await web3.eth.getTransactionReceipt(data.hash);
                 if (receipt === null) {
                   return;
@@ -139,13 +140,16 @@ async function checkNFTs() {
 async function checkOrders() {
   try {
     console.log("Checking for Order Hash...");
+    let currentTime = new Date().getTime();
+    let minutes = 2 * 60 * 1000;
+    let newDateTime = new Date(currentTime + minutes);
     Order.find({ hashStatus: 0 },
       async function (err, resData) {
         if (err) {
         } else {
           if (resData.length > 0) {
             for (const data of resData) {
-              if (data.hash !== undefined) {
+              if (data.hash !== undefined && data.hash !== "0x0") {
                 console.log("Order Hash", data.hash);
 
                 web3.eth.getTransactionReceipt(data.hash, async function (e, receipt) {
@@ -154,6 +158,7 @@ async function checkOrders() {
                     return;
                   }
                   if (receipt.status === false) {
+                    console.log("Inside false");
                     let updateData = { hashStatus: 2 };
                     await Order.findByIdAndUpdate(
                       data._id,
@@ -168,8 +173,9 @@ async function checkOrders() {
                     });
                   }
                   if (receipt.status === true) {
+                    console.log("Inside True");
                     const decodedLogs = logsDecoder.decodeLogs(receipt.logs);
-                    // console.log("result is---->",decodedLogs[7].events);
+                    
                     let saleData = "";
                     if (data.salesType === 1) {
                       saleData = decodedLogs[11].events;
@@ -185,8 +191,8 @@ async function checkOrders() {
                     let tokenAddress = "";
                     let tokenId = "";
                     let amount = "";
+                    let bidsamount = "";
                     let quantity = "";
-                    let sellerID = "";
 
 
                     for (const sales of saleData) {
@@ -204,6 +210,7 @@ async function checkOrders() {
                       }
                       if (sales.name === "amount") {
                         amount = sales.value;
+                        bidsamount = sales.value;
                       }
                       if (sales.name === "quantity") {
                         quantity = sales.value;
@@ -338,7 +345,7 @@ async function checkOrders() {
                         ).catch((e) => {
                           return;
                         });
-                        
+
                       }
                     });
 
@@ -400,15 +407,7 @@ async function checkOrders() {
                         }
                       );
                     }
-                    Bid.deleteMany({
-                      orderID: mongoose.Types.ObjectId(orderID),
-                      bidStatus: "MakeOffer",
-                    }).then(function () {
-                      console.log("Make Offer Data deleted");
-                    }).catch(function (error) {
-                      console.log(error);
-                    });
-                  
+                    
                     let updateData = { hashStatus: 1 };
                     await Order.findByIdAndUpdate(
                       orderID,
@@ -416,35 +415,95 @@ async function checkOrders() {
                       (err, resData) => {
                         if (resData) {
                           console.log("Updated Order record", orderID)
+                          await User.findOne({ walletAddress: _.toChecksumAddress(buyer) },
+                            (err, user) => {
+                              if (err){
+                                return;
+                              }
+                              if (!user) {
+                                return;
+                              }
+                              let buyerID = user._id;
+                              let sellerID = data.sellerID;
+                              let action = "";
+                              let price = "";
+                              if (data.salesType === 1) {
+                                action = "Bid";
+                                price = bidsamount;
+                              } else {
+                                action = "Sold";
+                                price = data.price;
+                              }
+                              let type = "Accepted";
+                              let paymentToken = data.paymentToken;
+                              let createdBy = "";
+                              if (data.salesType === 1) {
+                                createdBy = user._id;
+                              } else {
+                                createdBy = data.sellerID;
+                              }
+                              const insertData = new History({
+                                nftID: nftID,
+                                buyerID: buyerID,
+                                sellerID: sellerID,
+                                action: action,
+                                type: type,
+                                paymentToken: paymentToken,
+                                price: price,
+                                quantity: quantity,
+                                createdBy: createdBy
+                              });
+                              insertData.save().then(async (result) => { 
+                                console.log("Record Added in adding History....");
+                              }).catch((error) => {
+                                console.log("Error in adding History...");
+                              });
+                            });
                         }
                       }
                     ).catch((e) => {
                       return;
                     });
-                    await Order.find({ _id: mongoose.Types.ObjectId(orderID) }).remove().exec();
-                    await Bid.find({orderID: mongoose.Types.ObjectId(orderID),bidStatus: "Bid",}).remove().exec();
+                    await Order.deleteMany({ _id: mongoose.Types.ObjectId(orderID) }).then(function () { 
+                      console.log("Order Data Deleted Cronjon");
+                    }).catch(function (error) {
+                      console.log("Error in Order Data Deleted Cronjon",error);
+                    });
+                    await Bid.deleteMany({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).then(function () { 
+                      console.log("Order Bid Deleted Cronjon");
+                    }).catch(function (error) {
+                      console.log("Error in Bid Data Deleted Cronjon",error);
+                    });
+                    await Bid.deleteMany({ nftID: mongoose.Types.ObjectId(nftID), bidStatus: "MakeOffer" }).then(function () { 
+                      console.log("Bid Offer Data Deleted Cronjon");
+                    }).catch(function (error) {
+                      console.log("Error in Bid Offer Data Deleted Cronjon",error);
+                    });
                   }
-                });
+                })
               }
             }
           }
         }
       })
   } catch (error) {
-    console.log(error);
-  }
+    console.log("Error is", error);
+  } 
 }
 
 async function checkOffers() {
   try {
     console.log("Checking for Offer Hash...");
+    let currentTime = new Date().getTime();
+    let minutes = 2 * 60 * 1000;
+    let newDateTime = new Date(currentTime + minutes);
     Bid.find({ hashStatus: 0 },
       async function (err, resData) {
         if (err) {
         } else {
           if (resData.length > 0) {
             for (const data of resData) {
-              if (data.hash !== undefined) {
+              if (data.hash !== undefined && data.hash !== "0x0") {
                 console.log("Offer Hash", data.hash);
 
                 web3.eth.getTransactionReceipt(data.hash, async function (e, receipt) {
@@ -514,7 +573,7 @@ async function checkOffers() {
                       currentQty = _NFT[0].ownedBy.find(
                         (o) => o.address === seller.toLowerCase()
                       ).quantity;
-                      console.log("currentQty", currentQty)
+                    console.log("currentQty", currentQty)
 
                     let leftQty = parseInt(currentQty) - parseInt(boughtQty);
                     console.log("leftQty", leftQty)
@@ -629,13 +688,12 @@ async function checkOffers() {
                     });
 
                     await Bid.deleteMany({
-                      owner: mongoose.Types.ObjectId(owner),
                       nftID: mongoose.Types.ObjectId(nftID),
                       bidStatus: "MakeOffer",
                     }).then(function () {
-                      console.log("Data deleted");
+                      console.log("Makeoffer deleted cronjob 1");
                     }).catch(function (error) {
-                      console.log(error);
+                      console.log("Error  in Makeoffer deleted cronjob 1", error);
                     });
 
                     await Order.deleteMany({
@@ -647,17 +705,41 @@ async function checkOffers() {
                       console.log(error);
                     });
                     let updateData = { hashStatus: 1 };
-                        await Bid.findByIdAndUpdate(
-                          data._id,
-                          updateData,
-                          (err, resData) => {
-                            if (resData) {
-                              console.log("Updated Bid record", data._id)
-                            }
-                          }
-                        ).catch((e) => {
-                          return;
-                        });
+                    await Bid.findByIdAndUpdate(
+                      data._id,
+                      updateData,
+                      (err, resData) => {
+                        if (resData) {
+                          console.log("Updated Bid record", data._id)
+                          let buyerID = data.bidderID;
+                          let sellerID = data.owner;
+                          let action = "Offer";
+                          let type = "Accepted";
+                          let paymentToken = data.paymentToken;
+                          let price = data.bidPrice;
+                          let createdBy = data.bidderID;
+
+                          const insertData = new History({
+                            nftID: nftID,
+                            buyerID: buyerID,
+                            sellerID: sellerID,
+                            action: action,
+                            type: type,
+                            paymentToken: paymentToken,
+                            price: price,
+                            quantity: quantity,
+                            createdBy: createdBy
+                          });
+                          insertData.save().then(async (result) => {
+                            console.log("Record Added in adding History");
+                          }).catch((error) => {
+                            console.log("Error in adding History");
+                          });
+                        }
+                      }
+                    ).catch((e) => {
+                      console.log("Error 1212", e);
+                    });
 
                   }
                 });
@@ -677,4 +759,4 @@ setInterval(() => {
   checkNFTs();
   checkOrders();
   checkOffers();
-}, 7000);
+}, 10000);

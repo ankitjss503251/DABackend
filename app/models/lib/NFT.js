@@ -11,11 +11,15 @@ const nftSchema = mongoose.Schema({
     require: true,
     enum: [1, 2],
   },
+  metaDatahash: {
+    type: String
+  },
   hash: {
     type: String,
     require: true
   },
   image: { type: String, require: true },
+  previewImg: { type: String },
   fileType: { type: String, default: "Image" },
   price: { type: mongoose.Types.Decimal128, require: true },
   description: { type: String },

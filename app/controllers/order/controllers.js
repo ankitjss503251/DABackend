@@ -230,6 +230,16 @@ class OrderController {
               ).catch((e) => {
                 console.log("Error1", e.message);
               });
+              await Bid.deleteMany({ orderID: mongoose.Types.ObjectId(req.body.orderID), bidStatus: "Bid", }).then(function () { 
+                console.log("Order Bid Deleted UpdateOrder");
+              }).catch(function (error) {
+                console.log("Error in Bid Data Deleted UpdateOrder",error);
+              });
+              await Bid.deleteMany({ nftID: mongoose.Types.ObjectId(req.body.nftID), bidStatus: "MakeOffer" }).then(function () { 
+                console.log("Bid Offer Data Deleted UpdateOrder");
+              }).catch(function (error) {
+                console.log("Error in Bid Offer Data Deleted UpdateOrder",error);
+              });
               return res.reply(messages.updated("order"));
             }
           });
@@ -242,7 +252,7 @@ class OrderController {
 
   async getOrder(req, res) {
     try {
-      Order.findOne({ _id: req.body.orderID }, (err, order) => {
+      Order.findOne({ _id: req.body.orderID, }, (err, order) => {
         if (err) return res.reply(messages.server_error());
         if (!order) return res.reply(messages.not_found("Order"));
         return res.reply(messages.no_prefix("Order Details"), order);
@@ -268,6 +278,7 @@ class OrderController {
       const endIndex = page * limit;
       const results = {};
       let searchArray = [];
+      // searchArray["hashStatus"] = 1;
       if (req.body.nftID != undefined && req.body.nftID != "") {
         searchArray["nftID"] = req.body.nftID;
       }

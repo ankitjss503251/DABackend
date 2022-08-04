@@ -3,6 +3,7 @@ const validators = require("../helpers/validators");
 const mongoose = require("mongoose");
 const nodemailer = require("../../utils/lib/nodemailer");
 
+
 class BidController {
   constructor() {}
 
@@ -645,22 +646,21 @@ class BidController {
               bidStatus: "Bid",
             })
               .then(function () {
-                console.log("Data deleted");
+                console.log("Bids Data deleted Code");
               })
               .catch(function (error) {
                 console.log(error);
               });
 
               await Bid.deleteMany({
-                owner: mongoose.Types.ObjectId(owner),
                 nftID: mongoose.Types.ObjectId(nftID),
                 bidStatus: "MakeOffer",
               })
                 .then(function () {
-                  console.log("Data deleted");
+                  console.log("MakeOffer Data deleted Code");
                 })
                 .catch(function (error) {
-                  console.log(error);
+                  console.log("Error in Bid Delete 2",error);
                 });
           } else {
             let _order = await Order.findOne({
@@ -683,13 +683,12 @@ class BidController {
             });
             
             await Bid.deleteMany({
-              owner: mongoose.Types.ObjectId(owner),
               nftID: mongoose.Types.ObjectId(nftID),
               bidStatus: "MakeOffer",
             }).then(function () {
-              console.log("Data deleted");
+              console.log("MakeOffer Data deleted Code 2");
             }).catch(function (error) {
-              console.log(error);
+              console.log("Error in Bid Delete 2",error);
             });
           }
           return res.reply(messages.updated("order"));
@@ -861,13 +860,12 @@ class BidController {
             });
 
             await Bid.deleteMany({
-              owner: mongoose.Types.ObjectId(owner),
               nftID: mongoose.Types.ObjectId(nftID),
               bidStatus: "MakeOffer",
             }).then(function () {
-              console.log("Data deleted");
+              console.log("Offer Delete 55",);
             }).catch(function (error) {
-              console.log(error);
+              console.log("Error in Bid Delete 3",error);
             });
 
             await Order.deleteMany({
