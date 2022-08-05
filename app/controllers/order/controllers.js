@@ -16,7 +16,7 @@ const validators = require("../helpers/validators");
 var jwt = require("jsonwebtoken");
 
 class OrderController {
-  constructor() {}
+  constructor() { }
 
   async createOrder(req, res) {
     try {
@@ -87,6 +87,7 @@ class OrderController {
 
   async updateOrder(req, res) {
     try {
+      console.log("inside update order", req.body)
       if (!req.userId) return res.reply(messages.unauthorized());
       console.log("111");
       let lazyMintingStatus = Number(req.body.LazyMintingStatus);
@@ -112,7 +113,7 @@ class OrderController {
             } else {
               await Order.updateOne(
                 { _id: req.body.orderID },
-                { $set: { quantity_sold: req.body.qty_sold }, hash: req.body.hash, hashStatus: req.body.hashStatus  },
+                { $set: { quantity_sold: req.body.qty_sold }, hash: req.body.hash, hashStatus: req.body.hashStatus },
                 (err) => {
                   if (err) throw error;
                 }
@@ -181,10 +182,10 @@ class OrderController {
                   (o) => o.address === req.body.buyer.toLowerCase()
                 ).quantity
                   ? parseInt(
-                      NFTData_Buyer.ownedBy.find(
-                        (o) => o.address === req.body.buyer.toLowerCase()
-                      ).quantity
-                    )
+                    NFTData_Buyer.ownedBy.find(
+                      (o) => o.address === req.body.buyer.toLowerCase()
+                    ).quantity
+                  )
                   : 0;
                 boughtQty = req.body.qtyBought;
                 let ownedQty = currentQty + boughtQty;
@@ -230,15 +231,15 @@ class OrderController {
               ).catch((e) => {
                 console.log("Error1", e.message);
               });
-              await Bid.deleteMany({ orderID: mongoose.Types.ObjectId(req.body.orderID), bidStatus: "Bid", }).then(function () { 
+              await Bid.deleteMany({ orderID: mongoose.Types.ObjectId(req.body.orderID), bidStatus: "Bid", }).then(function () {
                 console.log("Order Bid Deleted UpdateOrder");
               }).catch(function (error) {
-                console.log("Error in Bid Data Deleted UpdateOrder",error);
+                console.log("Error in Bid Data Deleted UpdateOrder", error);
               });
-              await Bid.deleteMany({ nftID: mongoose.Types.ObjectId(req.body.nftID), bidStatus: "MakeOffer" }).then(function () { 
+              await Bid.deleteMany({ nftID: mongoose.Types.ObjectId(req.body.nftID), bidStatus: "MakeOffer" }).then(function () {
                 console.log("Bid Offer Data Deleted UpdateOrder");
               }).catch(function (error) {
-                console.log("Error in Bid Offer Data Deleted UpdateOrder",error);
+                console.log("Error in Bid Offer Data Deleted UpdateOrder", error);
               });
               return res.reply(messages.updated("order"));
             }
@@ -405,7 +406,7 @@ class OrderController {
                   await Collection.findOneAndUpdate(
                     { _id: mongoose.Types.ObjectId(collectionID) },
                     { $inc: { nftCount: 1 } },
-                    function () {}
+                    function () { }
                   );
                   importedNFT.deleteOne({
                     _id: mongoose.Types.ObjectId(importedNFTID),
