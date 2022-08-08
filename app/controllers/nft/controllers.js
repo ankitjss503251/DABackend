@@ -1152,21 +1152,13 @@ class NFTController {
       let searchObj = Object.assign({}, searchArray);
 
       let isOnMarketplaceSearchArray = [];
-      isOnMarketplaceSearchArray["$match"] = {
-        "CollectionData.status": 1,
-        "CollectionData.hashStatus": 1
-      };
-      let isOnMarketplaceSearchObj = Object.assign(
-        {},
-        isOnMarketplaceSearchArray
-      );
+      isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1, "CollectionData.hashStatus": 1 };
+      let isOnMarketplaceSearchObj = Object.assign({}, isOnMarketplaceSearchArray);
       console.log("isOnMarketplaceSearchObj", isOnMarketplaceSearchObj);
-
 
       // let salesTypeSearchArray = [];
       // salesTypeSearchArray["$match"] = { "OrderData.hashStatus": 1 };
       // let salesTypeSearchObj = Object.assign({}, salesTypeSearchArray);
-
       // console.log("salesTypeSearchObj", salesTypeSearchObj);
 
       let nfts = await NFT.aggregate([
@@ -1189,6 +1181,58 @@ class NFTController {
           },
         },
         // salesTypeSearchObj,
+        {
+          $lookup:
+          {
+            from: 'bids',
+            pipeline: [
+              {
+                $match:
+                {
+                  bidQuantity: { $gte: 1 },
+                  bidStatus: "Bid",
+                  nftID: mongoose.Types.ObjectId(nftID)
+                }
+              },
+              { $sort: { createdOn: -1 } },
+            ],
+            as: 'BidsData'
+          },
+        },
+        {
+          $lookup:
+          {
+            from: 'bids',
+            pipeline: [
+              {
+                $match:
+                {
+                  bidQuantity: { $gte: 1 },
+                  isOffer: true,
+                  nftID: mongoose.Types.ObjectId(nftID)
+                }
+              },
+              { $sort: { createdOn: -1 } },
+            ],
+            as: 'OffersData'
+          },
+        },
+        {
+          $lookup:
+          {
+            from: 'histories',
+            pipeline: [
+              {
+                $match:
+                {
+                  nftID: mongoose.Types.ObjectId(nftID)
+                }
+              },
+              { $sort: { createdOn: -1 } },
+            ],
+            as: 'HistoryData'
+          },
+        },
         {
           $lookup: {
             from: "categories",
@@ -7247,6 +7291,184 @@ class NFTController {
       }
     } catch (error) {
       console.log("Error", error)
+      return res.reply(messages.server_error());
+    }
+  }
+
+  async nftButtons(req, res) {
+    try {
+      let results = [];
+      let nftID = req.body.nftID;
+      let userID = "";
+      if (req.body.userID && req.body.userID !== undefined) {
+        userID = req.body.userID;
+      }
+      let walletAddress = "";
+      if (req.body.walletAddress && req.body.walletAddress !== undefined) {
+        walletAddress = req.body.walletAddress;
+        walletAddress = walletAddress?.toLowerCase()
+      }
+      if (walletAddress !== "" && userID !== "") {
+        let searchArray = [];
+        searchArray["_id"] = mongoose.Types.ObjectId(nftID);
+        searchArray["ownedBy"] = {
+          $elemMatch: {
+            address: walletAddress?.toLowerCase(),
+            quantity: { $gt: 0 },
+          }
+        }
+        let searchObj = Object.assign({}, searchArray);
+        let isOwner = await NFT.countDocuments(searchObj).exec();
+        if (isOwner > 0) {
+          let searchArray1 = [];
+          searchArray1["status"] = 1;
+          searchArray1["hashStatus"] = 1;
+          searchArray1["OrderData.0"] = { $exists: true }
+          let searchObj1 = Object.assign({}, searchArray1);
+          await NFT.aggregate([
+            {
+              $lookup: {
+                from: "orders",
+                localField: "_id",
+                foreignField: "nftID",
+                as: "OrderData",
+              },
+            },
+            { $match: searchObj1 },
+            {
+              $project: {
+                _id: 1,
+                hasOrder: {
+                  $cond: { if: { $isArray: "$OrderData" }, then: { $size: "$OrderData" }, else: "NA" }
+                },
+              },
+            },
+          ]).exec(function (e, nftData) {
+            let onMarketPLace = nftData?.length ? nftData.length : 0;
+            if (onMarketPLace === 0) {
+              results.push("Put On Marketplace");
+            } else {
+              results.push("Remove From Sale");
+            }
+            return res.reply(messages.successfully("Data"), results);
+          });
+        } else {
+          let searchArray = [];
+          searchArray["nftID"] = mongoose.Types.ObjectId(nftID);
+          if (userID !== "") {
+            searchArray["bidderID"] = mongoose.Types.ObjectId(userID);
+          }
+          searchArray["bidQuantity"] = { $gte: 1 };
+          searchArray["bidStatus"] = "Bid";
+          let searchObj = Object.assign({}, searchArray);
+          let hasBid = await Bid.countDocuments(searchObj).exec();
+
+          let searchArray1 = [];
+          searchArray1["nftID"] = mongoose.Types.ObjectId(nftID);
+          if (userID !== "") {
+            searchArray1["bidderID"] = mongoose.Types.ObjectId(userID);
+          }
+          searchArray1["bidQuantity"] = { $gte: 1 };
+          searchArray1["isOffer"] = true;
+          let searchObj1 = Object.assign({}, searchArray1);
+          let hasOffer = await Bid.countDocuments(searchObj1).exec();
+          if (hasOffer === 0) {
+            results.push("Make Offer");
+          } else {
+            results.push("Update Offer");
+          }
+
+          let searchArray2 = [];
+          searchArray2["status"] = 1;
+          searchArray2["hashStatus"] = 1;
+          searchArray2["OrderData.0"] = { $exists: true }
+          let searchObj2 = Object.assign({}, searchArray2);
+          await NFT.aggregate([
+            {
+              $lookup: {
+                from: "orders",
+                localField: "_id",
+                foreignField: "nftID",
+                as: "OrderData",
+              },
+            },
+            { $match: searchObj2 },
+            {
+              $project: {
+                _id: 1,
+                "OrderData.salesType": 1,
+                hasOrder: {
+                  $cond: { if: { $isArray: "$OrderData" }, then: { $size: "$OrderData" }, else: "NA" }
+                },
+              },
+            },
+          ]).exec(function (e, nftData) {
+            console.log("nftData", nftData)
+            let onMarketPLace = nftData?.length ? nftData.length : 0;
+            if (onMarketPLace === 0) {
+              return res.reply(messages.successfully("Data"), results);
+            } else {
+              if (nftData[0]?.OrderData[0]?.salesType == 0) {
+                results.push("Buy Now");
+              } else {
+                if (hasBid === 0) {
+                  results.push("Place a Bid");
+                } else {
+                  results.push("Update Bid");
+                }
+              }
+              return res.reply(messages.successfully("Data"), results);
+            }
+          });
+        }
+      } else {
+        results.push("Make Offer");
+        let searchArray2 = [];
+        searchArray2["status"] = 1;
+        searchArray2["hashStatus"] = 1;
+        searchArray2["OrderData.0"] = { $exists: true }
+        let searchObj2 = Object.assign({}, searchArray2);
+        await NFT.aggregate([
+          {
+            $lookup: {
+              from: "orders",
+              localField: "_id",
+              foreignField: "nftID",
+              as: "OrderData",
+            },
+          },
+          { $match: searchObj2 },
+          {
+            $project: {
+              _id: 1,
+              "OrderData.salesType": 1,
+              hasOrder: {
+                $cond: { if: { $isArray: "$OrderData" }, then: { $size: "$OrderData" }, else: "NA" }
+              },
+            },
+          },
+        ]).exec(function (e, nftData) {
+          console.log("nftData", nftData)
+          let onMarketPLace = nftData?.length ? nftData.length : 0;
+          if (onMarketPLace === 0) {
+            return res.reply(messages.successfully("Data"), results);
+          } else {
+            if (nftData[0]?.OrderData[0]?.salesType == 0) {
+              results.push("Buy Now");
+            } else {
+              if (hasBid === 0) {
+                results.push("Place a Bid");
+              } else {
+                results.push("Update Bid");
+              }
+            }
+            return res.reply(messages.successfully("Data"), results);
+          }
+        });
+      }
+
+    } catch (error) {
+      console.log("Error " + error);
       return res.reply(messages.server_error());
     }
   }

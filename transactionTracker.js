@@ -742,8 +742,10 @@ async function checkOffers() {
 
 
 setInterval(() => {
+
   checkCollection();
   checkNFTs();
   checkOrders();
   checkOffers();
 }, 20000);
+
