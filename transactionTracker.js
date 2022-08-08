@@ -130,14 +130,17 @@ async function checkNFTs() {
 
 async function checkOrders() {
   try {
-    console.log("Checking for Order Hash...");
+    // console.log("Checking for Order Hash...");
+    let currentTime = new Date().getTime();
+    let minutes = 2 * 60 * 1000;
+    let newDateTime = new Date(currentTime + minutes);
     Order.find({ hashStatus: 0 },
       async function (err, resData) {
         if (err) {
         } else {
           if (resData.length > 0) {
             for (const data of resData) {
-              if (data.hash !== undefined && data.hash !== "0x0") {
+              if (data.hash !== undefined && data.hash !== "0x0" && data.hash !== "" && data.hash?.length >= 66) {
                 console.log("Order Hash", data.hash);
                 web3.eth.getTransactionReceipt(data.hash, async function (e, receipt) {
                   if (receipt === null) {
@@ -160,7 +163,7 @@ async function checkOrders() {
                   } else if (receipt.status === true) {
                     console.log("Inside True");
                     const decodedLogs = logsDecoder.decodeLogs(receipt.logs);
-                    
+
                     let saleData = "";
                     if (data.salesType === 1) {
                       saleData = decodedLogs[11].events;
@@ -222,7 +225,7 @@ async function checkOrders() {
                           _id: mongoose.Types.ObjectId(nftID),
                           "ownedBy.address": seller.toLowerCase(),
                         }).select("ownedBy -_id");
-                        console.log("NFTData-------->", NFTData);
+                        // console.log("NFTData-------->", NFTData);
                         let currentQty;
                         if (NFTData.length > 0) {
                           currentQty = NFTData[0].ownedBy.find(
@@ -392,7 +395,7 @@ async function checkOrders() {
                         }
                       );
                     }
-                    
+
                     let updateData = { hashStatus: 1 };
                     await Order.findByIdAndUpdate(
                       orderID,
@@ -402,7 +405,7 @@ async function checkOrders() {
                           console.log("Updated Order record", orderID)
                           await User.findOne({ walletAddress: _.toChecksumAddress(buyer) },
                             (err, user) => {
-                              if (err){
+                              if (err) {
                                 return;
                               }
                               if (!user) {
@@ -438,7 +441,7 @@ async function checkOrders() {
                                 quantity: quantity,
                                 createdBy: createdBy
                               });
-                              insertData.save().then(async (result) => { 
+                              insertData.save().then(async (result) => {
                                 console.log("Record Added in adding History....");
                               }).catch((error) => {
                                 console.log("Error in adding History...");
@@ -449,20 +452,20 @@ async function checkOrders() {
                     ).catch((e) => {
                       return;
                     });
-                    await Order.deleteMany({ _id: mongoose.Types.ObjectId(orderID) }).then(function () { 
+                    await Order.deleteMany({ _id: mongoose.Types.ObjectId(orderID) }).then(function () {
                       console.log("Order Data Deleted Cronjon");
                     }).catch(function (error) {
-                      console.log("Error in Order Data Deleted Cronjon",error);
+                      console.log("Error in Order Data Deleted Cronjon", error);
                     });
-                    await Bid.deleteMany({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).then(function () { 
+                    await Bid.deleteMany({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).then(function () {
                       console.log("Order Bid Deleted Cronjon");
                     }).catch(function (error) {
-                      console.log("Error in Bid Data Deleted Cronjon",error);
+                      console.log("Error in Bid Data Deleted Cronjon", error);
                     });
-                    await Bid.deleteMany({ nftID: mongoose.Types.ObjectId(nftID), bidStatus: "MakeOffer" }).then(function () { 
+                    await Bid.deleteMany({ nftID: mongoose.Types.ObjectId(nftID), bidStatus: "MakeOffer" }).then(function () {
                       console.log("Bid Offer Data Deleted Cronjon");
                     }).catch(function (error) {
-                      console.log("Error in Bid Offer Data Deleted Cronjon",error);
+                      console.log("Error in Bid Offer Data Deleted Cronjon", error);
                     });
                   }
                 })
@@ -471,21 +474,25 @@ async function checkOrders() {
           }
         }
       })
+    console.log("updated through cron")
   } catch (error) {
     console.log("Error is", error);
-  } 
+  }
 }
 
 async function checkOffers() {
   try {
     console.log("Checking for Offer Hash...");
-    Bid.find({ hashStatus: 0 },
+    let currentTime = new Date().getTime();
+    let minutes = 2 * 60 * 1000;
+    let newDateTime = new Date(currentTime + minutes);
+    Bid.find({ hashStatus: 0, bidStatus: "MakeOffer" },
       async function (err, resData) {
         if (err) {
         } else {
           if (resData.length > 0) {
             for (const data of resData) {
-              if (data.hash !== undefined && data.hash !== "0x0") {
+              if (data.hash !== undefined && data.hash !== "0x0" && data.hashStatus !== 1) {
                 console.log("Offer Hash", data.hash);
 
                 web3.eth.getTransactionReceipt(data.hash, async function (e, receipt) {
@@ -649,7 +656,7 @@ async function checkOffers() {
                       { bidStatus: "Accepted" },
                       function (err, acceptBid) {
                         if (err) {
-                          console.log("Error in Accepting Offer" + err);
+                          // console.log("Error in Accepting Offer" + err);
                           return res.reply(messages.error());
                         } else {
                           console.log("Offer Accepted : ", acceptBid);
@@ -662,7 +669,7 @@ async function checkOffers() {
                       nftID: mongoose.Types.ObjectId(nftID),
                       bidStatus: "Bid",
                     }).then(function () {
-                      console.log("Data deleted");
+                      // console.log("Data deleted");
                     }).catch(function (error) {
                       console.log(error);
                     });
@@ -671,7 +678,7 @@ async function checkOffers() {
                       nftID: mongoose.Types.ObjectId(nftID),
                       bidStatus: "MakeOffer",
                     }).then(function () {
-                      console.log("Makeoffer deleted cronjob 1");
+                      // console.log("Makeoffer deleted cronjob 1");
                     }).catch(function (error) {
                       console.log("Error  in Makeoffer deleted cronjob 1", error);
                     });
@@ -680,7 +687,7 @@ async function checkOffers() {
                       nftID: mongoose.Types.ObjectId(nftID),
                       sellerID: mongoose.Types.ObjectId(owner)
                     }).then(function () {
-                      console.log("Data deleted");
+                      // console.log("Data deleted");
                     }).catch(function (error) {
                       console.log(error);
                     });
@@ -735,8 +742,10 @@ async function checkOffers() {
 
 
 setInterval(() => {
-  // checkCollection();
-  // checkNFTs();
-  // checkOrders();
-  // checkOffers();
-}, 10000);
+
+  checkCollection();
+  checkNFTs();
+  checkOrders();
+  checkOffers();
+}, 20000);
+

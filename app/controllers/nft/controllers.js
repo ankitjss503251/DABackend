@@ -7232,6 +7232,7 @@ class NFTController {
           (err, resData) => {
             if (err) return res.reply(messages.server_error());
             if (!resData) return res.reply(messages.not_found("NFT"));
+            if (resData.hashStatus === req.body.hashStatus && (resData.hash !== "" || resData.hash !== "0x0" || resData.hash !== undefined)) return res.reply(messages.already_exists("Same Data"));
             return res.reply(messages.successfully("NFT Hash Status Updated"));
           }
         ).catch((e) => {
@@ -7250,6 +7251,7 @@ class NFTController {
           (err, resData) => {
             if (err) return res.reply(messages.server_error());
             if (!resData) return res.reply(messages.not_found("Collection"));
+            if (resData.hashStatus === req.body.hashStatus && (resData.hash !== "" || resData.hash !== "0x0" || resData.hash !== undefined)) return res.reply(messages.already_exists("Same Data"));
             return res.reply(messages.successfully("Collection Hash Status Updated"));
           }
         ).catch((e) => {
@@ -7264,6 +7266,7 @@ class NFTController {
           (err, resData) => {
             if (err) return res.reply(messages.server_error());
             if (!resData) return res.reply(messages.not_found("Order"));
+            if (resData.hashStatus === req.body.hashStatus && (resData.hash !== "" || resData.hash !== "0x0" || resData.hash !== undefined) && resData.hash?.length >= 66) return res.reply(messages.already_exists("Same Data"));
             return res.reply(messages.successfully("Order Hash Status Updated"));
           }
         ).catch((e) => {
@@ -7276,8 +7279,10 @@ class NFTController {
           req.body.recordID,
           details,
           (err, resData) => {
+            console.log("data", resData);
             if (err) return res.reply(messages.server_error());
             if (!resData) return res.reply(messages.not_found("Bids"));
+            if (resData.hashStatus === req.body.hashStatus && (resData.hash !== "" || resData.hash !== "0x0" || resData.hash !== undefined)) return res.reply(messages.already_exists("Same Data"));
             return res.reply(messages.successfully("Bids Hash Status Updated"));
           }
         ).catch((e) => {
