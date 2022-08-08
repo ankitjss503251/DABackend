@@ -7301,6 +7301,10 @@ class NFTController {
       let results = [];
       let nftID = req.body.nftID;
       let userID = "";
+      let isOwner = 0;
+      let onMarketPLace = 0;
+      let hasBid = 0;
+      let hasOffer = 0;
       if (req.body.userID && req.body.userID !== undefined) {
         userID = req.body.userID;
       }
@@ -7319,7 +7323,7 @@ class NFTController {
           }
         }
         let searchObj = Object.assign({}, searchArray);
-        let isOwner = await NFT.countDocuments(searchObj).exec();
+        isOwner = await NFT.countDocuments(searchObj).exec();
         if (isOwner > 0) {
           let searchArray1 = [];
           searchArray1["status"] = 1;
@@ -7345,7 +7349,7 @@ class NFTController {
               },
             },
           ]).exec(function (e, nftData) {
-            let onMarketPLace = nftData?.length ? nftData.length : 0;
+            onMarketPLace = nftData?.length ? nftData.length : 0;
             if (onMarketPLace === 0) {
               results.push("Put On Marketplace");
             } else {
@@ -7362,7 +7366,7 @@ class NFTController {
           searchArray["bidQuantity"] = { $gte: 1 };
           searchArray["bidStatus"] = "Bid";
           let searchObj = Object.assign({}, searchArray);
-          let hasBid = await Bid.countDocuments(searchObj).exec();
+          hasBid = await Bid.countDocuments(searchObj).exec();
 
           let searchArray1 = [];
           searchArray1["nftID"] = mongoose.Types.ObjectId(nftID);
@@ -7372,7 +7376,7 @@ class NFTController {
           searchArray1["bidQuantity"] = { $gte: 1 };
           searchArray1["isOffer"] = true;
           let searchObj1 = Object.assign({}, searchArray1);
-          let hasOffer = await Bid.countDocuments(searchObj1).exec();
+          hasOffer = await Bid.countDocuments(searchObj1).exec();
           if (hasOffer === 0) {
             results.push("Make Offer");
           } else {
@@ -7449,10 +7453,10 @@ class NFTController {
             },
           },
         ]).exec(function (e, nftData) {
-          console.log("nftData", nftData)
           let onMarketPLace = nftData?.length ? nftData.length : 0;
+          console.log("onMarketPLace", onMarketPLace)
           if (onMarketPLace === 0) {
-            return res.reply(messages.successfully("Data"), results);
+            return res.reply(messages.successfully("Datafgdh"), results);
           } else {
             if (nftData[0]?.OrderData[0]?.salesType == 0) {
               results.push("Buy Now");
