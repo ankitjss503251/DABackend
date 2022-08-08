@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 const fs = require("fs");
 const http = require("https");
-const { Category, Brand } = require("../../models");
+const { Category, Brand, Collection} = require("../../models");
 const pinataSDK = require("@pinata/sdk");
 const aws = require("aws-sdk");
 const multer = require("multer");
@@ -458,6 +458,70 @@ class UtilsController {
       });
     } catch (e) {
       return res.reply(message.error(e));
+    }
+  }
+
+  async getCategoryWithCollectionData(req, res) {
+    try {
+      let categoryID = "";
+      if (req.body.categoryID && req.body.categoryID !== undefined) {
+        categoryID = req.body.categoryID;
+      }
+      let name = "";
+      if (req.body.name && req.body.name !== undefined) {
+        name = req.body.name;
+      }
+      let searchArray = [];
+      if (categoryID !== "") {
+        searchArray["_id"] = mongoose.Types.ObjectId(categoryID);
+      }
+      if (name !== "") {
+        searchArray["name"] = name;
+      }
+      let CollectionSearchArray = [];
+      CollectionSearchArray["$match"] = { "CollectionData.status": 1 };
+      let searchObj = Object.assign({}, searchArray);
+      let CollectionSearchObj = Object.assign({}, CollectionSearchArray);
+
+
+      await Category.aggregate([
+        { $match: searchObj },
+        {
+          $lookup: {
+            from: "collections",
+            localField: "_id",
+            foreignField: "categoryID",
+            as: "CollectionData",
+          },
+        },
+        CollectionSearchObj,
+        { 
+          $lookup: 
+          { 
+            from: 'collections', 
+            'let': { col_id: '$_id' }, 
+            pipeline: [
+              { $match: 
+                { $expr: { $eq: ['$categoryID', '$$col_id'] } } 
+              }, 
+              { $project: { _id: 1, name: 1, description: 1, coverImage: 1, brandID: 1 } },
+              { $lookup: 
+                  { from: 'brands', 
+                  'let': { brandID: '$brandID' }, 
+                  pipeline: [{ $match: { $expr: { $eq: ['$_id', '$$brandID'] } } }, { $project: { _id: 1, logoImage: 1 } } ], 
+                  as: 'BrandData' } 
+              }
+              
+            ], 
+            as: 'CollectionData' } 
+          },
+      ]).exec(function (e, catData) {
+        console.log("Error ", e);
+        return res.reply(messages.success("Category List"), catData);
+      });
+    } catch (error) {
+      console.log("Error " + error);
+      return res.reply(messages.server_error());
     }
   }
 
