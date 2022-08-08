@@ -70,15 +70,16 @@ class OrderController {
   async deleteOrder(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
-      await Order.find({ _id: mongoose.Types.ObjectId(req.body.orderID) })
-        .remove()
-        .exec();
-      await Bid.find({
-        orderID: mongoose.Types.ObjectId(req.body.orderID),
-        bidStatus: "Bid",
-      })
-        .remove()
-        .exec();
+      await Order.deleteMany({ _id: mongoose.Types.ObjectId(orderID) }).then(function () { 
+        console.log("Order Data Deleted");
+      }).catch(function (error) {
+        console.log("Error in Order Data Deleted",error);
+      });
+      await Bid.deleteMany({ orderID: mongoose.Types.ObjectId(orderID), bidStatus: "Bid", }).then(function () { 
+        console.log("Order Bid Deleted Cronjon");
+      }).catch(function (error) {
+        console.log("Error in Bid Data Deleted Cronjon",error);
+      });
       return res.reply(messages.deleted("order"));
     } catch (err) {
       return res.reply(messages.error(), err.message);

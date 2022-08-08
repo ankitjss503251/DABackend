@@ -20,4 +20,6 @@ router.get("/getCategoryByID/:categoryID", utilsMiddleware.verifyAdminToken, uti
 router.post("/updateCategory", utilsMiddleware.verifyAdminToken, utilsController.updateCategory);
 router.post("/updateBrand", utilsMiddleware.verifyAdminToken, utilsController.updateBrand);
 
+router.post("/getCategoryWithCollectionData", utilsController.getCategoryWithCollectionData);
+
 module.exports = router;
