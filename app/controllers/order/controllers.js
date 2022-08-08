@@ -70,6 +70,7 @@ class OrderController {
   async deleteOrder(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
+      let orderID = req.body.orderID;
       await Order.deleteMany({ _id: mongoose.Types.ObjectId(orderID) }).then(function () { 
         console.log("Order Data Deleted");
       }).catch(function (error) {

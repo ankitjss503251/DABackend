@@ -397,10 +397,12 @@ async function checkOrders() {
                     }
 
                     let updateData = { hashStatus: 1 };
+                    console.log("start")
                     await Order.findByIdAndUpdate(
                       orderID,
                       updateData,
                       async (err, resData) => {
+                        console.log("resData", resData)
                         if (resData) {
                           console.log("Updated Order record", orderID)
                           await User.findOne({ walletAddress: _.toChecksumAddress(buyer) },
@@ -415,14 +417,16 @@ async function checkOrders() {
                               let sellerID = data.sellerID;
                               let action = "";
                               let price = "";
+                              let type = "";
                               if (data.salesType === 1) {
                                 action = "Bid";
                                 price = bidsamount;
+                                type = "Accepted";
                               } else {
                                 action = "Sold";
                                 price = data.price;
                               }
-                              let type = "Accepted";
+                              console.log("after user.findone")
                               let paymentToken = data.paymentToken;
                               let createdBy = "";
                               if (data.salesType === 1) {
@@ -430,6 +434,8 @@ async function checkOrders() {
                               } else {
                                 createdBy = data.sellerID;
                               }
+
+                              console.log("before new history")
                               const insertData = new History({
                                 nftID: nftID,
                                 buyerID: buyerID,
@@ -441,10 +447,11 @@ async function checkOrders() {
                                 quantity: quantity,
                                 createdBy: createdBy
                               });
+                              console.log("after new history")
                               insertData.save().then(async (result) => {
                                 console.log("Record Added in adding History....");
                               }).catch((error) => {
-                                console.log("Error in adding History...");
+                                console.log("Error in adding History...", error);
                               });
                             });
                         }

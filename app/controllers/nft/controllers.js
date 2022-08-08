@@ -7266,6 +7266,7 @@ class NFTController {
           (err, resData) => {
             if (err) return res.reply(messages.server_error());
             if (!resData) return res.reply(messages.not_found("Order"));
+            console.log("status--------------------------------->",resData.hashStatus ,req.body.hashStatus);
             if (resData.hashStatus === req.body.hashStatus && (resData.hash !== "" || resData.hash !== "0x0" || resData.hash !== undefined) && resData.hash?.length >= 66) return res.reply(messages.already_exists("Same Data"));
             return res.reply(messages.successfully("Order Hash Status Updated"));
           }
