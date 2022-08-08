@@ -19,7 +19,7 @@ const historySchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ["List", "Accepted", "Rejected", "Created", "Cancelled", "Updated", "Fixed Sale", "Timed Auction", "Open for Bids"],
+    enum: ["List", "Accepted", "Rejected", "Created", "Cancelled", "Updated", "Fixed Sale", "Timed Auction", "Open for Bids",""],
   },
   paymentToken: {
     type: String,

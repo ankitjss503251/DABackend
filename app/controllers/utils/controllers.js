@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 const fs = require("fs");
 const http = require("https");
-const { Category, Brand } = require("../../models");
+const { Category, Brand, Collection} = require("../../models");
 const pinataSDK = require("@pinata/sdk");
 const aws = require("aws-sdk");
 const multer = require("multer");
@@ -461,5 +461,246 @@ class UtilsController {
     }
   }
 
+  async getCategoryWithCollectionData(req, res) {
+    try {
+      // const page = parseInt(req.body.page);
+      const page = 1;
+      const limit = parseInt(req.body.limit);
+      const startIndex = (page - 1) * limit;
+      let categoryID = "";
+      if (req.body.categoryID && req.body.categoryID !== undefined) {
+        categoryID = req.body.categoryID;
+      }
+      let name = "";
+      if (req.body.name && req.body.name !== undefined) {
+        name = req.body.name;
+      }
+      let searchArray = [];
+      if (categoryID !== "") {
+        searchArray["_id"] = mongoose.Types.ObjectId(categoryID);
+      }
+      if (name !== "") {
+        searchArray["name"] = name;
+      }
+      let CollectionSearchArray = [];
+      CollectionSearchArray["$match"] = { "CollectionData.status": 1,  "CollectionData.hashStatus": 1 };
+      let searchObj = Object.assign({}, searchArray);
+      let CollectionSearchObj = Object.assign({}, CollectionSearchArray);
+      await Category.aggregate([
+        { $match: searchObj },
+        {
+          $lookup: {
+            from: "collections",
+            localField: "_id",
+            foreignField: "categoryID",
+            as: "CollectionData",
+          },
+        },
+        { 
+          $lookup: 
+          { 
+            from: 'collections', 
+            'let': { col_id: '$_id' }, 
+            pipeline: [
+              { $match: 
+                { 
+                  status: 1,
+                  hashStatus: 1,
+                  $expr: { $eq: ['$categoryID', '$$col_id'] } 
+                } 
+              }, 
+              { $project: { _id: 1, name: 1, description: 1, coverImage: 1, brandID: 1, createdOn: 1 } },
+              { $lookup: 
+                { from: 'brands', 
+                'let': { brandID: '$brandID' }, 
+                pipeline: [{ $match: { $expr: { $eq: ['$_id', '$$brandID'] } } }, { $project: { _id: 1, logoImage: 1 } } ], 
+                as: 'BrandData' } 
+              },
+              { $sort: { createdOn: -1 } },
+              { $skip: startIndex },
+              { $limit: limit },
+            ], 
+            as: 'CollectionData' } ,
+          },
+          { 
+            $lookup: 
+            { 
+              from: 'collections', 
+              'let': { col_id: '$_id' }, 
+              pipeline: [
+                { $match: 
+                  { 
+                    status: 1,
+                    hashStatus: 1,
+                    $expr: { $eq: ['$categoryID', '$$col_id'] } 
+                  } 
+                }, 
+                { $group: { _id: null, count: { $sum: 1 } } } 
+              ], 
+              as: 'CollectionData2' } ,
+            },
+      ]).exec(function (e, catData) {
+        console.log("Error ", e);
+        return res.reply(messages.success("Category List"), catData);
+      });
+    } catch (error) {
+      console.log("Error " + error);
+      return res.reply(messages.server_error());
+    }
+  }
+  async getCollections(req, res) {
+    try {
+      let data = [];
+      const page = parseInt(req.body.page);
+      const limit = parseInt(req.body.limit);
+      const startIndex = (page - 1) * limit;
+      const endIndex = page * limit;
+
+      let collectionID = "";
+      if (req.body.collectionID && req.body.collectionID !== undefined) {
+        collectionID = req.body.collectionID;
+      }
+      let userID = "";
+      if (req.body.userID && req.body.userID !== undefined) {
+        userID = req.body.userID;
+      }
+      let categoryID = "";
+      if (req.body.categoryID && req.body.categoryID !== undefined) {
+        categoryID = req.body.categoryID;
+      }
+      let brandID = "";
+      if (req.body.brandID && req.body.brandID !== undefined) {
+        brandID = req.body.brandID;
+      }
+      let ERCType = "";
+      if (req.body.ERCType && req.body.ERCType !== undefined) {
+        ERCType = req.body.ERCType;
+      }
+      let searchText = "";
+      if (req.body.searchText && req.body.searchText !== undefined) {
+        searchText = req.body.searchText;
+      }
+      let filterString = "";
+      if (req.body.filterString && req.body.filterString !== undefined) {
+        filterString = req.body.filterString;
+      }
+      let isMinted = "";
+      if (req.body.isMinted && req.body.isMinted !== undefined) {
+        isMinted = req.body.isMinted;
+      }
+      let isHotCollection = "";
+      if (req.body.isHotCollection && req.body.isHotCollection !== undefined) {
+        isHotCollection = req.body.isHotCollection;
+      }
+      let isExclusive = "";
+      if (req.body.isExclusive && req.body.isExclusive !== undefined) {
+        isExclusive = req.body.isExclusive;
+      }
+      let isOnMarketplace = "";
+      if (req.body.isOnMarketplace && req.body.isOnMarketplace !== undefined) {
+        isOnMarketplace = req.body.isOnMarketplace;
+      }
+
+      let contractAddress = "";
+      if (req.body.contractAddress && req.body.contractAddress !== undefined) {
+        contractAddress = req.body.contractAddress;
+      }
+
+      let searchArray = [];
+      searchArray["status"] = 1;
+      searchArray["hashStatus"] = 1;
+      if (collectionID !== "") {
+        searchArray["_id"] = mongoose.Types.ObjectId(collectionID);
+      }
+      if (contractAddress !== "" && contractAddress != undefined) {
+        searchArray["contractAddress"] = contractAddress;
+      }
+      if (userID !== "") {
+        searchArray["createdBy"] = mongoose.Types.ObjectId(userID);
+      }
+      if (categoryID !== "") {
+        searchArray["categoryID"] = mongoose.Types.ObjectId(categoryID);
+      }
+      if (brandID !== "") {
+        searchArray["brandID"] = mongoose.Types.ObjectId(brandID);
+      }
+      if (isMinted !== "") {
+        searchArray["isMinted"] = isMinted;
+      }
+      if (isHotCollection !== "") {
+        searchArray["isHotCollection"] = isHotCollection;
+      }
+      if (isExclusive !== "") {
+        searchArray["isExclusive"] = isExclusive;
+      }
+      if (ERCType !== "") {
+        searchArray["type"] = ERCType;
+      }
+      if (filterString !== "") {
+        searchArray["salesCount"] = { $gte: 0 };
+      }
+      if (isOnMarketplace !== "") {
+        searchArray["isOnMarketplace"] = isOnMarketplace;
+      }
+      if (searchText !== "") {
+        let searchKey = new RegExp(searchText, "i");
+        searchArray["$or"] = [
+          { name: searchKey },
+        ];
+      }
+      let searchObj = Object.assign({}, searchArray);
+
+      console.log("Obj", searchObj);
+      const results = {};
+      if (endIndex < (await Collection.countDocuments(searchObj).exec())) {
+        results.next = {
+          page: page + 1,
+          limit: limit,
+        };
+      }
+      if (startIndex > 0) {
+        results.previous = {
+          page: page - 1,
+          limit: limit,
+        };
+      }
+     await Collection.aggregate([
+        {
+          $lookup: {
+            from: "brands",
+            localField: "brandID",
+            foreignField: "_id",
+            as: "BrandData",
+          },
+        },
+        { $match: searchObj },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            description: 1,
+            coverImage: 1,
+            brandID: 1,
+            createdOn: 1,
+            "BrandData._id": 1,
+            "BrandData.logoImage": 1,
+          },
+        },
+        { $sort: {createdOn: -1 } },
+        { $skip: startIndex },
+        { $limit: limit },
+
+      ]).exec(function (e, collData) {
+        console.log("Error ", e);
+        let results = {};
+        results.count = collData?.length ? collData.length : 0;
+        results.results = collData;
+        return res.reply(messages.success("Collection List"), results);
+      });
+    } catch (error) {
+      console.log("Error " + error);
+      return res.reply(messages.server_error());
+    }
+  }
 }
 module.exports = UtilsController;
