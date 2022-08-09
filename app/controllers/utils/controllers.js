@@ -483,7 +483,7 @@ class UtilsController {
         searchArray["name"] = name;
       }
       let CollectionSearchArray = [];
-      CollectionSearchArray["$match"] = { "CollectionData.status": 1,  "CollectionData.hashStatus": 1 };
+      CollectionSearchArray["$match"] = { "CollectionData.status": 1,  "CollectionData.hashStatus": 1};
       let searchObj = Object.assign({}, searchArray);
       let CollectionSearchObj = Object.assign({}, CollectionSearchArray);
       await Category.aggregate([
@@ -506,6 +506,7 @@ class UtilsController {
                 { 
                   status: 1,
                   hashStatus: 1,
+                  isOnMarketplace: 1,
                   $expr: { $eq: ['$categoryID', '$$col_id'] } 
                 } 
               }, 
@@ -532,6 +533,7 @@ class UtilsController {
                   { 
                     status: 1,
                     hashStatus: 1,
+                    isOnMarketplace: 1,
                     $expr: { $eq: ['$categoryID', '$$col_id'] } 
                   } 
                 }, 
