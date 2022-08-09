@@ -31,6 +31,7 @@ router.post("/fetchOfferReceived", nftController.fetchOfferReceived);
 router.post("/updateStatus", nftMiddleware.verifyUserToken, nftController.updateStatus);
 
 router.post("/nftButtons", nftController.nftButtons);
+router.post("/refreshMetaData", nftController.refreshMetaData);
 
 // router.post("/getHotCollections",nftMiddleware.verifyWithoutToken, nftController.getHotCollections);
 // router.post("/likeNFT", nftMiddleware.verifyUserToken, nftController.likeNFT);

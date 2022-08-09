@@ -44,9 +44,6 @@ const collectionSchema = mongoose.Schema({
     require: true,
     lowercase: true,
   },
-  chainID: {
-    type: String,
-  },
   price: { type: mongoose.Types.Decimal128, default: 0 },
   royalityPercentage: { type: Number, default: 0 },
   salesCount: {
