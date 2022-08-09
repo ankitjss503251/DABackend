@@ -7366,11 +7366,10 @@ class NFTController {
         console.log("Is Owner", isOwner);
         if (isOwner > 0) {
           let searchArray1 = [];
-          searchArray1["nftID"] = mongoose.Types.ObjectId(nftID);
-          searchArray1["status"] = 1;
-          searchArray1["hashStatus"] = 1;
+          searchArray1["_id"] = mongoose.Types.ObjectId(nftID);
           searchArray1["OrderData.0"] = { $exists: true }
           let searchObj1 = Object.assign({}, searchArray1);
+          console.log("searchObj1", searchObj1)
           await NFT.aggregate([
             {
               $lookup: {
@@ -7430,9 +7429,7 @@ class NFTController {
           }
 
           let searchArray2 = [];
-          searchArray2["nftID"] = mongoose.Types.ObjectId(nftID);
-          searchArray2["status"] = 1;
-          searchArray2["hashStatus"] = 1;
+          searchArray2["_id"] = mongoose.Types.ObjectId(nftID);
           searchArray2["OrderData.0"] = { $exists: true }
           let searchObj2 = Object.assign({}, searchArray2);
           await NFT.aggregate([
@@ -7477,8 +7474,7 @@ class NFTController {
       } else {
         results.push("Make Offer");
         let searchArray2 = [];
-        searchArray2["status"] = 1;
-        searchArray2["hashStatus"] = 1;
+        searchArray2["_id"] = mongoose.Types.ObjectId(nftID);
         searchArray2["OrderData.0"] = { $exists: true }
         let searchObj2 = Object.assign({}, searchArray2);
         await NFT.aggregate([
