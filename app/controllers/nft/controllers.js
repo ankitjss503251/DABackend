@@ -1092,6 +1092,8 @@ class NFTController {
             collectionAddress: 1,
             ownedBy: 1,
             user_likes: 1,
+            isImported: 1,
+            metaDatahash: 1,
             totalQuantity: 1,
             collectionID: 1,
             assetsInfo: 1,
@@ -1115,21 +1117,58 @@ class NFTController {
             "BrandData.name": 1,
             "BrandData.logoImage": 1,
             "BrandData.coverImage": 1,
-
           },
         },
         { $sort: { hasOrder: -1, "OrderData.price": priceSort, createdOn: -1 } },
         { $skip: startIndex },
         { $limit: limit },
 
-      ]).exec(function (e, nftData) {
+      ]).exec(function async(e, nftData) {
         console.log("Error ", e);
         let results = {};
         results.count = nftData?.length ? nftData.length : 0;
+        // var checkNFTMeta = new Promise((resolve, reject) => {
+        //   nftData.forEach((nftList, index, array) => {
+        //     console.log("NFT record", nftList._id)
+        //     if (nftList.isImported === 0) {
+              
+        //       let url = "https://decryptnft.mypinata.cloud/ipfs/QmdDAhKqZWKqGb2D8kx9D9ppBjdpBYyL3VXNdwfq6WjgDT";
+        //       http.get(url, (res) => {
+        //         let body = "";
+        //         res.on("data", (chunk) => {
+        //           body += chunk;
+        //         });
+        //         res.on("end", () => {
+        //           try {
+        //             nftList.newJSON = JSON.parse(body);
+        //             console.log("Data Loaded for ", nftList._id)
+        //             if (index === array.length - 1){
+        //               console.log("array", index, " ", array.length)
+        //               resolve();
+        //             }
+        //           } catch (error) {
+        //             nftList.newJSON = {};
+        //           };
+        //         });
+        //       }).on("error", (error) => {
+        //         nftList.newJSON = {};
+        //       });
+        //     } 
+        //   });
+        // });
+
+        // checkNFTMeta.then(() => {
+        //   results.results = nftData;
+        //   console.log("Data Returned");
+        //   return res.reply(messages.success("NFT List"), results);
+        // });
         results.results = nftData;
+        console.log("Data Returned");
+        return res.reply(messages.success("NFT List"), results);
+
         // let count = nftData.length;
         // return res.reply(messages.success("NFT List"), nftData);
-        return res.reply(messages.success("NFT List"), results);
+
       });
     } catch (error) {
       console.log("Error " + error);
@@ -7266,7 +7305,7 @@ class NFTController {
           (err, resData) => {
             if (err) return res.reply(messages.server_error());
             if (!resData) return res.reply(messages.not_found("Order"));
-            console.log("status--------------------------------->",resData.hashStatus ,req.body.hashStatus);
+            console.log("status--------------------------------->", resData.hashStatus, req.body.hashStatus);
             if (resData.hashStatus === req.body.hashStatus && (resData.hash !== "" || resData.hash !== "0x0" || resData.hash !== undefined) && resData.hash?.length >= 66) return res.reply(messages.already_exists("Same Data"));
             return res.reply(messages.successfully("Order Hash Status Updated"));
           }
@@ -7301,6 +7340,10 @@ class NFTController {
       let results = [];
       let nftID = req.body.nftID;
       let userID = "";
+      let isOwner = 0;
+      let onMarketPLace = 0;
+      let hasBid = 0;
+      let hasOffer = 0;
       if (req.body.userID && req.body.userID !== undefined) {
         userID = req.body.userID;
       }
@@ -7319,13 +7362,14 @@ class NFTController {
           }
         }
         let searchObj = Object.assign({}, searchArray);
-        let isOwner = await NFT.countDocuments(searchObj).exec();
+        isOwner = await NFT.countDocuments(searchObj).exec();
+        console.log("Is Owner", isOwner);
         if (isOwner > 0) {
           let searchArray1 = [];
-          searchArray1["status"] = 1;
-          searchArray1["hashStatus"] = 1;
+          searchArray1["_id"] = mongoose.Types.ObjectId(nftID);
           searchArray1["OrderData.0"] = { $exists: true }
           let searchObj1 = Object.assign({}, searchArray1);
+          console.log("searchObj1", searchObj1)
           await NFT.aggregate([
             {
               $lookup: {
@@ -7345,7 +7389,7 @@ class NFTController {
               },
             },
           ]).exec(function (e, nftData) {
-            let onMarketPLace = nftData?.length ? nftData.length : 0;
+            onMarketPLace = nftData?.length ? nftData.length : 0;
             if (onMarketPLace === 0) {
               results.push("Put On Marketplace");
             } else {
@@ -7362,7 +7406,9 @@ class NFTController {
           searchArray["bidQuantity"] = { $gte: 1 };
           searchArray["bidStatus"] = "Bid";
           let searchObj = Object.assign({}, searchArray);
-          let hasBid = await Bid.countDocuments(searchObj).exec();
+          hasBid = await Bid.countDocuments(searchObj).exec();
+
+          console.log("hasBid", 0);
 
           let searchArray1 = [];
           searchArray1["nftID"] = mongoose.Types.ObjectId(nftID);
@@ -7370,9 +7416,12 @@ class NFTController {
             searchArray1["bidderID"] = mongoose.Types.ObjectId(userID);
           }
           searchArray1["bidQuantity"] = { $gte: 1 };
+          searchArray1["bidStatus"] = "MakeOffer";
           searchArray1["isOffer"] = true;
           let searchObj1 = Object.assign({}, searchArray1);
-          let hasOffer = await Bid.countDocuments(searchObj1).exec();
+          console.log("searchObj1", searchObj1)
+          hasOffer = await Bid.countDocuments(searchObj1).exec();
+          console.log("hasOffer", hasOffer);
           if (hasOffer === 0) {
             results.push("Make Offer");
           } else {
@@ -7380,8 +7429,7 @@ class NFTController {
           }
 
           let searchArray2 = [];
-          searchArray2["status"] = 1;
-          searchArray2["hashStatus"] = 1;
+          searchArray2["_id"] = mongoose.Types.ObjectId(nftID);
           searchArray2["OrderData.0"] = { $exists: true }
           let searchObj2 = Object.assign({}, searchArray2);
           await NFT.aggregate([
@@ -7406,6 +7454,7 @@ class NFTController {
           ]).exec(function (e, nftData) {
             console.log("nftData", nftData)
             let onMarketPLace = nftData?.length ? nftData.length : 0;
+            console.log("onMarketPLace", onMarketPLace)
             if (onMarketPLace === 0) {
               return res.reply(messages.successfully("Data"), results);
             } else {
@@ -7425,8 +7474,7 @@ class NFTController {
       } else {
         results.push("Make Offer");
         let searchArray2 = [];
-        searchArray2["status"] = 1;
-        searchArray2["hashStatus"] = 1;
+        searchArray2["_id"] = mongoose.Types.ObjectId(nftID);
         searchArray2["OrderData.0"] = { $exists: true }
         let searchObj2 = Object.assign({}, searchArray2);
         await NFT.aggregate([
@@ -7449,10 +7497,10 @@ class NFTController {
             },
           },
         ]).exec(function (e, nftData) {
-          console.log("nftData", nftData)
           let onMarketPLace = nftData?.length ? nftData.length : 0;
+          console.log("onMarketPLace", onMarketPLace)
           if (onMarketPLace === 0) {
-            return res.reply(messages.successfully("Data"), results);
+            return res.reply(messages.successfully("Datafgdh"), results);
           } else {
             if (nftData[0]?.OrderData[0]?.salesType == 0) {
               results.push("Buy Now");
