@@ -18,6 +18,69 @@ const chainID = process.env.CHAIN_ID;
 class ImportedController {
   constructor() { }
 
+  async getmyImportedCollection(req, res) {
+    try {
+      if (!req.userId) return res.reply(messages.unauthorized());
+      let data = [];
+      const page = parseInt(req.body.page);
+      const limit = parseInt(req.body.limit);
+      const startIndex = (page - 1) * limit;
+      const endIndex = page * limit;
+
+      let searchText = "";
+      if (req.body.searchText && req.body.searchText !== undefined) {
+        searchText = req.body.searchText;
+      }
+      let searchArray = [];
+      searchArray["status"] = 1;
+      searchArray["hashStatus"] = 1;
+      searchArray["isImported"] = 1;
+      searchArray["createdBy"] = mongoose.Types.ObjectId(req.userId);
+      if (searchText !== "") {
+        let searchKey = new RegExp(searchText, "i");
+        searchArray["$or"] = [
+          { name: searchKey },
+        ];
+      }
+      let searchObj = Object.assign({}, searchArray);
+      console.log("Obj", searchObj);
+      const results = {};
+      if (endIndex < (await Collection.countDocuments(searchObj).exec())) {
+        results.next = {
+          page: page + 1,
+          limit: limit,
+        };
+      }
+      if (startIndex > 0) {
+        results.previous = {
+          page: page - 1,
+          limit: limit,
+        };
+      }
+      await Collection.find(searchObj)
+        .populate("categoryID")
+        .populate("brandID")
+        .sort({ createdOn: -1 })
+        .limit(limit)
+        .skip(startIndex)
+        .lean()
+        .exec()
+        .then((res) => {
+          data.push(res);
+        })
+        .catch((e) => {
+          console.log("Error", e);
+        });
+      results.count = await Collection.countDocuments(searchObj).exec();
+      results.results = data;
+      res.header("Access-Control-Max-Age", 600);
+      return res.reply(messages.success("Collection List"), results);
+    } catch (error) {
+      console.log("Error " + error);
+      return res.reply(messages.server_error());
+    }
+  }
+
   async getImportedCollection(req, res) {
     try {
       let data = [];
