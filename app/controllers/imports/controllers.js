@@ -18,7 +18,7 @@ const chainID = process.env.CHAIN_ID;
 class ImportedController {
   constructor() { }
 
-  async getmyImportedCollection(req, res) {
+  async getMyImportedCollection(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
       let data = [];
@@ -308,18 +308,18 @@ class ImportedController {
                                       });
                                     } else {
                                       var d2 = new Date(nftData[0].lastUpdatedOn);
-                                      if (d1.getTime() === d2.getTime()){
+                                      if (d1.getTime() === d2.getTime()) {
                                         console.log("NFT already Updated");
-                                      }else{
+                                      } else {
                                         let updateNFTData = {
                                           name: nftRecord.name,
                                           description: nftRecord.description,
                                           previewImg: nftRecord.S3Images.S3Thumb,
                                           lastUpdatedOn: lastUpdateMetaDB
                                         }
-                                        if(nftRecord.S3Images.S3Animation === "" || nftRecord.S3Images.S3Animation === null){
+                                        if (nftRecord.S3Images.S3Animation === "" || nftRecord.S3Images.S3Animation === null) {
                                           updateNFTData.image = nftRecord.S3Images.S3Image;
-                                        }else{
+                                        } else {
                                           updateNFTData.image = nftRecord.S3Images.S3Animation;
                                         }
                                         await NFT.findOneAndUpdate(
