@@ -1,4 +1,5 @@
 const fs = require("fs");
+const https = require("https");
 const http = require("https");
 const {
   NFT,
@@ -1315,7 +1316,7 @@ class NFTController {
           console.log("Created on Plateform");
           let tokenURI = await contract.methods.tokenURI(tokenID).call();
           try{
-            http.get(tokenURI, (resp) => {
+            https.get(tokenURI, (resp) => {
               let body = "";
               resp.on("data", (chunk) => {
                 body += chunk;
@@ -7624,7 +7625,7 @@ class NFTController {
               console.log("Created on Plateform");
               let tokenURI = await contract.methods.tokenURI(tokenID).call();
               try{
-                http.get(tokenURI, (res) => {
+                https.get(tokenURI, (res) => {
                   let body = "";
                   res.on("data", (chunk) => {
                     body += chunk;

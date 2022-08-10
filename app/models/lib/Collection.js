@@ -76,11 +76,6 @@ const collectionSchema = mongoose.Schema({
     require: true,
     default: 0,
   },
-  isHotCollection: {
-    type: Number,
-    default: 0,
-    enum: [0, 1],
-  },
   isMinted: {
     type: Number,
     default: 0,

@@ -1,5 +1,6 @@
 const fs = require("fs");
-const http = require("https");
+const https = require("https");
+const http = require("http");
 const { NFT, Collection } = require("../../models");
 const mongoose = require("mongoose");
 const validators = require("../helpers/validators");
