@@ -121,6 +121,18 @@ const collectionSchema = mongoose.Schema({
     enum: [0, 1, 2],
     default: 0,
   },
+  progressStatus: {
+    //0 - Read & 1 - Process & 2 - Completed
+    type: Number,
+    enum: [0, 1, 2],
+    default: 1,
+  },
+  apiStatus: {
+    type: String,
+  },
+  init_progress: {
+    type: String,
+  },
   createdBy: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
