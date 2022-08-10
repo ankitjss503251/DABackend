@@ -167,7 +167,7 @@ class ImportedController {
                 res.on("end", async () => {
                   try {
                     let newJSON = JSON.parse(body);
-                    let apiStatus = newJSON[0].apiStatus;
+                    let apiStatus = newJSON[0].status;
                     let updateCollectionData = {
                       apiStatus: apiStatus
                     }
