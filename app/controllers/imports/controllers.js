@@ -1,7 +1,7 @@
 const fs = require("fs");
 const https = require("https");
 const http = require("http");
-const { NFT, Collection } = require("../../models");
+const { NFT, Collection, Category, Brand } = require("../../models");
 const mongoose = require("mongoose");
 const validators = require("../helpers/validators");
 var jwt = require("jsonwebtoken");
@@ -231,6 +231,7 @@ class ImportedController {
                     let apiStatus = newJSON[0].status;
                     if (apiStatus === "available" && collectionData[0].progressStatus === 1) {
                       let NFTDataList = nftMetaBaseURL + "tokenDetailsExtended?ChainId=" + chainID + "&ContractAddress=" + collectionData[0].contractAddress;
+                      console.log("NFTDataList", NFTDataList);
                       try {
                         await http.get(NFTDataList, (resData) => {
                           let body = "";
