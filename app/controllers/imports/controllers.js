@@ -1,7 +1,7 @@
 const fs = require("fs");
 const https = require("https");
 const http = require("http");
-const { NFT, Collection } = require("../../models");
+const { NFT, Collection, Category, Brand } = require("../../models");
 const mongoose = require("mongoose");
 const validators = require("../helpers/validators");
 var jwt = require("jsonwebtoken");
