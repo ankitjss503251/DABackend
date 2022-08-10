@@ -753,9 +753,9 @@ async function checkOffers() {
   }
 }
 
-async function checkCategoryStatus() {
+async function checkCollectionStatus() {
   try {
-    console.log("Check Category Status Import FAST API....");
+    console.log("Check Collection Status Import FAST API....");
     Collection.find({ isImported: 1, progressStatus: 0 },
       async function (err, resData) {
         if (err) {
@@ -812,6 +812,7 @@ async function checkCategoryStatus() {
   }
 }
 
+
 setInterval(() => {
   checkCollection();
   checkNFTs();
@@ -820,6 +821,6 @@ setInterval(() => {
 }, 20000);
 
 setInterval(() => {
-  checkCategoryStatus();
+  checkCollectionStatus();
 }, 10000);
 
