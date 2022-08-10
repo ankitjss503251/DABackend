@@ -1317,26 +1317,30 @@ class NFTController {
         if (nftData[0].isMinted === 0) {
           console.log("Created on Plateform");
           let tokenURI = await contract.methods.tokenURI(tokenID).call();
-          http.get(tokenURI, (resp) => {
-            let body = "";
-            resp.on("data", (chunk) => {
-              body += chunk;
+          if(tokenURI !== "www.uri.com12"){
+            http.get(tokenURI, (resp) => {
+              let body = "";
+              resp.on("data", (chunk) => {
+                body += chunk;
+              });
+              resp.on("end", async () => {
+                try {
+                  let newJSON = JSON.parse(body);
+                  nftData[0].name = newJSON.name;
+                  nftData[0].description = newJSON.description;
+                  nftData[0].image = newJSON.image;
+                  nftData[0].attributes = newJSON.attributes;
+                  return res.reply(messages.success("NFT List"), nftData);
+                } catch (error) {
+                  console.log("Error ", error);
+                };
+              });
+            }).on("error", (error) => {
+              console.log("Error ", error);
             });
-            resp.on("end", async () => {
-              try {
-                let newJSON = JSON.parse(body);
-                nftData[0].name = newJSON.name;
-                nftData[0].description = newJSON.description;
-                nftData[0].image = newJSON.image;
-                nftData[0].attributes = newJSON.attributes;
-                return res.reply(messages.success("NFT List"), nftData);
-              } catch (error) {
-                console.log("Error ", error);
-              };
-            });
-          }).on("error", (error) => {
-            console.log("Error ", error);
-          });
+          }else{
+            return res.reply(messages.success("NFT List"), nftData);
+          }
         } else {
           let tokenURI = nftMetaBaseURL + "/tokenDetailsExtended?ChainId=" + chainID + "&ContractAddress=" + nftData[0].collectionAddress + "&TokenId=" + tokenID;
           http.get(tokenURI, (resp) => {
@@ -7658,29 +7662,38 @@ class NFTController {
                 res.on("end", async () => {
                   try {
                     let newJSON = JSON.parse(body);
-                    let updateNFTData = {
-                      name: newJSON[0].name,
-                      description: newJSON[0].description,
-                      previewImg: newJSON[0].S3Images.S3Thumb,
-                      updatedOn: Date.now()
-                    }
-                    if(newJSON[0].S3Images.S3Animation === "" || newJSON[0].S3Images.S3Animation === null){
-                      updateNFTData.image = newJSON[0].S3Images.S3Image;
+                    let lastUpdated = newJSON[0].description;
+                    var d = new Date(0);
+                    let lastUpdateMetaDB = d.setUTCSeconds(lastUpdated);
+                    var d1 = new Date(lastUpdateMetaDB);
+                    var d2 = new Date(nftData[0].lastUpdatedOn);
+                    if (d1.getTime() === d2.getTime()){
+                      return res.reply(messages.already_updated("NFT"));
                     }else{
-                      updateNFTData.image = newJSON[0].S3Images.S3Animation;
-                    }
-                    await NFT.findOneAndUpdate(
-                      { _id: mongoose.Types.ObjectId(nftID) },
-                      { updateNFTData }, function (err, updateNFT) {
-                        if (err) {
-                          console.log("Error in Updating NFT" + err);
-                          return res.reply(messages.error());
-                        } else {
-                          console.log("NFT MetaData Updated: ", updateNFT);
-                          return res.reply(messages.created("NFT Updated"), updateNFT);
-                        }
+                      let updateNFTData = {
+                        name: newJSON[0].name,
+                        description: newJSON[0].description,
+                        previewImg: newJSON[0].S3Images.S3Thumb,
+                        lastUpdatedOn: lastUpdateMetaDB
                       }
-                    );
+                      if(newJSON[0].S3Images.S3Animation === "" || newJSON[0].S3Images.S3Animation === null){
+                        updateNFTData.image = newJSON[0].S3Images.S3Image;
+                      }else{
+                        updateNFTData.image = newJSON[0].S3Images.S3Animation;
+                      }
+                      await NFT.findOneAndUpdate(
+                        { _id: mongoose.Types.ObjectId(nftID) },
+                        { updateNFTData }, function (err, updateNFT) {
+                          if (err) {
+                            console.log("Error in Updating NFT" + err);
+                            return res.reply(messages.error());
+                          } else {
+                            console.log("NFT MetaData Updated: ", updateNFT);
+                            return res.reply(messages.created("NFT Updated"), updateNFT);
+                          }
+                        }
+                      );
+                    }
                   } catch (error) {
                     console.log("Error ", error);
                     return res.reply(messages.server_error());
