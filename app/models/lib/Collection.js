@@ -42,7 +42,7 @@ const collectionSchema = mongoose.Schema({
     type: String,
     // unique: true,
     require: true,
-    lowercase: true,
+    // lowercase: true,
   },
   price: { type: mongoose.Types.Decimal128, default: 0 },
   royalityPercentage: { type: Number, default: 0 },

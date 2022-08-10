@@ -813,14 +813,13 @@ async function checkCollectionStatus() {
 }
 
 
-setInterval(() => {
-  checkCollection();
-  checkNFTs();
-  checkOrders();
-  checkOffers();
-}, 20000);
+// setInterval(() => {
+//   checkCollection();
+//   checkNFTs();
+//   checkOrders();
+//   checkOffers();
+// }, 20000);
 
-setInterval(() => {
-  checkCollectionStatus();
-}, 10000);
-
+// setInterval(() => {
+//   checkCollectionStatus();
+// }, 10000);
