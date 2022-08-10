@@ -73,9 +73,9 @@ class ImportedController {
         });
       results.count = await Collection.countDocuments(searchObj).exec();
       if(results.count === 0){
-        results.results = data[0];
-      }else{
         results.results = data;
+      }else{
+        results.results = data[0];
       }
       res.header("Access-Control-Max-Age", 600);
       return res.reply(messages.success("Collection List"), results);
