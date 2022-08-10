@@ -159,12 +159,12 @@ class ImportedController {
           } else {
             let tokenURI = nftMetaBaseURL + "/collections?ChainId=" + chainID + "&ContractAddress=" + collectionData[0].contractAddress;
             try {
-              http.get(tokenURI, (res) => {
+              http.get(tokenURI, (resData) => {
                 let body = "";
-                res.on("data", (chunk) => {
+                resData.on("data", (chunk) => {
                   body += chunk;
                 });
-                res.on("end", async () => {
+                resData.on("end", async () => {
                   try {
                     let newJSON = JSON.parse(body);
                     let apiStatus = newJSON[0].status;
@@ -220,24 +220,24 @@ class ImportedController {
           } else {
             let tokenURI = nftMetaBaseURL + "/collections?ChainId=" + chainID + "&ContractAddress=" + collectionData[0].contractAddress;
             try {
-              http.get(tokenURI, (res) => {
+              http.get(tokenURI, (resData) => {
                 let body = "";
-                res.on("data", (chunk) => {
+                resData.on("data", (chunk) => {
                   body += chunk;
                 });
-                res.on("end", async () => {
+                resData.on("end", async () => {
                   try {
                     let newJSON = JSON.parse(body);
                     let apiStatus = newJSON[0].status;
                     if (apiStatus === "available" && collectionData[0].progressStatus === 1) {
                       let NFTDataList = nftMetaBaseURL + "/tokenDetailsExtended?ChainId=" + chainID + "&ContractAddress=" + collectionData[0].contractAddress;
                       try {
-                        await http.get(NFTDataList, (res) => {
+                        await http.get(NFTDataList, (resData) => {
                           let body = "";
-                          res.on("data", (chunk) => {
+                          resData.on("data", (chunk) => {
                             body += chunk;
                           });
-                          res.on("end", async () => {
+                          resData.on("end", async () => {
                             try {
                               let jsonNFTData = JSON.parse(body);
                               jsonNFTData.forEach(nftRecord => {
