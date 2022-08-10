@@ -130,9 +130,6 @@ const collectionSchema = mongoose.Schema({
   apiStatus: {
     type: String,
   },
-  init_progress: {
-    type: String,
-  },
   createdBy: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
