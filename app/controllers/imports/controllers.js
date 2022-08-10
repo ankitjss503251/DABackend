@@ -18,7 +18,7 @@ const chainID = process.env.CHAIN_ID;
 class ImportedController {
   constructor() { }
 
-  async getmyImportedCollection(req, res) {
+  async getMyImportedCollection(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
       let data = [];
