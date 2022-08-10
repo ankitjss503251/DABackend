@@ -5,12 +5,9 @@ const {
   Collection,
   User,
   Bid,
-  NFTowners,
   Order,
   Brand,
   Category,
-  importedNFT,
-  importedCollection,
   MintCollection,
 } = require("../../models");
 const pinataSDK = require("@pinata/sdk");
@@ -1482,50 +1479,50 @@ class NFTController {
     }
   }
 
-  async updateNftOrder(req, res) {
-    try {
-      if (!req.userId) return res.reply(messages.unauthorized());
-      console.log("request is--->", JSON.stringify(req.body));
-      console.log("id is--->", req.body._id);
+  // async updateNftOrder(req, res) {
+  //   try {
+  //     if (!req.userId) return res.reply(messages.unauthorized());
+  //     console.log("request is--->", JSON.stringify(req.body));
+  //     console.log("id is--->", req.body._id);
 
-      let sId = await NFT.findById(req.body._id);
-      let nftownerID = req.body.nftownerID;
+  //     let sId = await NFT.findById(req.body._id);
+  //     let nftownerID = req.body.nftownerID;
 
-      if (!sId) return res.reply(messages.not_found("NFT"));
+  //     if (!sId) return res.reply(messages.not_found("NFT"));
 
-      await NFTowners.findByIdAndUpdate(nftownerID, {
-        sOrder: req.body.sOrder,
-        sSignature: req.body.sSignature,
-        sTransactionStatus: 1,
-        nBasePrice: req.body.nBasePrice,
-      }).then((err, nftowner) => {
-        console.log("Error Update is " + JSON.stringify(err));
-      });
+  //     await NFTowners.findByIdAndUpdate(nftownerID, {
+  //       sOrder: req.body.sOrder,
+  //       sSignature: req.body.sSignature,
+  //       sTransactionStatus: 1,
+  //       nBasePrice: req.body.nBasePrice,
+  //     }).then((err, nftowner) => {
+  //       console.log("Error Update is " + JSON.stringify(err));
+  //     });
 
-      NFTowners.findByIdAndUpdate(
-        nftownerID,
-        { $inc: { nQuantityLeft: -req.body.putOnSaleQty } },
-        { new: true },
-        function (err, response) { }
-      );
-      if (req.body.erc721) {
-        await NFT.findByIdAndUpdate(sId, {
-          sOrder: req.body.sOrder,
-          sSignature: req.body.sSignature,
-          sTransactionStatus: 1,
-          nBasePrice: req.body.nBasePrice,
-        }).then((err, nft) => {
-          console.log("Updating By ID" + nftownerID);
-          return res.reply(messages.success("Order Created"));
-        });
-      } else {
-        return res.reply(messages.success("Order Created"));
-      }
-    } catch (e) {
-      console.log("Error is " + e);
-      return res.reply(messages.server_error());
-    }
-  }
+  //     NFTowners.findByIdAndUpdate(
+  //       nftownerID,
+  //       { $inc: { nQuantityLeft: -req.body.putOnSaleQty } },
+  //       { new: true },
+  //       function (err, response) { }
+  //     );
+  //     if (req.body.erc721) {
+  //       await NFT.findByIdAndUpdate(sId, {
+  //         sOrder: req.body.sOrder,
+  //         sSignature: req.body.sSignature,
+  //         sTransactionStatus: 1,
+  //         nBasePrice: req.body.nBasePrice,
+  //       }).then((err, nft) => {
+  //         console.log("Updating By ID" + nftownerID);
+  //         return res.reply(messages.success("Order Created"));
+  //       });
+  //     } else {
+  //       return res.reply(messages.success("Order Created"));
+  //     }
+  //   } catch (e) {
+  //     console.log("Error is " + e);
+  //     return res.reply(messages.server_error());
+  //   }
+  // }
 
   async getOnSaleItems(req, res) {
     console.log("req", req.body);
@@ -2152,6 +2149,10 @@ class NFTController {
           }
           if (req.body.isImported) {
             updateData["isImported"] = req.body.isImported;
+            if(req.body.isImported === 1){
+              updateData["status"] = 1;
+              updateData["hashStatus"] = 1;
+            }
           }
           if (
             req.body.preSaleStartTime &&
@@ -2197,7 +2198,7 @@ class NFTController {
           { $set: updateObj }
         ).then((collection) => {
           NFT.updateMany(
-            { _id: mongoose.Types.ObjectId(collectionID) },
+            { collectionID: mongoose.Types.ObjectId(collectionID) },
             nftupdateObj,
             function (err, docs) {
               if (err) {
@@ -2207,10 +2208,7 @@ class NFTController {
               }
             }
           );
-          return res.reply(
-            messages.updated("Collection Updated successfully."),
-            collection
-          );
+          return res.reply( messages.updated("Collection Updated successfully."), collection );
         });
       });
     } catch (error) {
@@ -6946,13 +6944,12 @@ class NFTController {
       //     }
       //   }
       // }
-      searchArray["status"] = 1;
-      searchArray["hashStatus"] = 1;
+      searchArray["isImported"] = 1;
       let searchObj = Object.assign({}, searchArray);
       let result = [];
       const nfts = await NFT.find(searchObj);
       if (nfts.length) result.push(nfts);
-      const impnfts = await importedNFT.find(searchObj);
+      const impnfts = await NFT.find(searchObj);
       if (impnfts.length) result.push(impnfts);
       if (result.length)
         return res.reply(messages.success("NFTs/Imported NFTs List"), result);
@@ -7678,7 +7675,7 @@ class NFTController {
                   res.on("end", async () => {
                     try {
                       let newJSON = JSON.parse(body);
-                      let lastUpdated = newJSON[0].description;
+                      let lastUpdated = newJSON[0].MetadataLastUpdated;
                       var d = new Date(0);
                       let lastUpdateMetaDB = d.setUTCSeconds(lastUpdated);
                       var d1 = new Date(lastUpdateMetaDB);
