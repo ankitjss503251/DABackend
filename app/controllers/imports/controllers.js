@@ -1,5 +1,6 @@
 const fs = require("fs");
-const http = require("https");
+const https = require("https");
+const http = require("http");
 const { NFT, Collection } = require("../../models");
 const mongoose = require("mongoose");
 const validators = require("../helpers/validators");
@@ -166,13 +167,11 @@ class ImportedController {
                 res.on("end", async () => {
                   try {
                     let newJSON = JSON.parse(body);
-                    let initStatus = newJSON[0].init_progress;
                     let apiStatus = newJSON[0].apiStatus;
                     let updateCollectionData = {
-                      init_progress: initStatus,
                       apiStatus: apiStatus
                     }
-                    if (initStatus === "complete" && collectionData[0].progressStatus === 0) {
+                    if (apiStatus === "available" && collectionData[0].progressStatus === 0) {
                       updateCollectionData.progressStatus = 1;
                     }
                     await Collection.findOneAndUpdate(
@@ -229,8 +228,8 @@ class ImportedController {
                 res.on("end", async () => {
                   try {
                     let newJSON = JSON.parse(body);
-                    let initStatus = newJSON[0].init_progress;
-                    if (initStatus === "complete" && collectionData[0].progressStatus === 1) {
+                    let apiStatus = newJSON[0].status;
+                    if (apiStatus === "available" && collectionData[0].progressStatus === 1) {
                       let NFTDataList = nftMetaBaseURL + "/tokenDetailsExtended?ChainId=" + chainID + "&ContractAddress=" + collectionData[0].contractAddress;
                       try {
                         await http.get(NFTDataList, (res) => {

@@ -1,6 +1,8 @@
 const Web3 = require("web3");
 const mongoose = require('mongoose');
 const LogsDecoder = require('logs-decoder');
+const http = require("http");
+const https = require("https");
 const logsDecoder = LogsDecoder.create()
 const config = require("dotenv").config();
 const { NFT, Collection, User, Bid, Order, History } = require("./app/models");
@@ -12,6 +14,10 @@ const CONTRACT_ADDRESS = '0x8026FEB064ef99d431CDC37a273fb7fADeC30D12';
 const BlockchainConnect = require('./blockchainconnect');
 const chain = new BlockchainConnect();
 const contract = chain.Contract(ABI, CONTRACT_ADDRESS);
+
+const nftMetaBaseURL = process.env.NFT_META_BASE_URL;
+const chainID = process.env.CHAIN_ID;
+
 const options = {
   useUnifiedTopology: true,
   useNewUrlParser: true,
@@ -747,12 +753,73 @@ async function checkOffers() {
   }
 }
 
+async function checkCategoryStatus() {
+  try {
+    console.log("Check Category Status Import FAST API....");
+    Collection.find({ isImported: 1, progressStatus: 0 },
+      async function (err, resData) {
+        if (err) {
+        } else {
+          if (resData.length > 0) {
+            for (const data of resData) {
+              console.log("Category ID", data._id)
+              if(data.contractAddress !== "0x"){
+                let tokenURI = nftMetaBaseURL + "collections?ChainId=" + chainID + "&ContractAddress=" + data.contractAddress;
+                console.log("tokenURI", tokenURI)
+                try {
+                  http.get(tokenURI, (res) => { 
+                    let body = "";
+                    res.on("data", (chunk) => {
+                      body += chunk;
+                    });
+                    res.on("end", async () => {
+                      try {
+                        let newJSON = JSON.parse(body);
+                        let apiStatus = newJSON.apiStatus;
+                        let updateCollectionData = {
+                          apiStatus: apiStatus
+                        }
+                        if (apiStatus === "available" && data.progressStatus === 0) {
+                          updateCollectionData.progressStatus = 1;
+                        }
+                        await Collection.findOneAndUpdate(
+                          { _id: mongoose.Types.ObjectId(data._id) },
+                          { updateCollectionData }, function (err, updateCollection) {
+                            if (err) {
+                              console.log("Error in Updating Collection" + err);
+                            } else {
+                              console.log("Collection status Updated");
+                            }
+                          }
+                        );
+                      } catch (error) {
+                        console.log("Error ", error);
+                      };
+                    });
+                  }).on("error", (error) => {
+                    console.log("Error ", error);
+                  });
+                } catch (error) {
+                  console.log("Error ", error);
+                }
+              }
+            }
+          }
+        }
+      })
+  } catch (error) {
+    console.log(error);
+  }
+}
 
 setInterval(() => {
-
   checkCollection();
   checkNFTs();
   checkOrders();
   checkOffers();
 }, 20000);
+
+setInterval(() => {
+  checkCategoryStatus();
+}, 10000);
 

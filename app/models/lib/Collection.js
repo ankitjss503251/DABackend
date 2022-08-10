@@ -76,11 +76,6 @@ const collectionSchema = mongoose.Schema({
     require: true,
     default: 0,
   },
-  isHotCollection: {
-    type: Number,
-    default: 0,
-    enum: [0, 1],
-  },
   isMinted: {
     type: Number,
     default: 0,
@@ -128,9 +123,6 @@ const collectionSchema = mongoose.Schema({
     default: 1,
   },
   apiStatus: {
-    type: String,
-  },
-  init_progress: {
     type: String,
   },
   createdBy: {
