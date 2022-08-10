@@ -1343,7 +1343,7 @@ class NFTController {
             return res.reply(messages.success("NFT List"), nftData);
           }
         } else {
-          let tokenURI = nftMetaBaseURL + "/tokenDetailsExtended?ChainId=" + chainID + "&ContractAddress=" + nftData[0].collectionAddress + "&TokenId=" + tokenID;
+          let tokenURI = nftMetaBaseURL + "tokenDetailsExtended?ChainId=" + chainID + "&ContractAddress=" + nftData[0].collectionAddress + "&TokenId=" + tokenID;
           try{
             http.get(tokenURI, (resp) => {
               let body = "";
@@ -7666,7 +7666,7 @@ class NFTController {
               }
             } else {
               console.log("Imported on Plateform");
-              let tokenURI = nftMetaBaseURL + "/tokenDetailsExtended?ChainId=" + chainID + "&ContractAddress=" + nftData[0].collectionAddress + "&TokenId=" + tokenID;
+              let tokenURI = nftMetaBaseURL + "tokenDetailsExtended?ChainId=" + chainID + "&ContractAddress=" + nftData[0].collectionAddress + "&TokenId=" + tokenID;
               try{
                 http.get(tokenURI, (res) => {
                   let body = "";
