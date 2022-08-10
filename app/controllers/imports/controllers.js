@@ -18,7 +18,7 @@ const chainID = process.env.CHAIN_ID;
 class ImportedController {
   constructor() { }
 
-  async getmyImportedCollection(req, res) {
+  async getMyImportedCollection(req, res) {
     try {
       if (!req.userId) return res.reply(messages.unauthorized());
       let data = [];
@@ -72,7 +72,11 @@ class ImportedController {
           console.log("Error", e);
         });
       results.count = await Collection.countDocuments(searchObj).exec();
-      results.results = data;
+      if(results.count === 0){
+        results.results = data[0];
+      }else{
+        results.results = data;
+      }
       res.header("Access-Control-Max-Age", 600);
       return res.reply(messages.success("Collection List"), results);
     } catch (error) {
