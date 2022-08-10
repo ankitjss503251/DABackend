@@ -231,6 +231,7 @@ class ImportedController {
                     let apiStatus = newJSON[0].status;
                     if (apiStatus === "available" && collectionData[0].progressStatus === 1) {
                       let NFTDataList = nftMetaBaseURL + "tokenDetailsExtended?ChainId=" + chainID + "&ContractAddress=" + collectionData[0].contractAddress;
+                      console.log("NFTDataList", NFTDataList);
                       try {
                         await http.get(NFTDataList, (resData) => {
                           let body = "";

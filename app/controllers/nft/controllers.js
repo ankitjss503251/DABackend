@@ -1496,8 +1496,6 @@ class NFTController {
       if (req.body.searchText && req.body.searchText !== undefined) {
         searchText = req.body.searchText;
       }
-
-
       let priceSort = 1;
       if (req.body.priceSort !== undefined) {
         if (req.body.priceSort === "ASC") {
@@ -1516,37 +1514,28 @@ class NFTController {
       let searchArray = [];
       searchArray["status"] = 1;
       searchArray["hashStatus"] = 1;
-
       if (ERCType !== "") {
         searchArray["type"] = ERCType;
       }
-
       if (searchText !== "") {
         searchArray["name"] = { $regex: new RegExp(searchText), $options: "i" };
       }
-
       searchArray["ownedBy"] = {
         $elemMatch: {
           address: req.body.userWalletAddress?.toLowerCase(),
           quantity: { $gt: 0 },
         },
       };
-
       searchArray["OrderData.0"] = { $exists: true }
-
       let searchObj = Object.assign({}, searchArray);
-
       let isOnMarketplaceSearchArray = [];
       isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1, "CollectionData.hashStatus": 1 };
       let isOnMarketplaceSearchObj = Object.assign(
         {},
         isOnMarketplaceSearchArray
       );
-
       console.log("isOnMarketplaceSearchObj", isOnMarketplaceSearchObj);
-
-      let nfts = await NFT.aggregate([
-
+      await NFT.aggregate([
         {
           $lookup: {
             from: "collections",
@@ -1626,17 +1615,65 @@ class NFTController {
             "BrandData.name": 1,
             "BrandData.logoImage": 1,
             "BrandData.coverImage": 1,
-
           },
+        },
+        {
+          $count: "allNFTs"
         },
         { $sort: { hasOrder: -1, "OrderData.price": priceSort, createdOn: -1 } },
         { $skip: startIndex },
         { $limit: limit },
-
       ]).exec( async function (e, nftData) {
         console.log("Error ", e);
         let results = {};
-        results.count = await NFT.countDocuments(searchObj).exec();
+        results.count = await await NFT.aggregate([
+          {
+            $lookup: {
+              from: "collections",
+              localField: "collectionID",
+              foreignField: "_id",
+              as: "CollectionData",
+            },
+          },
+          isOnMarketplaceSearchObj,
+          {
+            $lookup: {
+              from: "orders",
+              localField: "_id",
+              foreignField: "nftID",
+              as: "OrderData",
+            },
+          },
+          {
+            $lookup: {
+              from: "categories",
+              localField: "categoryID",
+              foreignField: "_id",
+              as: "CategoryData",
+            },
+          },
+          {
+            $lookup: {
+              from: "brands",
+              localField: "brandID",
+              foreignField: "_id",
+              as: "BrandData",
+            },
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "createdBy",
+              foreignField: "_id",
+              as: "UserData",
+            },
+          },
+          { $match: searchObj },
+          {
+            $count: "allNFTs"
+          },
+        ]);
+        
         results.results = nftData;
         return res.reply(messages.success("NFT List"), results);
       });
