@@ -963,7 +963,6 @@ class NFTController {
       }
       let sortArray = [];
       sortArray["OrderData.price"] = priceSort;
-      // sortArray["createdOn"] = -1;
       let sortObj = Object.assign({}, sortArray);
 
       console.log("sortObj", sortObj);
@@ -1003,7 +1002,6 @@ class NFTController {
       if (salesType === 2) {
         searchArray["OrderData.0"] = { $exists: false }
       }
-      // searchArray["OrderData.0"] = { $exists:true }
 
       let searchObj = Object.assign({}, searchArray);
 
@@ -1127,52 +1125,13 @@ class NFTController {
         { $skip: startIndex },
         { $limit: limit },
 
-      ]).exec(function async(e, nftData) {
+      ]).exec( async function(e, nftData) {
         console.log("Error ", e);
         let results = {};
-        results.count = nftData?.length ? nftData.length : 0;
-        // var checkNFTMeta = new Promise((resolve, reject) => {
-        //   nftData.forEach((nftList, index, array) => {
-        //     console.log("NFT record", nftList._id)
-        //     if (nftList.isImported === 0) {
-
-        //       let url = "https://decryptnft.mypinata.cloud/ipfs/QmdDAhKqZWKqGb2D8kx9D9ppBjdpBYyL3VXNdwfq6WjgDT";
-        //       http.get(url, (res) => {
-        //         let body = "";
-        //         res.on("data", (chunk) => {
-        //           body += chunk;
-        //         });
-        //         res.on("end", () => {
-        //           try {
-        //             nftList.newJSON = JSON.parse(body);
-        //             console.log("Data Loaded for ", nftList._id)
-        //             if (index === array.length - 1){
-        //               console.log("array", index, " ", array.length)
-        //               resolve();
-        //             }
-        //           } catch (error) {
-        //             nftList.newJSON = {};
-        //           };
-        //         });
-        //       }).on("error", (error) => {
-        //         nftList.newJSON = {};
-        //       });
-        //     } 
-        //   });
-        // });
-
-        // checkNFTMeta.then(() => {
-        //   results.results = nftData;
-        //   console.log("Data Returned");
-        //   return res.reply(messages.success("NFT List"), results);
-        // });
+        results.count = await NFT.countDocuments(searchObj).exec();
         results.results = nftData;
         console.log("Data Returned");
         return res.reply(messages.success("NFT List"), results);
-
-        // let count = nftData.length;
-        // return res.reply(messages.success("NFT List"), nftData);
-
       });
     } catch (error) {
       console.log("Error " + error);
@@ -1199,11 +1158,6 @@ class NFTController {
       let isOnMarketplaceSearchObj = Object.assign({}, isOnMarketplaceSearchArray);
       console.log("isOnMarketplaceSearchObj", isOnMarketplaceSearchObj);
 
-      // let salesTypeSearchArray = [];
-      // salesTypeSearchArray["$match"] = { "OrderData.hashStatus": 1 };
-      // let salesTypeSearchObj = Object.assign({}, salesTypeSearchArray);
-      // console.log("salesTypeSearchObj", salesTypeSearchObj);
-
       let nfts = await NFT.aggregate([
         { $match: searchObj },
         {
@@ -1223,7 +1177,6 @@ class NFTController {
             as: "OrderData",
           },
         },
-        // salesTypeSearchObj,
         {
           $lookup:
           {
@@ -1680,10 +1633,10 @@ class NFTController {
         { $skip: startIndex },
         { $limit: limit },
 
-      ]).exec(function (e, nftData) {
+      ]).exec( async function (e, nftData) {
         console.log("Error ", e);
         let results = {};
-        results.count = nftData?.length ? nftData.length : 0;
+        results.count = await NFT.countDocuments(searchObj).exec();
         results.results = nftData;
         return res.reply(messages.success("NFT List"), results);
       });
@@ -1853,10 +1806,10 @@ class NFTController {
         { $skip: startIndex },
         { $limit: limit },
 
-      ]).exec(function (e, nftData) {
+      ]).exec( async function (e, nftData) {
         console.log("Error ", e);
         let results = {};
-        results.count = nftData?.length ? nftData.length : 0;
+        results.count = await NFT.countDocuments(searchObj).exec();
         results.results = nftData;
         return res.reply(messages.success("NFT List"), results);
       });
