@@ -176,7 +176,7 @@ class ImportedController {
                     }
                     await Collection.findOneAndUpdate(
                       { _id: mongoose.Types.ObjectId(collectionID) },
-                      { updateCollectionData }, function (err, updateCollection) {
+                      {  $set: updateCollectionData }, { new: true}, function (err, updateCollection) {
                         if (err) {
                           console.log("Error in Updating Collection" + err);
                           return res.reply(messages.error());
@@ -229,6 +229,9 @@ class ImportedController {
                   try {
                     let newJSON = JSON.parse(body);
                     let apiStatus = newJSON[0].status;
+                    let lastUpdatedCollection = newJSON[0].last_updated;
+                    var d = new Date(0);
+                    let lastUpdateMetaDBCollection = d.setUTCSeconds(lastUpdatedCollection);
                     if (apiStatus === "available" && collectionData[0].progressStatus === 1) {
                       let NFTDataList = nftMetaBaseURL + "tokenDetailsExtended?ChainId=" + chainID + "&ContractAddress=" + collectionData[0].contractAddress;
                       console.log("NFTDataList", NFTDataList);
@@ -266,6 +269,7 @@ class ImportedController {
                                         brandID: collectionData[0].brandID,
                                         categoryID: collectionData[0].categoryID,
                                         ownedBy: [],
+                                        lastUpdatedOn: lastUpdateMetaDB,
                                       });
                                       if (nftRecord.S3Images.S3Animation === "" || nftRecord.S3Images.S3Animation === null) {
                                         nft.image = nftRecord.S3Images.S3Image;
@@ -328,7 +332,7 @@ class ImportedController {
                                         }
                                         await NFT.findOneAndUpdate(
                                           { _id: mongoose.Types.ObjectId(nftID) },
-                                          { updateNFTData }, function (err, updateNFT) {
+                                          {  $set: updateNFTData }, { new: true}, function (err, updateNFT) {
                                             if (err) {
                                               console.log("Error in Updating NFT" + err);
                                             } else {
@@ -351,11 +355,12 @@ class ImportedController {
                           return res.reply(messages.server_error());
                         });
                         let updateCollectionData = {
-                          progressStatus: 2
+                          progressStatus: 2,
+                          lastUpdatedOn: lastUpdateMetaDBCollection
                         }
                         await Collection.findOneAndUpdate(
                           { _id: mongoose.Types.ObjectId(collectionID) },
-                          { updateCollectionData }, function (err, updateCollection) {
+                          {  $set: updateCollectionData }, { new: true}, function (err, updateCollection) {
                             if (err) {
                               console.log("Error in Updating Collection" + err);
                               return res.reply(messages.error());
@@ -403,6 +408,7 @@ class ImportedController {
             return res.reply(messages.not_found("Collection"));
           } else {
             let tokenURI = nftMetaBaseURL + "collections?ChainId=" + chainID + "&ContractAddress=" + collectionData[0].contractAddress;
+            console.log("tokenURI", tokenURI);
             try {
               http.get(tokenURI, (resData) => {
                 let body = "";
@@ -417,11 +423,15 @@ class ImportedController {
                     let lastUpdateMetaDB = d.setUTCSeconds(lastUpdated);
                     var d1 = new Date(lastUpdateMetaDB);
                     var d2 = new Date(collectionData[0].lastUpdatedOn);
+
                     if (d1.getTime() === d2.getTime()){
+                      console.log("No changes found in Collection");
                       return res.reply(messages.already_updated("Collection"));
                     }else{
+                      console.log("changes found in Collection");
                       let apiStatus = newJSON[0].status;
-                      if (apiStatus === "available" && collectionData[0].progressStatus === 1) {
+                      console.log("File Status", apiStatus);
+                      if (apiStatus === "available" && collectionData[0].progressStatus === 2) {
                         let NFTDataList = nftMetaBaseURL + "tokenDetailsExtended?ChainId=" + chainID + "&ContractAddress=" + collectionData[0].contractAddress;
                         console.log("NFTDataList", NFTDataList);
                         try {
@@ -436,8 +446,8 @@ class ImportedController {
                                 jsonNFTData.forEach(nftRecord => {
                                   let lastUpdated = nftRecord.MetadataLastUpdated;
                                   var d = new Date(0);
-                                  let lastUpdateMetaDB = d.setUTCSeconds(lastUpdated);
-                                  var d1 = new Date(lastUpdateMetaDB);
+                                  let lastUpdateMetaDBNFT = d.setUTCSeconds(lastUpdated);
+                                  var d1 = new Date(lastUpdateMetaDBNFT);
                                   NFT.find({ collectionID: mongoose.Types.ObjectId(collectionData[0]._id), tokenID: nftRecord.edition }, async function (err, nftData) {
                                     if (err) {
                                       console.log("Error in nft Query", err)
@@ -457,6 +467,7 @@ class ImportedController {
                                           hashStatus: 1,
                                           brandID: collectionData[0].brandID,
                                           categoryID: collectionData[0].categoryID,
+                                          lastUpdatedOn: lastUpdateMetaDBNFT,
                                           ownedBy: [],
                                         });
                                         if (nftRecord.S3Images.S3Animation === "" || nftRecord.S3Images.S3Animation === null) {
@@ -470,13 +481,13 @@ class ImportedController {
                                         });
                                         nft.save().then(async (result) => {
                                           const collection = await Collection.findOne({
-                                            _id: mongoose.Types.ObjectId(collectionID),
+                                            _id: mongoose.Types.ObjectId(collectionData[0]._id),
                                           });
                                           let nextID = collection.getNextID();
                                           collection.nextID = nextID;
                                           collection.save();
                                           await Collection.findOneAndUpdate({
-                                            _id: mongoose.Types.ObjectId(collectionID),
+                                            _id: mongoose.Types.ObjectId(collectionData[0]._id),
                                           },
                                             { $inc: { nftCount: 1 } },
                                             function () { }
@@ -511,7 +522,7 @@ class ImportedController {
                                             name: nftRecord.name,
                                             description: nftRecord.description,
                                             previewImg: nftRecord.S3Images.S3Thumb,
-                                            lastUpdatedOn: lastUpdateMetaDB
+                                            lastUpdatedOn: lastUpdateMetaDBNFT
                                           }
                                           if(nftRecord.S3Images.S3Animation === "" || nftRecord.S3Images.S3Animation === null){
                                             updateNFTData.image = nftRecord.S3Images.S3Image;
@@ -519,12 +530,12 @@ class ImportedController {
                                             updateNFTData.image = nftRecord.S3Images.S3Animation;
                                           }
                                           await NFT.findOneAndUpdate(
-                                            { _id: mongoose.Types.ObjectId(nftID) },
-                                            { updateNFTData }, function (err, updateNFT) {
+                                            { _id: mongoose.Types.ObjectId(nftData[0]._id) },
+                                            {  $set: updateNFTData }, { new: true}, function (err, updateNFT) {
                                               if (err) {
-                                                console.log("Error in Updating NFT" + err);
+                                                console.log("Error in Updating NFT" + nftData[0]._id);
                                               } else {
-                                                console.log("NFT MetaData Updated: ", updateNFT);
+                                                console.log("NFT MetaData Updated: ", nftData[0]._id);
                                               }
                                             }
                                           );
@@ -543,11 +554,12 @@ class ImportedController {
                             return res.reply(messages.server_error());
                           });
                           let updateCollectionData = {
-                            progressStatus: 2
+                            progressStatus: 2,
+                            lastUpdatedOn: lastUpdateMetaDB
                           }
                           await Collection.findOneAndUpdate(
                             { _id: mongoose.Types.ObjectId(collectionID) },
-                            { updateCollectionData }, function (err, updateCollection) {
+                            {  $set: updateCollectionData }, { new: true}, function (err, updateCollection) {
                               if (err) {
                                 console.log("Error in Updating Collection" + err);
                                 return res.reply(messages.error());
@@ -561,6 +573,8 @@ class ImportedController {
                           console.log("Error ", error);
                           return res.reply(messages.server_error());
                         }
+                      }else{
+                        return res.reply(messages.status_not_updated("Collection"));
                       }
                     }
                   } catch (error) {

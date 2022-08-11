@@ -19,6 +19,7 @@ const builder = {
     not_verified: (prefix) => builder.prepare(406, prefix, 'not verified'),
     already_exists: (prefix) => builder.prepare(409, prefix, 'already exists'),
     already_updated: (prefix) => builder.prepare(409, prefix, 'already updated'),
+    status_not_updated: (prefix) => builder.prepare(406, prefix, 'status not updated'),
     user_deleted: (prefix) => builder.prepare(406, prefix, 'deleted by admin'),
     user_blocked: (prefix) => builder.prepare(406, prefix, 'blocked by admin'),
     required_field: (prefix) => builder.prepare(419, prefix, 'field required'),

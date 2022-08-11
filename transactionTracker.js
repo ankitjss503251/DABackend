@@ -784,7 +784,7 @@ async function checkCollectionStatus() {
                         }
                         await Collection.findOneAndUpdate(
                           { _id: mongoose.Types.ObjectId(data._id) },
-                          { updateCollectionData }, function (err, updateCollection) {
+                          {  $set: updateCollectionData }, { new: true}, function (err, updateCollection) {
                             if (err) {
                               console.log("Error in Updating Collection" + err);
                             } else {
