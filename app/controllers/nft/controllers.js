@@ -952,6 +952,11 @@ class NFTController {
         }
       }
 
+      let pageName = "";
+      if (req.body.pageName && req.body.pageName !== undefined) {
+        pageName = req.body.pageName;
+      }
+
 
       let priceSort = 1;
       if (req.body.priceSort !== undefined) {
@@ -1005,6 +1010,21 @@ class NFTController {
 
       let searchObj = Object.assign({}, searchArray);
 
+      let searchArrayCount = [];
+      searchArrayCount["status"] = 1;
+      searchArrayCount["hashStatus"] = 1;
+      if(pageName === "Brand"){
+        if (brandID !== "") {
+          searchArrayCount["brandID"] = mongoose.Types.ObjectId(brandID);
+        }
+      }
+      if(pageName === "Collection"){
+        if (collectionID !== "") {
+          searchArrayCount["collectionID"] = mongoose.Types.ObjectId(collectionID);
+        }
+      }
+      let searchObjCount = Object.assign({}, searchArrayCount);
+
       let isOnMarketplaceSearchArray = [];
       isOnMarketplaceSearchArray["$match"] = {};
       if (isOnMarketplace === 1 || isOnMarketplace === 0) {
@@ -1035,8 +1055,7 @@ class NFTController {
 
       console.log("salesTypeSearchObj", salesTypeSearchObj);
 
-      let nfts = await NFT.aggregate([
-
+      await NFT.aggregate([
         {
           $lookup: {
             from: "collections",
@@ -1128,7 +1147,54 @@ class NFTController {
       ]).exec( async function(e, nftData) {
         console.log("Error ", e);
         let results = {};
-        results.count = await NFT.countDocuments(searchObj).exec();
+        let count = await NFT.aggregate([
+          {
+            $lookup: {
+              from: "collections",
+              localField: "collectionID",
+              foreignField: "_id",
+              as: "CollectionData",
+            },
+          },
+          isOnMarketplaceSearchObj,
+          {
+            $lookup: {
+              from: "orders",
+              localField: "_id",
+              foreignField: "nftID",
+              as: "OrderData",
+            },
+          },
+          {
+            $lookup: {
+              from: "categories",
+              localField: "categoryID",
+              foreignField: "_id",
+              as: "CategoryData",
+            },
+          },
+          {
+            $lookup: {
+              from: "brands",
+              localField: "brandID",
+              foreignField: "_id",
+              as: "BrandData",
+            },
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "createdBy",
+              foreignField: "_id",
+              as: "UserData",
+            },
+          },
+          { $match: searchObjCount },
+          {
+            $count: "allNFTs"
+          }
+        ]);
+        results.count = count[0].allNFTs;
         results.results = nftData;
         console.log("Data Returned");
         return res.reply(messages.success("NFT List"), results);
@@ -1617,16 +1683,13 @@ class NFTController {
             "BrandData.coverImage": 1,
           },
         },
-        {
-          $count: "allNFTs"
-        },
         { $sort: { hasOrder: -1, "OrderData.price": priceSort, createdOn: -1 } },
         { $skip: startIndex },
         { $limit: limit },
       ]).exec( async function (e, nftData) {
         console.log("Error ", e);
         let results = {};
-        results.count = await await NFT.aggregate([
+        let count = await NFT.aggregate([
           {
             $lookup: {
               from: "collections",
@@ -1671,9 +1734,9 @@ class NFTController {
           { $match: searchObj },
           {
             $count: "allNFTs"
-          },
+          }
         ]);
-        
+        results.count = count[0].allNFTs;
         results.results = nftData;
         return res.reply(messages.success("NFT List"), results);
       });
@@ -1755,7 +1818,7 @@ class NFTController {
 
       console.log("isOnMarketplaceSearchObj", isOnMarketplaceSearchObj);
 
-      let nfts = await NFT.aggregate([
+      await NFT.aggregate([
 
         {
           $lookup: {
@@ -1846,7 +1909,55 @@ class NFTController {
       ]).exec( async function (e, nftData) {
         console.log("Error ", e);
         let results = {};
-        results.count = await NFT.countDocuments(searchObj).exec();
+        let count = await NFT.aggregate([
+
+          {
+            $lookup: {
+              from: "collections",
+              localField: "collectionID",
+              foreignField: "_id",
+              as: "CollectionData",
+            },
+          },
+          isOnMarketplaceSearchObj,
+          {
+            $lookup: {
+              from: "orders",
+              localField: "_id",
+              foreignField: "nftID",
+              as: "OrderData",
+            },
+          },
+          {
+            $lookup: {
+              from: "categories",
+              localField: "categoryID",
+              foreignField: "_id",
+              as: "CategoryData",
+            },
+          },
+          {
+            $lookup: {
+              from: "brands",
+              localField: "brandID",
+              foreignField: "_id",
+              as: "BrandData",
+            },
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "createdBy",
+              foreignField: "_id",
+              as: "UserData",
+            },
+          },
+          { $match: searchObj },
+          {
+            $count: "allNFTs"
+          }
+        ]);
+        results.count = count[0].allNFTs;
         results.results = nftData;
         return res.reply(messages.success("NFT List"), results);
       });
