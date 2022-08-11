@@ -1594,6 +1594,13 @@ class NFTController {
       };
       searchArray["OrderData.0"] = { $exists: true }
       let searchObj = Object.assign({}, searchArray);
+
+      let searchArrayCount = [];
+      searchArrayCount["status"] = 1;
+      searchArrayCount["hashStatus"] = 1;
+      searchArrayCount["OrderData.0"] = { $exists: true }
+      let searchObjCount = Object.assign({}, searchArrayCount);
+
       let isOnMarketplaceSearchArray = [];
       isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1, "CollectionData.hashStatus": 1 };
       let isOnMarketplaceSearchObj = Object.assign(
@@ -1731,7 +1738,7 @@ class NFTController {
               as: "UserData",
             },
           },
-          { $match: searchObj },
+          { $match: searchObjCount },
           {
             $count: "allNFTs"
           }
@@ -1809,6 +1816,11 @@ class NFTController {
 
       let searchObj = Object.assign({}, searchArray);
 
+      let searchArrayCount = [];
+      searchArrayCount["status"] = 1;
+      searchArrayCount["hashStatus"] = 1;
+      let searchObjCount = Object.assign({}, searchArrayCount);
+
       let isOnMarketplaceSearchArray = [];
       isOnMarketplaceSearchArray["$match"] = { "CollectionData.status": 1, "CollectionData.hashStatus": 1 };
       let isOnMarketplaceSearchObj = Object.assign(
@@ -1952,7 +1964,7 @@ class NFTController {
               as: "UserData",
             },
           },
-          { $match: searchObj },
+          { $match: searchObjCount },
           {
             $count: "allNFTs"
           }
