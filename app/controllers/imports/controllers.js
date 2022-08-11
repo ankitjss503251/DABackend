@@ -1,6 +1,7 @@
 const fs = require("fs");
 const https = require("https");
 const http = require("http");
+const axios = require('axios');
 const { NFT, Collection, Category, Brand } = require("../../models");
 const mongoose = require("mongoose");
 const validators = require("../helpers/validators");
@@ -14,6 +15,8 @@ const erc721Abi = require("./../../../abis/extendedERC721.json");
 const erc1155Abi = require("./../../../abis/extendedERC1155.json");
 const nftMetaBaseURL = process.env.NFT_META_BASE_URL;
 const chainID = process.env.CHAIN_ID;
+
+const postAPIURL = process.env.NFT_META_POST_URL;
 
 
 class ImportedController {
@@ -356,6 +359,7 @@ class ImportedController {
                         });
                         let updateCollectionData = {
                           progressStatus: 2,
+                          checkStatus: 0,
                           lastUpdatedOn: lastUpdateMetaDBCollection
                         }
                         await Collection.findOneAndUpdate(
@@ -385,6 +389,59 @@ class ImportedController {
                 return res.reply(messages.server_error());
               });
             } catch (error) {
+              console.log("Error ", error);
+              return res.reply(messages.server_error());
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.log("Error " + error);
+      return res.reply(messages.server_error());
+    }
+  }
+
+  async checkCollectionUpdate(req, res) {
+    try {
+      let collectionID = req.body.collectionID;
+      Collection.find({ _id: mongoose.Types.ObjectId(collectionID) }, async function (err, collectionData) {
+        if (err) {
+          return res.reply(messages.server_error("Collection"));
+        } else {
+          if (collectionData.length == 0) {
+            return res.reply(messages.not_found("Collection"));
+          } else {
+            let $request = [];
+            $request["request_type"] = "update";
+            $request["address"] = collectionData[0].contractAddress;
+            $request["chain_id"] = chainID;
+            $request["name"] = "rockstar";
+            $request["total_supply_field"] = "indicatesID";
+            let payload = Object.assign({}, $request);
+            try {
+              let response = await axios.post(postAPIURL+'impCollection/', payload);
+              let data = response.data;
+              if(data?.status !== undefined && data?.status === "update"){
+                let updateCollectionData = {
+                  checkStatus: 1
+                }
+                await Collection.findOneAndUpdate(
+                  { _id: mongoose.Types.ObjectId(collectionID) },
+                  {  $set: updateCollectionData }, { new: true}, function (err, updateCollection) {
+                    if (err) {
+                      console.log("Error in Updating Collection" + err);
+                      return res.reply(messages.error());
+                    } else {
+                      console.log("Collection status Updated: ", updateCollection);
+                      return res.reply(messages.created("Collection Updated"), updateCollection);
+                    }
+                  }
+                );
+              }else{
+                console.log("Error ", error);
+                return res.reply(messages.server_error());
+              }
+            }catch(error){
               console.log("Error ", error);
               return res.reply(messages.server_error());
             }
@@ -555,6 +612,7 @@ class ImportedController {
                           });
                           let updateCollectionData = {
                             progressStatus: 2,
+                            checkStatus: 0,
                             lastUpdatedOn: lastUpdateMetaDB
                           }
                           await Collection.findOneAndUpdate(
