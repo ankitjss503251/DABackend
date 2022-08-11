@@ -621,9 +621,15 @@ class NFTController {
       if (req.body.searchText && req.body.searchText !== undefined) {
         searchText = req.body.searchText;
       }
-
+      let collectionID = "";
+      if (req.body.collectionID && req.body.collectionID !== undefined) {
+        collectionID = req.body.collectionID;
+      }
       let searchArray = [];
       searchArray["createdBy"] = mongoose.Types.ObjectId(req.userId);
+      if(collectionID !== ""){
+        searchArray["_id"] = mongoose.Types.ObjectId(collectionID);
+      }
       if (searchText !== "") {
         searchArray["$or"] = [
           { name: { $regex: new RegExp(searchText), $options: "i" } },
