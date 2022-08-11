@@ -1,6 +1,6 @@
 const fs = require("fs");
 const https = require("https");
-const http = require("https");
+const http = require("http");
 const {
   NFT,
   Collection,
@@ -7744,12 +7744,12 @@ class NFTController {
               console.log("Created on Plateform");
               let tokenURI = await contract.methods.tokenURI(tokenID).call();
               try{
-                https.get(tokenURI, (res) => {
+                https.get(tokenURI, (resData) => {
                   let body = "";
-                  res.on("data", (chunk) => {
+                  resData.on("data", (chunk) => {
                     body += chunk;
                   });
-                  res.on("end", async () => {
+                  resData.on("end", async () => {
                     try {
                       let newJSON = JSON.parse(body);
                       let updateNFTData = {
@@ -7760,7 +7760,7 @@ class NFTController {
                       }
                       await NFT.findOneAndUpdate(
                         { _id: mongoose.Types.ObjectId(nftID) },
-                        { updateNFTData }, function (err, updateNFT) {
+                        {  $set: updateNFTData }, { new: true}, function (err, updateNFT) {
                           if (err) {
                             console.log("Error in Updating NFT" + err);
                             return res.reply(messages.error());
@@ -7787,12 +7787,12 @@ class NFTController {
               console.log("Imported on Plateform");
               let tokenURI = nftMetaBaseURL + "tokenDetailsExtended?ChainId=" + chainID + "&ContractAddress=" + nftData[0].collectionAddress + "&TokenId=" + tokenID;
               try{
-                http.get(tokenURI, (res) => {
+                http.get(tokenURI, (resData) => {
                   let body = "";
-                  res.on("data", (chunk) => {
+                  resData.on("data", (chunk) => {
                     body += chunk;
                   });
-                  res.on("end", async () => {
+                  resData.on("end", async () => {
                     try {
                       let newJSON = JSON.parse(body);
                       let lastUpdated = newJSON[0].MetadataLastUpdated;
@@ -7816,7 +7816,7 @@ class NFTController {
                         }
                         await NFT.findOneAndUpdate(
                           { _id: mongoose.Types.ObjectId(nftID) },
-                          { updateNFTData }, function (err, updateNFT) {
+                          {  $set: updateNFTData }, { new: true}, function (err, updateNFT) {
                             if (err) {
                               console.log("Error in Updating NFT" + err);
                               return res.reply(messages.error());
