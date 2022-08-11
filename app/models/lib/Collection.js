@@ -126,7 +126,7 @@ const collectionSchema = mongoose.Schema({
     //0 - Read & 1 - Process & 2 - Completed
     type: Number,
     enum: [0, 1, 2],
-    default: 1,
+    default: 0,
   },
   checkStatus: {
     //0 - Not Checked & 1 - Checked
