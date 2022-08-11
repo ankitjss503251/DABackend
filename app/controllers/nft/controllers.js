@@ -1605,6 +1605,12 @@ class NFTController {
       searchArrayCount["status"] = 1;
       searchArrayCount["hashStatus"] = 1;
       searchArrayCount["OrderData.0"] = { $exists: true }
+      searchArrayCount["ownedBy"] = {
+        $elemMatch: {
+          address: req.body.userWalletAddress?.toLowerCase(),
+          quantity: { $gt: 0 },
+        },
+      };
       let searchObjCount = Object.assign({}, searchArrayCount);
 
       let isOnMarketplaceSearchArray = [];
@@ -1825,6 +1831,18 @@ class NFTController {
       let searchArrayCount = [];
       searchArrayCount["status"] = 1;
       searchArrayCount["hashStatus"] = 1;
+      if (req.body.searchType === "owned") {
+        searchArrayCount["ownedBy"] = {
+          $elemMatch: {
+            address: req.body.userWalletAddress?.toLowerCase(),
+            quantity: { $gt: 0 },
+          },
+        };
+      } else {
+        searchArrayCount["createdBy"] = {
+          $in: [mongoose.Types.ObjectId(req.body.userId)],
+        };
+      }
       let searchObjCount = Object.assign({}, searchArrayCount);
 
       let isOnMarketplaceSearchArray = [];
@@ -2310,6 +2328,13 @@ class NFTController {
           }
           updateData["lastUpdatedBy"] = req.userId;
           updateData["lastUpdatedOn"] = Date.now();
+
+          if (req.body.contractName) {
+            updateData["contractName"] = req.body.contractName;
+          }
+          if (req.body.totalSupplyField) {
+            updateData["totalSupplyField"] = req.body.totalSupplyField;
+          }
         }
         let updateObj = Object.assign({}, updateData);
         let nftupdateObj = Object.assign({}, nftupdateData);
