@@ -952,6 +952,11 @@ class NFTController {
         }
       }
 
+      let pageName = "";
+      if (req.body.pageName && req.body.pageName !== undefined) {
+        pageName = req.body.pageName;
+      }
+
 
       let priceSort = 1;
       if (req.body.priceSort !== undefined) {
@@ -1004,6 +1009,21 @@ class NFTController {
       }
 
       let searchObj = Object.assign({}, searchArray);
+
+      let searchArrayCount = [];
+      searchArrayCount["status"] = 1;
+      searchArrayCount["hashStatus"] = 1;
+      if(pageName === "Brand"){
+        if (brandID !== "") {
+          searchArrayCount["brandID"] = mongoose.Types.ObjectId(brandID);
+        }
+      }
+      if(pageName === "Collection"){
+        if (collectionID !== "") {
+          searchArrayCount["collectionID"] = mongoose.Types.ObjectId(collectionID);
+        }
+      }
+      let searchObjCount = Object.assign({}, searchArrayCount);
 
       let isOnMarketplaceSearchArray = [];
       isOnMarketplaceSearchArray["$match"] = {};
@@ -1145,7 +1165,6 @@ class NFTController {
               as: "OrderData",
             },
           },
-          salesTypeSearchObj,
           {
             $lookup: {
               from: "categories",
@@ -1170,7 +1189,7 @@ class NFTController {
               as: "UserData",
             },
           },
-          { $match: searchObj },
+          { $match: searchObjCount },
           {
             $count: "allNFTs"
           }
