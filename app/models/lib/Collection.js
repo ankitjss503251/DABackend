@@ -96,6 +96,12 @@ const collectionSchema = mongoose.Schema({
     default: 0,
     enum: [0, 1], // 0-No 1-Yes
   },
+  contractName: {
+    type: String,
+  },
+  totalSupplyField: {
+    type: String,
+  },
   isDeployed: {
     type: Number,
     default: 0,
@@ -121,6 +127,12 @@ const collectionSchema = mongoose.Schema({
     type: Number,
     enum: [0, 1, 2],
     default: 1,
+  },
+  checkStatus: {
+    //0 - Not Checked & 1 - Checked
+    type: Number,
+    enum: [0, 1],
+    default: 0,
   },
   apiStatus: {
     type: String,
