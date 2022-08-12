@@ -776,8 +776,10 @@ async function checkCollectionStatus() {
                       try {
                         let newJSON = JSON.parse(body);
                         let apiStatus = newJSON.apiStatus;
+                        let totalSupply = newJSON.total_supply;
                         let updateCollectionData = {
-                          apiStatus: apiStatus
+                          apiStatus: apiStatus,
+                          totalSupply: totalSupply
                         }
                         if (apiStatus === "available" && data.progressStatus === 0) {
                           updateCollectionData.progressStatus = 1;
@@ -1012,16 +1014,17 @@ async function refreshCollectionMeta() {
 
 
 
-// setInterval(() => {
-//   checkCollection();
-//   checkNFTs();
-//   checkOrders();
-//   checkOffers();
-// }, 20000);
+setInterval(() => {
+  checkCollection();
+  checkNFTs();
+  checkOrders();
+  checkOffers();
+}, 20000);
+
+setInterval(() => {
+  checkCollectionStatus();
+}, 10000);
 
 // setInterval(() => {
-//   checkCollectionStatus();
-// }, 10000);
-setInterval(() => {
-  // refreshCollectionMeta();
-}, 5000);
+//   refreshCollectionMeta();
+// }, 5000);
