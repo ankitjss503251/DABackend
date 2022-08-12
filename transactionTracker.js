@@ -775,8 +775,8 @@ async function checkCollectionStatus() {
                     res.on("end", async () => {
                       try {
                         let newJSON = JSON.parse(body);
-                        let apiStatus = newJSON.apiStatus;
-                        let totalSupply = newJSON.total_supply;
+                        let apiStatus = newJSON[0].apiStatus;
+                        let totalSupply = newJSON[0].total_supply;
                         let updateCollectionData = {
                           apiStatus: apiStatus,
                           totalSupply: totalSupply
@@ -972,6 +972,7 @@ async function refreshCollectionMeta() {
                               let updateCollectionData = {
                                 progressStatus: 2,
                                 checkStatus: 0,
+                                totalSupply: totalSupply,
                                 lastUpdatedOn: lastUpdateMetaDB
                               }
                               await Collection.findOneAndUpdate(

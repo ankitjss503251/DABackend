@@ -40,9 +40,7 @@ const collectionSchema = mongoose.Schema({
   },
   contractAddress: {
     type: String,
-    // unique: true,
     require: true,
-    // lowercase: true,
   },
   price: { type: mongoose.Types.Decimal128, default: 0 },
   royalityPercentage: { type: Number, default: 0 },
@@ -77,6 +75,11 @@ const collectionSchema = mongoose.Schema({
     default: 0,
   },
   isMinted: {
+    type: Number,
+    default: 0,
+    enum: [0, 1],
+  },
+  isHotCollection:{
     type: Number,
     default: 0,
     enum: [0, 1],
