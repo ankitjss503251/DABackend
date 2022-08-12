@@ -171,8 +171,10 @@ class ImportedController {
                   try {
                     let newJSON = JSON.parse(body);
                     let apiStatus = newJSON[0].status;
+                    let totalSupply = newJSON[0].total_supply;
                     let updateCollectionData = {
-                      apiStatus: apiStatus
+                      apiStatus: apiStatus,
+                      totalSupply: totalSupply
                     }
                     if (apiStatus === "available" && collectionData[0].progressStatus === 0) {
                       updateCollectionData.progressStatus = 1;
@@ -476,6 +478,7 @@ class ImportedController {
                   try {
                     let newJSON = JSON.parse(body);
                     let lastUpdated = newJSON[0].last_updated;
+                    let totalSupply = newJSON[0].total_supply;
                     var d = new Date(0);
                     let lastUpdateMetaDB = d.setUTCSeconds(lastUpdated);
                     var d1 = new Date(lastUpdateMetaDB);
@@ -613,6 +616,7 @@ class ImportedController {
                           let updateCollectionData = {
                             progressStatus: 2,
                             checkStatus: 0,
+                            totalSupply: totalSupply,
                             lastUpdatedOn: lastUpdateMetaDB
                           }
                           await Collection.findOneAndUpdate(
