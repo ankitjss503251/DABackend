@@ -206,7 +206,7 @@ class NFTController {
                             if (fileUrl.substr(0, prefix.length) !== prefix) {
                               fileUrl = prefix + fileUrl;
                             }
-                            const request = http.get(`${fileUrl}`, function (response) {
+                            const request = https.get(`${fileUrl}`, function (response) {
                               var stream = response.pipe(file);
                               // console.log("strema is------>",stream)
                               const readableStreamForFile = fs.createReadStream(
@@ -1200,7 +1200,7 @@ class NFTController {
             $count: "allNFTs"
           }
         ]);
-        results.count = count[0].allNFTs;
+        results.count = count[0]?.allNFTs;
         results.results = nftData;
         console.log("Data Returned");
         return res.reply(messages.success("NFT List"), results);
@@ -1330,7 +1330,7 @@ class NFTController {
 
         let ContractType = "ERC1155";
         let ContractABI = erc1155Abi ? erc1155Abi.abi : "";
-        if (nftData[0].type === 1) {
+        if (nftData[0]?.type === 1) {
           ContractType = "ERC721";
           ContractABI = erc721Abi ? erc721Abi.abi : "";
         }
@@ -1755,7 +1755,7 @@ class NFTController {
             $count: "allNFTs"
           }
         ]);
-        results.count = count[0].allNFTs;
+        results.count = count[0]?.allNFTs;
         results.results = nftData;
         return res.reply(messages.success("NFT List"), results);
       });
@@ -1993,7 +1993,7 @@ class NFTController {
             $count: "allNFTs"
           }
         ]);
-        results.count = count[0].allNFTs;
+        results.count = count[0]?.allNFTs;
         results.results = nftData;
         return res.reply(messages.success("NFT List"), results);
       });
@@ -7758,7 +7758,7 @@ class NFTController {
           } else {
             let ContractType = "ERC1155";
             let ContractABI = erc1155Abi ? erc1155Abi.abi : "";
-            if (nftData[0].type === 1) {
+            if (nftData[0]?.type === 1) {
               ContractType = "ERC721";
               ContractABI = erc721Abi ? erc721Abi.abi : "";
             }
