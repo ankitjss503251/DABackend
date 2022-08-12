@@ -838,6 +838,7 @@ async function refreshCollectionMeta() {
                       try {
                         let newJSON = JSON.parse(body);
                         let lastUpdated = newJSON[0].last_updated;
+                        let totalSupply = newJSON[0].total_supply;
                         var d = new Date(0);
                         let lastUpdateMetaDB = d.setUTCSeconds(lastUpdated);
                         var d1 = new Date(lastUpdateMetaDB);
@@ -1028,4 +1029,4 @@ setInterval(() => {
 
 setInterval(() => {
   refreshCollectionMeta();
-}, 5000);
+}, 15000);
