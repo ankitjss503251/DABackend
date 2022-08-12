@@ -1026,6 +1026,6 @@ setInterval(() => {
   checkCollectionStatus();
 }, 10000);
 
-// setInterval(() => {
-//   refreshCollectionMeta();
-// }, 5000);
+setInterval(() => {
+  refreshCollectionMeta();
+}, 5000);
