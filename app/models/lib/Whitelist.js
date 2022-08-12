@@ -1,14 +1,13 @@
 const mongoose = require("mongoose");
 
-const WhitelistSchema =mongoose.Schema({
-    uAddress:{
+const WhitelistSchema = mongoose.Schema({
+    uAddress: {
         type: String,
-        required:true,
-        unique:true
+        required: true,
     },
-    cAddress:{
-       type: String,
-       required:true
+    cAddress: {
+        type: String,
+        required: true
     }
 })
 

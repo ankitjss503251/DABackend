@@ -627,7 +627,7 @@ class NFTController {
       }
       let searchArray = [];
       searchArray["createdBy"] = mongoose.Types.ObjectId(req.userId);
-      if(collectionID !== ""){
+      if (collectionID !== "") {
         searchArray["_id"] = mongoose.Types.ObjectId(collectionID);
       }
       if (searchText !== "") {
@@ -1019,12 +1019,12 @@ class NFTController {
       let searchArrayCount = [];
       searchArrayCount["status"] = 1;
       searchArrayCount["hashStatus"] = 1;
-      if(pageName === "Brand"){
+      if (pageName === "Brand") {
         if (brandID !== "") {
           searchArrayCount["brandID"] = mongoose.Types.ObjectId(brandID);
         }
       }
-      if(pageName === "Collection"){
+      if (pageName === "Collection") {
         if (collectionID !== "") {
           searchArrayCount["collectionID"] = mongoose.Types.ObjectId(collectionID);
         }
@@ -1150,7 +1150,7 @@ class NFTController {
         { $skip: startIndex },
         { $limit: limit },
 
-      ]).exec( async function(e, nftData) {
+      ]).exec(async function (e, nftData) {
         console.log("Error ", e);
         let results = {};
         let count = await NFT.aggregate([
@@ -1340,7 +1340,7 @@ class NFTController {
         if (nftData[0].isMinted === 0) {
           console.log("Created on Plateform");
           let tokenURI = await contract.methods.tokenURI(tokenID).call();
-          try{
+          try {
             https.get(tokenURI, (resp) => {
               let body = "";
               resp.on("data", (chunk) => {
@@ -1363,13 +1363,13 @@ class NFTController {
               console.log("Error ", error);
               return res.reply(messages.success("NFT List"), nftData);
             });
-          }catch(error){
+          } catch (error) {
             console.log("Error ", error);
             return res.reply(messages.success("NFT List"), nftData);
           }
         } else {
           let tokenURI = nftMetaBaseURL + "tokenDetailsExtended?ChainId=" + chainID + "&ContractAddress=" + nftData[0].collectionAddress + "&TokenId=" + tokenID;
-          try{
+          try {
             http.get(tokenURI, (resp) => {
               let body = "";
               resp.on("data", (chunk) => {
@@ -1380,9 +1380,9 @@ class NFTController {
                   let newJSON = JSON.parse(body);
                   nftData[0].name = newJSON[0].name;
                   nftData[0].description = newJSON[0].description;
-                  if(newJSON[0].S3Images.S3Animation === "" || newJSON[0].S3Images.S3Animation === null){
+                  if (newJSON[0].S3Images.S3Animation === "" || newJSON[0].S3Images.S3Animation === null) {
                     nftData[0].image = newJSON[0].S3Images.S3Image;
-                  }else{
+                  } else {
                     nftData[0].image = newJSON[0].S3Images.S3Animation;
                   }
                   nftData[0].attributes = newJSON[0].attributes;
@@ -1397,7 +1397,7 @@ class NFTController {
               console.log("Error ", error);
               return res.reply(messages.success("NFT List"), nftData);
             });
-          }catch(error){
+          } catch (error) {
             console.log("Error ", error);
             return res.reply(messages.success("NFT List"), nftData);
           }
@@ -1705,7 +1705,7 @@ class NFTController {
         { $sort: { hasOrder: -1, "OrderData.price": priceSort, createdOn: -1 } },
         { $skip: startIndex },
         { $limit: limit },
-      ]).exec( async function (e, nftData) {
+      ]).exec(async function (e, nftData) {
         console.log("Error ", e);
         let results = {};
         let count = await NFT.aggregate([
@@ -1942,7 +1942,7 @@ class NFTController {
         { $skip: startIndex },
         { $limit: limit },
 
-      ]).exec( async function (e, nftData) {
+      ]).exec(async function (e, nftData) {
         console.log("Error ", e);
         let results = {};
         let count = await NFT.aggregate([
@@ -2287,7 +2287,7 @@ class NFTController {
           }
           if (req.body.isImported) {
             updateData["isImported"] = req.body.isImported;
-            if(req.body.isImported === 1){
+            if (req.body.isImported === 1) {
               updateData["status"] = 1;
               updateData["hashStatus"] = 1;
             }
@@ -2353,7 +2353,7 @@ class NFTController {
               }
             }
           );
-          return res.reply( messages.updated("Collection Updated successfully."), collection );
+          return res.reply(messages.updated("Collection Updated successfully."), collection);
         });
       });
     } catch (error) {
@@ -7768,7 +7768,7 @@ class NFTController {
             if (nftData[0].isMinted === 0) {
               console.log("Created on Plateform");
               let tokenURI = await contract.methods.tokenURI(tokenID).call();
-              try{
+              try {
                 https.get(tokenURI, (resData) => {
                   let body = "";
                   resData.on("data", (chunk) => {
@@ -7785,7 +7785,7 @@ class NFTController {
                       }
                       await NFT.findOneAndUpdate(
                         { _id: mongoose.Types.ObjectId(nftID) },
-                        {  $set: updateNFTData }, { new: true}, function (err, updateNFT) {
+                        { $set: updateNFTData }, { new: true }, function (err, updateNFT) {
                           if (err) {
                             console.log("Error in Updating NFT" + err);
                             return res.reply(messages.error());
@@ -7804,14 +7804,14 @@ class NFTController {
                   console.log("Error ", error);
                   return res.reply(messages.server_error());
                 });
-              }catch(error){
+              } catch (error) {
                 console.log("Error ", error);
                 return res.reply(messages.server_error());
               }
             } else {
               console.log("Imported on Plateform");
               let tokenURI = nftMetaBaseURL + "tokenDetailsExtended?ChainId=" + chainID + "&ContractAddress=" + nftData[0].collectionAddress + "&TokenId=" + tokenID;
-              try{
+              try {
                 http.get(tokenURI, (resData) => {
                   let body = "";
                   resData.on("data", (chunk) => {
@@ -7825,23 +7825,23 @@ class NFTController {
                       let lastUpdateMetaDB = d.setUTCSeconds(lastUpdated);
                       var d1 = new Date(lastUpdateMetaDB);
                       var d2 = new Date(nftData[0].lastUpdatedOn);
-                      if (d1.getTime() === d2.getTime()){
+                      if (d1.getTime() === d2.getTime()) {
                         return res.reply(messages.already_updated("NFT"));
-                      }else{
+                      } else {
                         let updateNFTData = {
                           name: newJSON[0].name,
                           description: newJSON[0].description,
                           previewImg: newJSON[0].S3Images.S3Thumb,
                           lastUpdatedOn: lastUpdateMetaDB
                         }
-                        if(newJSON[0].S3Images.S3Animation === "" || newJSON[0].S3Images.S3Animation === null){
+                        if (newJSON[0].S3Images.S3Animation === "" || newJSON[0].S3Images.S3Animation === null) {
                           updateNFTData.image = newJSON[0].S3Images.S3Image;
-                        }else{
+                        } else {
                           updateNFTData.image = newJSON[0].S3Images.S3Animation;
                         }
                         await NFT.findOneAndUpdate(
                           { _id: mongoose.Types.ObjectId(nftID) },
-                          {  $set: updateNFTData }, { new: true}, function (err, updateNFT) {
+                          { $set: updateNFTData }, { new: true }, function (err, updateNFT) {
                             if (err) {
                               console.log("Error in Updating NFT" + err);
                               return res.reply(messages.error());
@@ -7861,7 +7861,7 @@ class NFTController {
                   console.log("Error ", error);
                   return res.reply(messages.server_error());
                 });
-              }catch(error){
+              } catch (error) {
                 console.log("Error ", error);
                 return res.reply(messages.server_error());
               }
