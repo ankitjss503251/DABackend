@@ -206,7 +206,7 @@ class NFTController {
                             if (fileUrl.substr(0, prefix.length) !== prefix) {
                               fileUrl = prefix + fileUrl;
                             }
-                            const request = http.get(`${fileUrl}`, function (response) {
+                            const request = https.get(`${fileUrl}`, function (response) {
                               var stream = response.pipe(file);
                               // console.log("strema is------>",stream)
                               const readableStreamForFile = fs.createReadStream(

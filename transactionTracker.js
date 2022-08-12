@@ -5,7 +5,7 @@ const http = require("http");
 const https = require("https");
 const logsDecoder = LogsDecoder.create()
 const config = require("dotenv").config();
-const { NFT, Collection, User, Bid, Order, History } = require("./app/models");
+const { NFT, Collection, User, Bid, Order, History, Category, Brand } = require("./app/models");
 // TODO: Change the URL to MainNet URL
 var web3 = new Web3(process.env.NETWORK_RPC_URL);
 const ABI = require("./abis/marketplace.json")
@@ -762,12 +762,12 @@ async function checkCollectionStatus() {
         } else {
           if (resData.length > 0) {
             for (const data of resData) {
-              console.log("Category ID", data._id)
-              if(data.contractAddress !== "0x"){
+              console.log("Collection ID", data._id)
+              if (data.contractAddress !== "0x") {
                 let tokenURI = nftMetaBaseURL + "collections?ChainId=" + chainID + "&ContractAddress=" + data.contractAddress;
                 console.log("tokenURI", tokenURI)
                 try {
-                  http.get(tokenURI, (res) => { 
+                  http.get(tokenURI, (res) => {
                     let body = "";
                     res.on("data", (chunk) => {
                       body += chunk;
@@ -776,15 +776,17 @@ async function checkCollectionStatus() {
                       try {
                         let newJSON = JSON.parse(body);
                         let apiStatus = newJSON.apiStatus;
+                        let totalSupply = newJSON.total_supply;
                         let updateCollectionData = {
-                          apiStatus: apiStatus
+                          apiStatus: apiStatus,
+                          totalSupply: totalSupply
                         }
                         if (apiStatus === "available" && data.progressStatus === 0) {
                           updateCollectionData.progressStatus = 1;
                         }
                         await Collection.findOneAndUpdate(
                           { _id: mongoose.Types.ObjectId(data._id) },
-                          {  $set: updateCollectionData }, { new: true}, function (err, updateCollection) {
+                          { $set: updateCollectionData }, { new: true }, function (err, updateCollection) {
                             if (err) {
                               console.log("Error in Updating Collection" + err);
                             } else {
@@ -813,13 +815,216 @@ async function checkCollectionStatus() {
 }
 
 
-// setInterval(() => {
-//   checkCollection();
-//   checkNFTs();
-//   checkOrders();
-//   checkOffers();
-// }, 20000);
+async function refreshCollectionMeta() {
+  try {
+    console.log("Check Collection Status Import FAST API....");
+    Collection.find({ isImported: 1, progressStatus: 2 },
+      async function (err, resData) {
+        if (err) {
+        } else {
+          if (resData.length > 0) {
+            for (const collectionData of resData) {
+              let collectionID = collectionData._id;
+              Collection.find({ _id: mongoose.Types.ObjectId(collectionID) }, async function (err, collectionData) {
+                let tokenURI = nftMetaBaseURL + "collections?ChainId=" + chainID + "&ContractAddress=" + collectionData[0].contractAddress;
+                console.log("tokenURI", tokenURI);
+                try {
+                  http.get(tokenURI, (resData) => {
+                    let body = "";
+                    resData.on("data", (chunk) => {
+                      body += chunk;
+                    });
+                    resData.on("end", async () => {
+                      try {
+                        let newJSON = JSON.parse(body);
+                        let lastUpdated = newJSON[0].last_updated;
+                        var d = new Date(0);
+                        let lastUpdateMetaDB = d.setUTCSeconds(lastUpdated);
+                        var d1 = new Date(lastUpdateMetaDB);
+                        var d2 = new Date(collectionData[0].lastUpdatedOn);
+
+                        if (d1.getTime() === d2.getTime()) {
+                          console.log("No changes found in Collection");
+                        } else {
+                          console.log("changes found in Collection");
+                          let apiStatus = newJSON[0].status;
+                          console.log("File Status", apiStatus);
+                          if (apiStatus === "available" && collectionData[0].progressStatus === 2) {
+                            let NFTDataList = nftMetaBaseURL + "tokenDetailsExtended?ChainId=" + chainID + "&ContractAddress=" + collectionData[0].contractAddress;
+                            console.log("NFTDataList", NFTDataList);
+                            try {
+                              await http.get(NFTDataList, (resData) => {
+                                let body = "";
+                                resData.on("data", (chunk) => {
+                                  body += chunk;
+                                });
+                                resData.on("end", async () => {
+                                  try {
+                                    let jsonNFTData = JSON.parse(body);
+                                    jsonNFTData.forEach(nftRecord => {
+                                      let lastUpdated = nftRecord.MetadataLastUpdated;
+                                      var d = new Date(0);
+                                      let lastUpdateMetaDBNFT = d.setUTCSeconds(lastUpdated);
+                                      var d1 = new Date(lastUpdateMetaDBNFT);
+                                      NFT.find({ collectionID: mongoose.Types.ObjectId(collectionData[0]._id), tokenID: nftRecord.edition }, async function (err, nftData) {
+                                        if (err) {
+                                          console.log("Error in nft Query", err)
+                                        } else {
+                                          if (nftData.length == 0) {
+                                            let nft = new NFT({
+                                              name: nftRecord.name,
+                                              description: nftRecord.description,
+                                              tokenID: nftRecord.edition,
+                                              collectionID: collectionData[0]._id,
+                                              collectionAddress: collectionData[0].contractAddress,
+                                              totalQuantity: 1,
+                                              isImported: 1,
+                                              type: 1,
+                                              isMinted: 1,
+                                              previewImg: nftRecord.S3Images.S3Thumb,
+                                              hashStatus: 1,
+                                              brandID: collectionData[0].brandID,
+                                              categoryID: collectionData[0].categoryID,
+                                              lastUpdatedOn: lastUpdateMetaDBNFT,
+                                              ownedBy: [],
+                                            });
+                                            if (nftRecord.S3Images.S3Animation === "" || nftRecord.S3Images.S3Animation === null) {
+                                              nft.image = nftRecord.S3Images.S3Image;
+                                            } else {
+                                              nft.image = nftRecord.S3Images.S3Animation;
+                                            }
+                                            nft.ownedBy.push({
+                                              address: nftRecord.owner.owner,
+                                              quantity: 1,
+                                            });
+                                            nft.save().then(async (result) => {
+                                              const collection = await Collection.findOne({
+                                                _id: mongoose.Types.ObjectId(collectionData[0]._id),
+                                              });
+                                              let nextID = collection.getNextID();
+                                              collection.nextID = nextID;
+                                              collection.save();
+                                              await Collection.findOneAndUpdate({
+                                                _id: mongoose.Types.ObjectId(collectionData[0]._id),
+                                              },
+                                                { $inc: { nftCount: 1 } },
+                                                function () { }
+                                              );
+                                              if (collectionData[0].categoryID === "" || collectionData[0].categoryID === undefined) {
+                                              } else {
+                                                await Category.findOneAndUpdate({
+                                                  _id: mongoose.Types.ObjectId(collectionData[0].categoryID),
+                                                },
+                                                  { $inc: { nftCount: 1 } },
+                                                  function () { }
+                                                );
+                                              }
+                                              if (collectionData[0].brandID === "" || collectionData[0].brandID === undefined) {
+                                              } else {
+                                                await Brand.findOneAndUpdate({
+                                                  _id: mongoose.Types.ObjectId(collectionData[0].brandID),
+                                                },
+                                                  { $inc: { nftCount: 1 } },
+                                                  function () { }
+                                                );
+                                              }
+                                            }).catch((error) => {
+                                              console.log("Created NFT error", error);
+                                            });
+                                          } else {
+                                            var d2 = new Date(nftData[0].lastUpdatedOn);
+                                            if (d1.getTime() === d2.getTime()) {
+                                              console.log("NFT already Updated");
+                                            } else {
+                                              let updateNFTData = {
+                                                name: nftRecord.name,
+                                                description: nftRecord.description,
+                                                previewImg: nftRecord.S3Images.S3Thumb,
+                                                lastUpdatedOn: lastUpdateMetaDBNFT
+                                              }
+                                              if (nftRecord.S3Images.S3Animation === "" || nftRecord.S3Images.S3Animation === null) {
+                                                updateNFTData.image = nftRecord.S3Images.S3Image;
+                                              } else {
+                                                updateNFTData.image = nftRecord.S3Images.S3Animation;
+                                              }
+                                              await NFT.findOneAndUpdate(
+                                                { _id: mongoose.Types.ObjectId(nftData[0]._id) },
+                                                { $set: updateNFTData }, { new: true }, function (err, updateNFT) {
+                                                  if (err) {
+                                                    console.log("Error in Updating NFT" + nftData[0]._id);
+                                                  } else {
+                                                    console.log("NFT MetaData Updated: ", nftData[0]._id);
+                                                  }
+                                                }
+                                              );
+                                            }
+                                          }
+                                        }
+                                      })
+                                    });
+                                  } catch (error) {
+                                    console.log("Error ", error);
+                                  };
+                                });
+                              }).on("error", (error) => {
+                                console.log("Error ", error);
+                              });
+                              let updateCollectionData = {
+                                progressStatus: 2,
+                                checkStatus: 0,
+                                lastUpdatedOn: lastUpdateMetaDB
+                              }
+                              await Collection.findOneAndUpdate(
+                                { _id: mongoose.Types.ObjectId(collectionID) },
+                                { $set: updateCollectionData }, { new: true }, function (err, updateCollection) {
+                                  if (err) {
+                                    console.log("Error in Updating Collection" + err);
+                                  } else {
+                                    console.log("Collection status Updated: ");
+                                  }
+                                }
+                              );
+                            } catch (error) {
+                              console.log("Error ", error);
+                            }
+                          } else {
+                            console.log("Not Updated in Colletion");
+                          }
+                        }
+                      } catch (error) {
+                        console.log("Error ", error);
+                      };
+                    });
+                  }).on("error", (error) => {
+                    console.log("Error ", error);
+                  });
+                } catch (error) {
+                  console.log("Error ", error);
+                }
+
+              });
+            }
+          }
+        }
+      })
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+
+
+setInterval(() => {
+  checkCollection();
+  checkNFTs();
+  checkOrders();
+  checkOffers();
+}, 20000);
+
+setInterval(() => {
+  checkCollectionStatus();
+}, 10000);
 
 // setInterval(() => {
-//   checkCollectionStatus();
-// }, 10000);
+//   refreshCollectionMeta();
+// }, 5000);
