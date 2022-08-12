@@ -453,6 +453,7 @@ class NFTController {
           collection
             .save()
             .then((result) => {
+              console.log("collection created", result)
               return res.reply(messages.created("Collection"), result);
             })
             .catch((error) => {
@@ -2337,6 +2338,7 @@ class NFTController {
           }
         }
         let updateObj = Object.assign({}, updateData);
+        console.log("updateObj",updateObj)
         let nftupdateObj = Object.assign({}, nftupdateData);
         Collection.findByIdAndUpdate(
           { _id: mongoose.Types.ObjectId(collectionID) },
