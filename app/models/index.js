@@ -8,6 +8,7 @@ const Order = require('./lib/Order');
 const User = require('./lib/User');
 const whitelist = require('./lib/Whitelist')
 const MintCollection = require('./lib/MintCollection');
+// const NFTMetaQueue = require('./lib/NFTMetaQueue');
 module.exports = {
     Bid,
     Brand,
@@ -18,5 +19,6 @@ module.exports = {
     Order,
     User,
     whitelist,
+    // NFTMetaQueue,
     MintCollection
 };

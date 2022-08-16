@@ -5,7 +5,7 @@ const http = require("http");
 const https = require("https");
 const logsDecoder = LogsDecoder.create()
 const config = require("dotenv").config();
-const { NFT, Collection, User, Bid, Order, History, Category, Brand } = require("./app/models");
+const { NFT, Collection, User, Bid, Order, History, Category, Brand, NFTMetaQueue } = require("./app/models");
 // TODO: Change the URL to MainNet URL
 var web3 = new Web3(process.env.NETWORK_RPC_URL);
 const ABI = require("./abis/marketplace.json")
@@ -1013,8 +1013,6 @@ async function refreshCollectionMeta() {
     console.log(error);
   }
 }
-
-
 
 setInterval(() => {
   checkCollection();

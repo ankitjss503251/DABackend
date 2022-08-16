@@ -9,6 +9,7 @@ router.post("/checkStatus", nftMiddleware.verifyAdminToken, importedController.c
 router.post("/importedCollectionNFTs", nftMiddleware.verifyAdminToken, importedController.importedCollectionNFTs );
 router.post("/refreshCollection", nftMiddleware.verifyAdminToken, importedController.refreshCollection );
 router.post("/checkCollectionUpdate", nftMiddleware.verifyAdminToken, importedController.checkCollectionUpdate );
+router.post("/refreshMetaNFT", nftMiddleware.verifyAdminToken, importedController.refreshMetaNFT );
 
 
 
