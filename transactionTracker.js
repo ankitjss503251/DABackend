@@ -1027,4 +1027,4 @@ setInterval(() => {
 
 setInterval(() => {
   refreshCollectionMeta();
-}, 15000);
+}, 5000);
