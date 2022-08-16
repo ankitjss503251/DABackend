@@ -776,7 +776,10 @@ async function checkCollectionStatus() {
                       try {
                         let newJSON = JSON.parse(body);
                         let apiStatus = newJSON[0].apiStatus;
-                        let totalSupply = newJSON[0].total_supply;
+                        let totalSupply = 0;
+                        if(newJSON[0].total_supply !== "TODO"){
+                          totalSupply  = parseInt(newJSON[0].total_supply);
+                        }
                         let updateCollectionData = {
                           apiStatus: apiStatus,
                           totalSupply: totalSupply
