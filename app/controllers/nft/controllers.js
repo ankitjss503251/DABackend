@@ -453,6 +453,7 @@ class NFTController {
           collection
             .save()
             .then((result) => {
+              console.log("collection created", result)
               return res.reply(messages.created("Collection"), result);
             })
             .catch((error) => {
@@ -1200,7 +1201,7 @@ class NFTController {
             $count: "allNFTs"
           }
         ]);
-        results.count = count[0].allNFTs;
+        results.count = count[0]?.allNFTs;
         results.results = nftData;
         console.log("Data Returned");
         return res.reply(messages.success("NFT List"), results);
@@ -1330,7 +1331,7 @@ class NFTController {
 
         let ContractType = "ERC1155";
         let ContractABI = erc1155Abi ? erc1155Abi.abi : "";
-        if (nftData[0].type === 1) {
+        if (nftData[0]?.type === 1) {
           ContractType = "ERC721";
           ContractABI = erc721Abi ? erc721Abi.abi : "";
         }
@@ -1755,7 +1756,7 @@ class NFTController {
             $count: "allNFTs"
           }
         ]);
-        results.count = count[0].allNFTs;
+        results.count = count[0]?.allNFTs;
         results.results = nftData;
         return res.reply(messages.success("NFT List"), results);
       });
@@ -1993,7 +1994,7 @@ class NFTController {
             $count: "allNFTs"
           }
         ]);
-        results.count = count[0].allNFTs;
+        results.count = count[0]?.allNFTs;
         results.results = nftData;
         return res.reply(messages.success("NFT List"), results);
       });
@@ -2337,6 +2338,7 @@ class NFTController {
           }
         }
         let updateObj = Object.assign({}, updateData);
+        console.log("updateObj",updateObj)
         let nftupdateObj = Object.assign({}, nftupdateData);
         Collection.findByIdAndUpdate(
           { _id: mongoose.Types.ObjectId(collectionID) },
@@ -7758,7 +7760,7 @@ class NFTController {
           } else {
             let ContractType = "ERC1155";
             let ContractABI = erc1155Abi ? erc1155Abi.abi : "";
-            if (nftData[0].type === 1) {
+            if (nftData[0]?.type === 1) {
               ContractType = "ERC721";
               ContractABI = erc721Abi ? erc721Abi.abi : "";
             }

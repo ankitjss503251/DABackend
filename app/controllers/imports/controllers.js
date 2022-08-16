@@ -76,9 +76,9 @@ class ImportedController {
           console.log("Error", e);
         });
       results.count = await Collection.countDocuments(searchObj).exec();
-      if(results.count === 0){
+      if (results.count === 0) {
         results.results = data;
-      }else{
+      } else {
         results.results = data[0];
       }
       res.header("Access-Control-Max-Age", 600);
@@ -181,7 +181,7 @@ class ImportedController {
                     }
                     await Collection.findOneAndUpdate(
                       { _id: mongoose.Types.ObjectId(collectionID) },
-                      {  $set: updateCollectionData }, { new: true}, function (err, updateCollection) {
+                      { $set: updateCollectionData }, { new: true }, function (err, updateCollection) {
                         if (err) {
                           console.log("Error in Updating Collection" + err);
                           return res.reply(messages.error());
@@ -337,7 +337,7 @@ class ImportedController {
                                         }
                                         await NFT.findOneAndUpdate(
                                           { _id: mongoose.Types.ObjectId(nftID) },
-                                          {  $set: updateNFTData }, { new: true}, function (err, updateNFT) {
+                                          { $set: updateNFTData }, { new: true }, function (err, updateNFT) {
                                             if (err) {
                                               console.log("Error in Updating NFT" + err);
                                             } else {
@@ -366,7 +366,7 @@ class ImportedController {
                         }
                         await Collection.findOneAndUpdate(
                           { _id: mongoose.Types.ObjectId(collectionID) },
-                          {  $set: updateCollectionData }, { new: true}, function (err, updateCollection) {
+                          { $set: updateCollectionData }, { new: true }, function (err, updateCollection) {
                             if (err) {
                               console.log("Error in Updating Collection" + err);
                               return res.reply(messages.error());
@@ -421,15 +421,15 @@ class ImportedController {
             $request["total_supply_field"] = "indicatesID";
             let payload = Object.assign({}, $request);
             try {
-              let response = await axios.post(postAPIURL+'impCollection/', payload);
+              let response = await axios.post(postAPIURL + 'impCollection/', payload);
               let data = response.data;
-              if(data?.status !== undefined && data?.status === "update"){
+              if (data?.status !== undefined && data?.status === "update") {
                 let updateCollectionData = {
                   checkStatus: 1
                 }
                 await Collection.findOneAndUpdate(
                   { _id: mongoose.Types.ObjectId(collectionID) },
-                  {  $set: updateCollectionData }, { new: true}, function (err, updateCollection) {
+                  { $set: updateCollectionData }, { new: true }, function (err, updateCollection) {
                     if (err) {
                       console.log("Error in Updating Collection" + err);
                       return res.reply(messages.error());
@@ -439,11 +439,11 @@ class ImportedController {
                     }
                   }
                 );
-              }else{
+              } else {
                 console.log("Error ", error);
                 return res.reply(messages.server_error());
               }
-            }catch(error){
+            } catch (error) {
               console.log("Error ", error);
               return res.reply(messages.server_error());
             }
@@ -484,10 +484,10 @@ class ImportedController {
                     var d1 = new Date(lastUpdateMetaDB);
                     var d2 = new Date(collectionData[0].lastUpdatedOn);
 
-                    if (d1.getTime() === d2.getTime()){
+                    if (d1.getTime() === d2.getTime()) {
                       console.log("No changes found in Collection");
                       return res.reply(messages.already_updated("Collection"));
-                    }else{
+                    } else {
                       console.log("changes found in Collection");
                       let apiStatus = newJSON[0].status;
                       console.log("File Status", apiStatus);
@@ -575,23 +575,23 @@ class ImportedController {
                                         });
                                       } else {
                                         var d2 = new Date(nftData[0].lastUpdatedOn);
-                                        if (d1.getTime() === d2.getTime()){
+                                        if (d1.getTime() === d2.getTime()) {
                                           console.log("NFT already Updated");
-                                        }else{
+                                        } else {
                                           let updateNFTData = {
                                             name: nftRecord.name,
                                             description: nftRecord.description,
                                             previewImg: nftRecord.S3Images.S3Thumb,
                                             lastUpdatedOn: lastUpdateMetaDBNFT
                                           }
-                                          if(nftRecord.S3Images.S3Animation === "" || nftRecord.S3Images.S3Animation === null){
+                                          if (nftRecord.S3Images.S3Animation === "" || nftRecord.S3Images.S3Animation === null) {
                                             updateNFTData.image = nftRecord.S3Images.S3Image;
-                                          }else{
+                                          } else {
                                             updateNFTData.image = nftRecord.S3Images.S3Animation;
                                           }
                                           await NFT.findOneAndUpdate(
                                             { _id: mongoose.Types.ObjectId(nftData[0]._id) },
-                                            {  $set: updateNFTData }, { new: true}, function (err, updateNFT) {
+                                            { $set: updateNFTData }, { new: true }, function (err, updateNFT) {
                                               if (err) {
                                                 console.log("Error in Updating NFT" + nftData[0]._id);
                                               } else {
@@ -621,7 +621,7 @@ class ImportedController {
                           }
                           await Collection.findOneAndUpdate(
                             { _id: mongoose.Types.ObjectId(collectionID) },
-                            {  $set: updateCollectionData }, { new: true}, function (err, updateCollection) {
+                            { $set: updateCollectionData }, { new: true }, function (err, updateCollection) {
                               if (err) {
                                 console.log("Error in Updating Collection" + err);
                                 return res.reply(messages.error());
@@ -635,7 +635,7 @@ class ImportedController {
                           console.log("Error ", error);
                           return res.reply(messages.server_error());
                         }
-                      }else{
+                      } else {
                         return res.reply(messages.status_not_updated("Collection"));
                       }
                     }
@@ -648,6 +648,45 @@ class ImportedController {
                 console.log("Error ", error);
                 return res.reply(messages.server_error());
               });
+            } catch (error) {
+              console.log("Error ", error);
+              return res.reply(messages.server_error());
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.log("Error " + error);
+      return res.reply(messages.server_error());
+    }
+  }
+
+  async refreshMetaNFT(req, res) {
+    try {
+      let nftID = req.body.nftID;
+      NFT.find({ _id: mongoose.Types.ObjectId(nftID) }, async function (err, nftData) {
+        if (err) {
+          return res.reply(messages.server_error("NFT"));
+        } else {
+          if (nftData.length == 0) {
+            return res.reply(messages.not_found("NFT"));
+          } else {
+            
+            let $request = [];
+            $request["address"] = nftData.collectionAddress;
+            $request["chain_id"] = chainID;
+            $request["token_id"] = nftData.tokenID;
+            let payload = Object.assign({}, $request);
+            try {
+              let response = await axios.post(postAPIURL + 'tokenRefresh/', payload);
+              let data = response.data;
+              if (data?.status !== undefined && data?.status === "success") {
+                console.log("Added to Queue ");
+                return res.reply(messages.created("Added to Queue"));
+              } else {
+                console.log("Error ", error);
+                return res.reply(messages.server_error());
+              }
             } catch (error) {
               console.log("Error ", error);
               return res.reply(messages.server_error());
