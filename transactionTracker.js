@@ -989,7 +989,7 @@ async function refreshCollectionMeta() {
                               console.log("Error ", error);
                             }
                           } else {
-                            console.log("Not Updated in Colletion");
+                            console.log("Not Updated in Collection");
                           }
                         }
                       } catch (error) {

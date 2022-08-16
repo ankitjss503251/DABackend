@@ -79,7 +79,7 @@ const collectionSchema = mongoose.Schema({
     default: 0,
     enum: [0, 1],
   },
-  isHotCollection:{
+  isHotCollection: {
     type: Number,
     default: 0,
     enum: [0, 1],
@@ -139,6 +139,7 @@ const collectionSchema = mongoose.Schema({
   },
   apiStatus: {
     type: String,
+    default: "initialise"
   },
   createdBy: {
     type: mongoose.Schema.ObjectId,
