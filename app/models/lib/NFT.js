@@ -30,7 +30,7 @@ const nftSchema = mongoose.Schema({
   collectionAddress: {
     type: String,
   },
-  tokenID: String,
+  tokenID: Number,
   assetsInfo: [
     {
       size: {

@@ -254,7 +254,9 @@ class ImportedController {
                                 var d = new Date(0);
                                 let lastUpdateMetaDB = d.setUTCSeconds(lastUpdated);
                                 var d1 = new Date(lastUpdateMetaDB);
-                                NFT.find({ collectionID: mongoose.Types.ObjectId(collectionData[0]._id), tokenID: nftRecord.edition }, async function (err, nftData) {
+                                NFT.find({
+                                  collectionAddress: collectionData[0].contractAddress, tokenID: Number(nftRecord.token_id)
+                                }, async function (err, nftData) {
                                   if (err) {
                                     return res.reply(messages.server_error("NFT"));
                                   } else {
@@ -262,7 +264,7 @@ class ImportedController {
                                       let nft = new NFT({
                                         name: nftRecord.name,
                                         description: nftRecord.description,
-                                        tokenID: nftRecord.edition,
+                                        tokenID: Number(nftRecord.token_id),
                                         collectionID: collectionData[0]._id,
                                         collectionAddress: collectionData[0].contractAddress,
                                         totalQuantity: 1,
@@ -508,7 +510,7 @@ class ImportedController {
                                   var d = new Date(0);
                                   let lastUpdateMetaDBNFT = d.setUTCSeconds(lastUpdated);
                                   var d1 = new Date(lastUpdateMetaDBNFT);
-                                  NFT.find({ collectionID: mongoose.Types.ObjectId(collectionData[0]._id), tokenID: nftRecord.edition }, async function (err, nftData) {
+                                  NFT.find({ collectionID: mongoose.Types.ObjectId(collectionData[0]._id), tokenID: Number(nftRecord.token_id) }, async function (err, nftData) {
                                     if (err) {
                                       console.log("Error in nft Query", err)
                                     } else {
@@ -516,7 +518,7 @@ class ImportedController {
                                         let nft = new NFT({
                                           name: nftRecord.name,
                                           description: nftRecord.description,
-                                          tokenID: nftRecord.edition,
+                                          tokenID: Number(nftRecord.token_id),
                                           collectionID: collectionData[0]._id,
                                           collectionAddress: collectionData[0].contractAddress,
                                           totalQuantity: 1,
@@ -671,7 +673,7 @@ class ImportedController {
           if (nftData.length == 0) {
             return res.reply(messages.not_found("NFT"));
           } else {
-            
+
             let $request = [];
             $request["address"] = nftData.collectionAddress;
             $request["chain_id"] = chainID;
