@@ -870,7 +870,7 @@ async function refreshCollectionMeta() {
                                       var d = new Date(0);
                                       let lastUpdateMetaDBNFT = d.setUTCSeconds(lastUpdated);
                                       var d1 = new Date(lastUpdateMetaDBNFT);
-                                      NFT.find({ collectionID: mongoose.Types.ObjectId(collectionData[0]._id), tokenID: nftRecord.edition }, async function (err, nftData) {
+                                      NFT.find({ collectionID: mongoose.Types.ObjectId(collectionData[0]._id), tokenID: nftRecord.token_id }, async function (err, nftData) {
                                         if (err) {
                                           console.log("Error in nft Query", err)
                                         } else {
@@ -878,7 +878,7 @@ async function refreshCollectionMeta() {
                                             let nft = new NFT({
                                               name: nftRecord.name,
                                               description: nftRecord.description,
-                                              tokenID: nftRecord.edition,
+                                              tokenID: nftRecord.token_id,
                                               collectionID: collectionData[0]._id,
                                               collectionAddress: collectionData[0].contractAddress,
                                               totalQuantity: 1,
