@@ -11,6 +11,4 @@ router.post('/getOrdersByNftId', orderController.getOrdersByNftId);
 router.post('/createOrder', orderMiddleware.verifyUserToken, orderController.createOrder);
 router.put('/updateOrder', orderMiddleware.verifyUserToken, orderController.updateOrder);
 router.delete('/deleteOrder', orderMiddleware.verifyUserToken, orderController.deleteOrder);
-router.post('/createOrderImport', orderMiddleware.verifyUserToken, orderController.createOrderImport);
-
 module.exports = router;

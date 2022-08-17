@@ -3,11 +3,14 @@ const ImportedController = require("./controllers");
 const importedController = new ImportedController();
 const nftMiddleware = require('./../helpers/middleware');
 
-router.post("/createCollection", nftMiddleware.verifyAdminToken, importedController.createCollection );
-router.post("/getImportedCollection", importedController.getImportedCollection );
+router.post("/getMyImportedCollection", nftMiddleware.verifyAdminToken, importedController.getMyImportedCollection );
+router.post("/getImportedCollection", nftMiddleware.verifyAdminToken, importedController.getImportedCollection );
+router.post("/checkStatus", nftMiddleware.verifyAdminToken, importedController.checkStatus );
+router.post("/importedCollectionNFTs", nftMiddleware.verifyAdminToken, importedController.importedCollectionNFTs );
+router.post("/refreshCollection", nftMiddleware.verifyAdminToken, importedController.refreshCollection );
+router.post("/checkCollectionUpdate", nftMiddleware.verifyAdminToken, importedController.checkCollectionUpdate );
+router.post("/refreshMetaNFT", nftMiddleware.verifyAdminToken, importedController.refreshMetaNFT );
 
-// router.post("/createNFT", nftMiddleware.verifyUserToken, importedController.createNFT );
-// router.post("/updateNFT", nftMiddleware.verifyUserToken, importedController.updateNFT );
-// router.post("/getNFT", importedController.getNFT );
+
 
 module.exports = router;

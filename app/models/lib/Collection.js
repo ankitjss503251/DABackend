@@ -40,12 +40,7 @@ const collectionSchema = mongoose.Schema({
   },
   contractAddress: {
     type: String,
-    // unique: true,
     require: true,
-    lowercase: true,
-  },
-  chainID: {
-    type: String,
   },
   price: { type: mongoose.Types.Decimal128, default: 0 },
   royalityPercentage: { type: Number, default: 0 },
@@ -79,12 +74,12 @@ const collectionSchema = mongoose.Schema({
     require: true,
     default: 0,
   },
-  isHotCollection: {
+  isMinted: {
     type: Number,
     default: 0,
     enum: [0, 1],
   },
-  isMinted: {
+  isHotCollection: {
     type: Number,
     default: 0,
     enum: [0, 1],
@@ -103,6 +98,12 @@ const collectionSchema = mongoose.Schema({
     type: Number,
     default: 0,
     enum: [0, 1], // 0-No 1-Yes
+  },
+  contractName: {
+    type: String,
+  },
+  totalSupplyField: {
+    type: String,
   },
   isDeployed: {
     type: Number,
@@ -123,6 +124,22 @@ const collectionSchema = mongoose.Schema({
     type: Number,
     enum: [0, 1, 2],
     default: 0,
+  },
+  progressStatus: {
+    //0 - Read & 1 - Process & 2 - Completed
+    type: Number,
+    enum: [0, 1, 2],
+    default: 0,
+  },
+  checkStatus: {
+    //0 - Not Checked & 1 - Checked
+    type: Number,
+    enum: [0, 1],
+    default: 0,
+  },
+  apiStatus: {
+    type: String,
+    default: "initialise"
   },
   createdBy: {
     type: mongoose.Schema.ObjectId,
