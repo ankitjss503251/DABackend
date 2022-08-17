@@ -7920,7 +7920,7 @@ class NFTController {
                             return res.reply(messages.error());
                           } else {
                             let $request = [];
-                            $request["RequestType"] = "update";
+                            $request["RequestType"] = "";
                             $request["ContractAddress"] = nftData[0].collectionAddress;
                             $request["InternalName"] = "";
                             $request["TokenIds"] = [tokenID]
