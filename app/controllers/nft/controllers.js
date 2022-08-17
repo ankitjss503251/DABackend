@@ -1,16 +1,7 @@
 const fs = require("fs");
 const https = require("https");
 const http = require("http");
-const {
-  NFT,
-  Collection,
-  User,
-  Bid,
-  Order,
-  Brand,
-  Category,
-  MintCollection,
-} = require("../../models");
+const { NFT, Collection, User, Bid, Order, Brand, Category, MintCollection, } = require("../../models");
 const pinataSDK = require("@pinata/sdk");
 const aws = require("aws-sdk");
 const multer = require("multer");
@@ -31,6 +22,7 @@ const erc721Abi = require("./../../../abis/extendedERC721.json");
 const erc1155Abi = require("./../../../abis/extendedERC1155.json");
 const nftMetaBaseURL = process.env.NFT_META_BASE_URL;
 const chainID = process.env.CHAIN_ID;
+const postAPIURL = process.env.NFT_META_POST_URL;
 
 // Set S3 endpoint to DigitalOcean Spaces
 const spacesEndpoint = new aws.Endpoint(process.env.BUCKET_ENDPOINT);
@@ -7884,6 +7876,80 @@ class NFTController {
     }
   }
 
+  async updateOwner(req, res) {
+    try {
+      let nftID = req.body.nftID;
+      NFT.find({ _id: mongoose.Types.ObjectId(nftID) }, async function (err, nftData) {
+        if (err) {
+          return res.reply(messages.server_error("NFT"));
+        } else {
+          if (nftData.length == 0) {
+            return res.reply(messages.not_found("NFT"));
+          } else {
+            let ContractType = "ERC1155";
+            let ContractABI = erc1155Abi ? erc1155Abi.abi : "";
+            if (nftData[0]?.type === 1) {
+              ContractType = "ERC721";
+              ContractABI = erc721Abi ? erc721Abi.abi : "";
+            }
+            let contract = new web3.eth.Contract(ContractABI, nftData[0].collectionAddress);
+            let tokenID = parseInt(nftData[0].tokenID);
+            try{
+              // if (nftData[0]?.type === 1) {
+                let ownerAddress = await contract.methods.ownerOf(tokenID).call();
+                console.log("Owner is ", ownerAddress);
+                let OwnedBy = [];
+                let updateNFTData = { ownedBy: OwnedBy }
+                await NFT.findOneAndUpdate(
+                  { _id: mongoose.Types.ObjectId(nftID) },
+                  { $set: updateNFTData }, { new: true }, async function (err, updateNFT) {
+                    if (err) {
+                      console.log("Error in Updating NFT" + err);
+                      return res.reply(messages.error());
+                    } else {
+                      OwnedBy.push({
+                        address: ownerAddress,
+                        quantity: 1,
+                      });
+                      updateNFTData = { ownedBy: OwnedBy }
+                      await NFT.findOneAndUpdate(
+                        { _id: mongoose.Types.ObjectId(nftID) },
+                        { $set: updateNFTData }, { new: true }, async function (err, updateNFT) {
+                          if (err) {
+                            console.log("Error in Updating NFT" + err);
+                            return res.reply(messages.error());
+                          } else {
+                            let $request = [];
+                            $request["RequestType"] = "update";
+                            $request["ContractAddress"] = nftData[0].collectionAddress;
+                            $request["InternalName"] = "";
+                            $request["TokenIds"] = [tokenID]
+                            let payload = Object.assign({}, $request);
+                            try {
+                              let response = await axios.post(postAPIURL + 'refreshOwner/', payload);
+                            } catch (error) {
+                              console.log("Error ", error);
+                            }
+                            console.log("NFT MetaData Updated: ", updateNFT);
+                            return res.reply(messages.created("NFT Owner Updated"), updateNFT);
+                          }
+                        }
+                      );
+                    }
+                  }
+                );
+              // }
+            }catch(error){
+              console.log("Error is ", error)
+            }
+          }
+        }
+      });
+
+    } catch (error) {
+      return res.reply(messages.server_error());
+    }
+  }
 }
 
 module.exports = NFTController;
