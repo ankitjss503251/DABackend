@@ -7888,8 +7888,9 @@ class NFTController {
 
   async updateOwner(req, res) {
     try {
-      let nftID = req.body.nftID;
-      NFT.find({ _id: mongoose.Types.ObjectId(nftID) }, async function (err, nftData) {
+      let collectionAddress = req.body.collectionAddress;
+      let tokenID = req.body.tokenID;
+      NFT.find({ collectionAddress: collectionAddress, tokenID: tokenID }, async function (err, nftData) {
         if (err) {
           return res.reply(messages.server_error("NFT"));
         } else {
