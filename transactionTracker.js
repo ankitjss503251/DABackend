@@ -1014,17 +1014,17 @@ async function refreshCollectionMeta() {
   }
 }
 
-setInterval(() => {
-  checkCollection();
-  checkNFTs();
-  checkOrders();
-  checkOffers();
-}, 20000);
+// setInterval(() => {
+//   checkCollection();
+//   checkNFTs();
+//   checkOrders();
+//   checkOffers();
+// }, 20000);
 
-setInterval(() => {
-  checkCollectionStatus();
-}, 10000);
+// setInterval(() => {
+//   checkCollectionStatus();
+// }, 10000);
 
-setInterval(() => {
-  refreshCollectionMeta();
-}, 5000);
+// setInterval(() => {
+//   refreshCollectionMeta();
+// }, 5000);

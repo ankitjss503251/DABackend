@@ -1370,6 +1370,7 @@ class NFTController {
           }
         } else {
           let tokenURI = nftMetaBaseURL + "tokenDetailsExtended?ChainId=" + chainID + "&ContractAddress=" + nftData[0].collectionAddress + "&TokenId=" + tokenID;
+          console.log("tokenURI", tokenURI)
           try {
             http.get(tokenURI, (resp) => {
               let body = "";
@@ -2338,7 +2339,7 @@ class NFTController {
           }
         }
         let updateObj = Object.assign({}, updateData);
-        console.log("updateObj",updateObj)
+        console.log("updateObj", updateObj)
         let nftupdateObj = Object.assign({}, nftupdateData);
         Collection.findByIdAndUpdate(
           { _id: mongoose.Types.ObjectId(collectionID) },
@@ -7196,8 +7197,8 @@ class NFTController {
 
   async fetchMintAddress(req, res) {
     try {
+      console.log("reqq", req.body)
       await MintCollection.findOne({ address: req.body.address })
-        .lean()
         .exec()
         .then((result) => {
           return res.reply(messages.success("Mint Collection List"), result);

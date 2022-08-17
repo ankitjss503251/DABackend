@@ -6,7 +6,6 @@ const mintCollectionSchema = mongoose.Schema({
   address: {
     type: String,
     require: true,
-    lowercase: true,
   },
 });
 module.exports = mongoose.model("MintCollection", mintCollectionSchema);
