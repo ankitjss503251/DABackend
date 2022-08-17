@@ -215,7 +215,7 @@ class NFTController {
                                     uploadingData = {
                                       id: "#" + nftElement.tokenID,
                                       name: nftElement.name,
-                                      edition: nftElement.tokenID,
+                                      token_id: nftElement.tokenID,
                                       description: nftElement.description,
                                       attributes: JSON.parse(nftElement.attributes),
                                       collectionAddress: nftElement.collectionAddress,
@@ -1374,13 +1374,20 @@ class NFTController {
                   let newJSON = JSON.parse(body);
                   nftData[0].name = newJSON[0].name;
                   nftData[0].description = newJSON[0].description;
-                  if (newJSON[0].S3Images.S3Animation === "" || newJSON[0].S3Images.S3Animation === null) {
-                    nftData[0].image = newJSON[0].S3Images.S3Image;
-                  } else {
-                    nftData[0].image = newJSON[0].S3Images.S3Animation;
+                  if(newJSON[0].S3Images.S3Thumb === "" || newJSON[0].S3Images.S3Thumb === undefined){
+                    nftData[0].previewImg = newJSON[0].image;
+                    nftData[0].image = newJSON[0].image;
+                  }else{
+                    if (newJSON[0].S3Images.S3Animation === "" || newJSON[0].S3Images.S3Animation === null) {
+                      nftData[0].image = newJSON[0].S3Images.S3Image;
+                    } else {
+                      nftData[0].image = newJSON[0].S3Images.S3Animation;
+                    }
+                    nftData[0].previewImg = newJSON[0].S3Images.S3Thumb;
                   }
+                  
                   nftData[0].attributes = newJSON[0].attributes;
-                  nftData[0].previewImg = newJSON[0].S3Images.S3Thumb;
+                  
                   return res.reply(messages.success("NFT List"), nftData);
                 } catch (error) {
                   console.log("Error ", error);
