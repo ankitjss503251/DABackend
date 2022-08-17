@@ -1385,8 +1385,11 @@ class NFTController {
                     }
                     nftData[0].previewImg = newJSON[0].S3Images.S3Thumb;
                   }
-                  
-                  nftData[0].attributes = newJSON[0].attributes;
+                  if(newJSON[0].rarity.rarity_attributes === "" || newJSON[0].rarity.rarity_attributes === undefined){
+                    nftData[0].attributes = newJSON[0].attributes;
+                  }else{
+                    nftData[0].attributes = newJSON[0].rarity.rarity_attributes;
+                  }
                   
                   return res.reply(messages.success("NFT List"), nftData);
                 } catch (error) {
