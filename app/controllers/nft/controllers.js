@@ -7912,7 +7912,7 @@ class NFTController {
                 let OwnedBy = [];
                 let updateNFTData = { ownedBy: OwnedBy }
                 await NFT.findOneAndUpdate(
-                  { _id: mongoose.Types.ObjectId(nftID) },
+                  { _id: mongoose.Types.ObjectId(nftData[0]._id) },
                   { $set: updateNFTData }, { new: true }, async function (err, updateNFT) {
                     if (err) {
                       console.log("Error in Updating NFT" + err);
@@ -7924,7 +7924,7 @@ class NFTController {
                       });
                       updateNFTData = { ownedBy: OwnedBy }
                       await NFT.findOneAndUpdate(
-                        { _id: mongoose.Types.ObjectId(nftID) },
+                        { _id: mongoose.Types.ObjectId(nftData[0]._id) },
                         { $set: updateNFTData }, { new: true }, async function (err, updateNFT) {
                           if (err) {
                             console.log("Error in Updating NFT" + err);
