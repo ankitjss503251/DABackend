@@ -2222,6 +2222,7 @@ class NFTController {
       if (!req.userId) return res.reply(messages.unauthorized());
       allowedMimes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
       errAllowed = "JPG, JPEG, PNG,GIF";
+      let collectionAddress = "";
 
       uploadBanner.fields([
         { name: "logoImage", maxCount: 1 },
@@ -2230,58 +2231,51 @@ class NFTController {
         let updateData = [];
         let nftupdateData = [];
         let collectionID = req.body.id;
-        if (
-          req.files &&
-          req.files.logoImage &&
-          req.files.logoImage[0] &&
-          req.files.logoImage[0].location
-        ) {
+        if ( req.files && req.files.logoImage && req.files.logoImage[0] && req.files.logoImage[0].location ) {
           updateData["logoImage"] = req.files.logoImage[0].location;
         }
-        if (
-          req.files &&
-          req.files.coverImage &&
-          req.files.coverImage[0] &&
-          req.files.coverImage[0].location
-        ) {
+        if ( req.files && req.files.coverImage && req.files.coverImage[0] && req.files.coverImage[0].location ) {
           updateData["coverImage"] = req.files.coverImage[0].location;
         }
         if (req.body) {
           if (req.body.price) {
             updateData["price"] = req.body.price;
           }
+
           if (req.body.name) {
             updateData["name"] = req.body.name;
           }
+
           if (req.body.description) {
             updateData["description"] = req.body.description;
           }
+
           if (req.body.symbol) {
             updateData["symbol"] = req.body.symbol;
           }
+
           if (req.body.isHotCollection) {
             updateData["isHotCollection"] = req.body.isHotCollection;
           }
+
           if (req.body.isExclusive) {
             updateData["isExclusive"] = req.body.isExclusive;
           }
+
           if (req.body.isMinted) {
             updateData["isMinted"] = req.body.isMinted;
           }
+
           if (req.body.categoryID) {
             updateData["categoryID"] = req.body.categoryID;
             nftupdateData["categoryID"] = req.body.categoryID;
           }
+
           if (req.body.brandID) {
             updateData["brandID"] = req.body.brandID;
             nftupdateData["brandID"] = req.body.brandID;
           }
-          if (
-            req.body.totalSupply &&
-            req.body.totalSupply !== undefined &&
-            req.body.totalSupply !== null &&
-            req.body.totalSupply !== "null"
-          ) {
+          if (req.body.totalSupply && req.body.totalSupply !== undefined && req.body.totalSupply !== null && req.body.totalSupply !== "null") {
             updateData["totalSupply"] = req.body.totalSupply;
           }
           if (req.body.royalty) {
@@ -2294,20 +2288,10 @@ class NFTController {
               updateData["hashStatus"] = 1;
             }
           }
-          if (
-            req.body.preSaleStartTime &&
-            req.body.preSaleStartTime !== null &&
-            req.body.preSaleStartTime !== "null" &&
-            req.body.preSaleStartTime !== undefined
-          ) {
+          if (req.body.preSaleStartTime && req.body.preSaleStartTime !== null && req.body.preSaleStartTime !== "null" && req.body.preSaleStartTime !== undefined) {
             updateData["preSaleStartTime"] = req.body.preSaleStartTime;
           }
-          if (
-            req.body.preSaleEndTime &&
-            req.body.preSaleEndTime !== null &&
-            req.body.preSaleEndTime !== "null" &&
-            req.body.preSaleEndTime !== undefined
-          ) {
+          if ( req.body.preSaleEndTime && req.body.preSaleEndTime !== null && req.body.preSaleEndTime !== "null" && req.body.preSaleEndTime !== undefined ) {
             updateData["preSaleEndTime"] = req.body.preSaleEndTime;
           }
           if (req.body.isDeployed !== "" && req.body.isDeployed !== undefined) {
@@ -2316,16 +2300,11 @@ class NFTController {
           if (req.body.link !== "" && req.body.link !== undefined) {
             updateData["link"] = req.body.link;
           }
-          if (
-            req.body.contractAddress !== "" &&
-            req.body.contractAddress !== undefined
-          ) {
+          if ( req.body.contractAddress !== "" && req.body.contractAddress !== undefined ) {
             updateData["contractAddress"] = req.body.contractAddress;
+            collectionAddress = req.body.contractAddress;
           }
-          if (
-            req.body.isOnMarketplace !== "" &&
-            req.body.isOnMarketplace !== undefined
-          ) {
+          if ( req.body.isOnMarketplace !== "" && req.body.isOnMarketplace !== undefined ) {
             updateData["isOnMarketplace"] = req.body.isOnMarketplace;
           }
           updateData["lastUpdatedBy"] = req.userId;
@@ -2341,23 +2320,50 @@ class NFTController {
         let updateObj = Object.assign({}, updateData);
         console.log("updateObj", updateObj)
         let nftupdateObj = Object.assign({}, nftupdateData);
-        Collection.findByIdAndUpdate(
-          { _id: mongoose.Types.ObjectId(collectionID) },
-          { $set: updateObj }
-        ).then((collection) => {
-          NFT.updateMany(
-            { collectionID: mongoose.Types.ObjectId(collectionID) },
-            nftupdateObj,
-            function (err, docs) {
-              if (err) {
-                console.log(err);
-              } else {
-                console.log("NFT updated");
-              }
+        if(contractAddress !== ""){
+          Collection.find({ contractAddress : collectionAddress })
+          .exec().then((res) => {
+            if(res.length === 0){
+              Collection.findByIdAndUpdate(
+                { _id: mongoose.Types.ObjectId(collectionID) },
+                { $set: updateObj }
+              ).then((collection) => {
+                NFT.updateMany(
+                  { collectionID: mongoose.Types.ObjectId(collectionID) },
+                  nftupdateObj,
+                  function (err, docs) {
+                    if (err) {
+                      console.log(err);
+                    } else {
+                      console.log("NFT updated");
+                    }
+                  }
+                );
+                return res.reply(messages.updated("Collection Updated successfully."), collection);
+              });
+            }else{
+              return res.reply(messages.already_exists("Collection"));
             }
-          );
-          return res.reply(messages.updated("Collection Updated successfully."), collection);
-        });
+          })
+        }else{  
+          Collection.findByIdAndUpdate(
+            { _id: mongoose.Types.ObjectId(collectionID) },
+            { $set: updateObj }
+          ).then((collection) => {
+            NFT.updateMany(
+              { collectionID: mongoose.Types.ObjectId(collectionID) },
+              nftupdateObj,
+              function (err, docs) {
+                if (err) {
+                  console.log(err);
+                } else {
+                  console.log("NFT updated");
+                }
+              }
+            );
+            return res.reply(messages.updated("Collection Updated successfully."), collection);
+          });
+        }
       });
     } catch (error) {
       return res.reply(messages.server_error());
